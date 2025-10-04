@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BudgetCategory } from "../types/budget";
+import { BudgetCategory, Transaction } from "../types/budget";
 import { StorageService } from "../utils/storage";
 
 export default function Index() {
@@ -19,6 +19,7 @@ export default function Index() {
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>(
     []
   );
+  const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
   const [hasMonthData, setHasMonthData] = useState(true);
@@ -54,35 +55,41 @@ export default function Index() {
   };
 
   const loadMonthData = async () => {
-    setIsMonthDataLoading(true);
+    setIsLoading(true);
     try {
       const month = (currentDate.getMonth() + 1).toString();
       const year = currentDate.getFullYear();
 
+      // Load monthly budget data
       const monthData = await StorageService.getMonthlyBudgetData(month, year);
 
-      if (monthData) {
+      // Load monthly transactions
+      const transactions = await StorageService.getMonthTransactions(
+        month,
+        year
+      );
+      setMonthTransactions(transactions);
+
+      if (monthData && monthData.categories.length > 0) {
         setBudgetCategories(monthData.categories);
-        setHasMonthData(true);
+        setIsSetupComplete(true);
       } else {
+        // Load base categories if no month data exists
         const baseCategories = await StorageService.getBudgetCategories();
         if (baseCategories.length > 0) {
-          const categoriesForMonth = baseCategories.map((cat) => ({
-            ...cat,
-            spent: 0,
-          }));
-          setBudgetCategories(categoriesForMonth);
-          setHasMonthData(false);
+          setBudgetCategories(
+            baseCategories.map((cat) => ({ ...cat, spent: 0 }))
+          );
+          setIsSetupComplete(true);
         } else {
-          setBudgetCategories([]);
-          setHasMonthData(false);
+          setIsSetupComplete(false);
         }
       }
     } catch (error) {
       console.error("Error loading month data:", error);
-      setHasMonthData(false);
+      setIsSetupComplete(false);
     } finally {
-      setIsMonthDataLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -91,7 +98,26 @@ export default function Index() {
   };
 
   const getTotalSpent = () => {
-    return budgetCategories.reduce((total, cat) => total + (cat.spent || 0), 0);
+    if (!monthTransactions || monthTransactions.length === 0) {
+      return budgetCategories.reduce(
+        (total, cat) => total + (cat.spent || 0),
+        0
+      );
+    }
+    return monthTransactions.reduce(
+      (total, transaction) => total + transaction.amount,
+      0
+    );
+  };
+
+  const getCategorySpent = (categoryId: string): number => {
+    if (!monthTransactions || monthTransactions.length === 0) {
+      const category = budgetCategories.find((cat) => cat.id === categoryId);
+      return category?.spent || 0;
+    }
+    return monthTransactions
+      .filter((transaction) => transaction.categoryId === categoryId)
+      .reduce((total, transaction) => total + transaction.amount, 0);
   };
 
   const getRemaining = () => {
@@ -269,10 +295,28 @@ export default function Index() {
                 </View>
               </View>
 
+              {/* Quick Actions */}
+              <View style={styles.quickActionsSection}>
+                <TouchableOpacity
+                  style={styles.quickActionButton}
+                  onPress={() => {
+                    const month = (currentDate.getMonth() + 1).toString();
+                    const year = currentDate.getFullYear();
+                    router.push(
+                      `./expense-history?month=${month}&year=${year}`
+                    );
+                  }}
+                >
+                  <Ionicons name="time-outline" size={20} color="#007AFF" />
+                  <Text style={styles.quickActionText}>Expense History</Text>
+                  <Ionicons name="chevron-forward" size={16} color="#666" />
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.categoriesSection}>
                 <Text style={styles.sectionTitle}>Budget Categories</Text>
                 {budgetCategories.map((category) => {
-                  const spent = category.spent || 0;
+                  const spent = getCategorySpent(category.id);
                   const percentage = getProgressPercentage(
                     spent,
                     category.amount
@@ -696,5 +740,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#007AFF",
+  },
+  quickActionButton: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  quickActionText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    flex: 1,
+    marginLeft: 12,
   },
 });

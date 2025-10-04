@@ -14,7 +14,7 @@ export interface Transaction {
   description: string;
   date: Date;
   type: "expense" | "income";
-  paymentMode?: string;
+  paymentMode: string;
 }
 
 export interface MonthlyBudget {

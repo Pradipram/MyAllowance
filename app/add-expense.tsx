@@ -170,7 +170,7 @@ export default function AddExpenseScreen() {
       // Save updated month data
       await StorageService.saveMonthlyBudgetData(updatedMonthData);
 
-      // Create transaction record (if needed for future features)
+      // Create and save transaction record
       const transaction: Transaction = {
         id: Date.now().toString(),
         categoryId: selectedCategory,
@@ -180,6 +180,9 @@ export default function AddExpenseScreen() {
         type: "expense",
         paymentMode: paymentMode,
       };
+
+      // Save transaction
+      await StorageService.saveTransaction(transaction);
 
       Alert.alert("Success", "Expense added successfully!", [
         { text: "OK", onPress: () => router.replace("/") },
