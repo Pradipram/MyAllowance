@@ -226,7 +226,7 @@ const isCurrentMonth = () => {
 // Color-coded progress based on spending percentage with smooth transitions
 const getProgressColor = (percentage: number) => {
   if (percentage >= 90) return "#ff4444"; // Red - Critical
-  if (percentage >= 75) return "#ff9500"; // Orange - Warning  
+  if (percentage >= 75) return "#ff9500"; // Orange - Warning
   if (percentage >= 50) return "#ffcc00"; // Yellow - Caution
   return "#007AFF"; // Blue - Safe
 };
@@ -258,7 +258,10 @@ await StorageService.saveTransaction(transaction);
 const getTotalSpent = () => {
   // Priority: Use actual transactions if available, fallback to budget data
   if (monthTransactions && monthTransactions.length > 0) {
-    return monthTransactions.reduce((total, transaction) => total + transaction.amount, 0);
+    return monthTransactions.reduce(
+      (total, transaction) => total + transaction.amount,
+      0
+    );
   }
   return budgetCategories.reduce((total, cat) => total + (cat.spent || 0), 0);
 };
@@ -294,6 +297,7 @@ router.push(`./expense-history?month=${month}&year=${year}`);
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 - **📊 Advanced Analytics Dashboard**: Detailed spending trends, insights, and financial health metrics
 - **📈 Interactive Charts & Graphs**: Visual spending analysis with customizable time periods
 - **🔔 Smart Notifications**: Budget alerts, spending reminders, and milestone notifications
@@ -306,6 +310,7 @@ router.push(`./expense-history?month=${month}&year=${year}`);
 - **📤 Export & Reporting**: PDF reports, CSV exports, and financial summaries
 
 ### Technical Roadmap
+
 - **🔐 Enhanced Security**: Biometric authentication and data encryption
 - **🌐 Web Dashboard**: Companion web application for desktop management
 - **🔄 Real-Time Sync**: Live data synchronization across all devices
@@ -315,18 +320,21 @@ router.push(`./expense-history?month=${month}&year=${year}`);
 ## 💡 Usage Tips & Best Practices
 
 ### Getting Started
+
 1. **Initial Setup**: Create 5-8 essential budget categories (Food, Transport, Entertainment, etc.)
 2. **Start Simple**: Begin with round numbers and adjust based on actual spending patterns
 3. **Daily Tracking**: Add expenses immediately to maintain accurate records
 4. **Weekly Reviews**: Check progress weekly to stay on track with budgets
 
 ### Effective Budget Management
+
 - **Set Realistic Budgets**: Base amounts on historical spending data, not wishful thinking
 - **Use Payment Mode Tracking**: Understand your spending patterns across different payment methods
 - **Regular Category Review**: Adjust categories monthly based on lifestyle changes
 - **Monitor Progress Colors**: Take action when categories turn orange (75%+ spent)
 
 ### Pro Tips
+
 - **Month-End Analysis**: Review expense history before setting next month's budget
 - **Category Balancing**: Move unused budget from one category to another mid-month
 - **Emergency Buffer**: Always include a 10-15% buffer in your total budget
@@ -361,7 +369,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📊 Development Stats
 
 - **Lines of Code**: 2,500+ lines of TypeScript/TSX
-- **Screens**: 5 fully-featured screens with advanced functionality  
+- **Screens**: 5 fully-featured screens with advanced functionality
 - **Components**: 20+ reusable UI components
 - **Storage Keys**: 10+ different data storage patterns
 - **Features**: 25+ major features implemented and tested
@@ -370,4 +378,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Happy Budgeting! 💰📱✨**
 
-*Transform your financial habits with intelligent budget tracking and expense management.*
+_Transform your financial habits with intelligent budget tracking and expense management._
