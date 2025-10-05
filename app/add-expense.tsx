@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -26,7 +26,7 @@ export default function AddExpenseScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [paymentMode, setPaymentMode] = useState<string>("");
+  const [paymentMode, setPaymentMode] = useState<string>("upi");
 
   const paymentModes = [
     { id: "cash", name: "Cash", icon: "cash-outline" },
@@ -207,18 +207,12 @@ export default function AddExpenseScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Expense</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
+      <Stack.Screen
+        options={{
+          title: "Add New Expense",
+          headerBackTitle: "Back",
+        }}
+      />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -377,28 +371,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "#666",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    textAlign: "center",
-  },
-  headerSpacer: {
-    width: 32,
   },
   scrollContainer: {
     flex: 1,

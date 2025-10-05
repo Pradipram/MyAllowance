@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BudgetCategory, MonthlyBudget } from "../types/budget";
 import { StorageService } from "../utils/storage";
 
@@ -59,7 +59,7 @@ export default function OnboardingScreen() {
       if (setupComplete) {
         // Check if we're editing a specific month
         if (month && year) {
-          setIsMonthSpecificEdit(true);
+          setIsMonthSpecificEdit(true); // Always set to true when month/year provided
           // Load month-specific data first
           const monthData = await StorageService.getMonthlyBudgetData(
             month as string,
@@ -165,7 +165,7 @@ export default function OnboardingScreen() {
         spent: 0,
       }));
 
-      if (isMonthSpecificEdit && month && year) {
+      if ((isMonthSpecificEdit || (month && year)) && month && year) {
         // Save to month-specific storage
         const totalBudget = budgetCategories.reduce(
           (sum, cat) => sum + cat.amount,
@@ -190,15 +190,35 @@ export default function OnboardingScreen() {
           [{ text: "OK", onPress: () => router.replace("/") }]
         );
       } else {
-        // Save to base storage (affects all future months)
+        // For initial setup - save to current month specifically
+        const today = new Date();
+        const currentMonth = (today.getMonth() + 1).toString();
+        const currentYear = today.getFullYear();
+
+        const totalBudget = budgetCategories.reduce(
+          (sum, cat) => sum + cat.amount,
+          0
+        );
+        const monthlyBudget: MonthlyBudget = {
+          id: `${currentYear}_${currentMonth}`,
+          month: currentMonth,
+          year: currentYear,
+          categories: budgetCategories,
+          totalBudget: totalBudget,
+          totalSpent: 0,
+        };
+
+        // Save current month budget
+        await StorageService.saveMonthlyBudgetData(monthlyBudget);
+        // Also save as base template for future months
         await StorageService.saveBudgetCategories(budgetCategories);
         await StorageService.setSetupComplete(true);
 
         Alert.alert(
           "Success",
-          `Your budget has been ${
-            isEditMode ? "updated" : "set up"
-          } successfully!`,
+          `Your budget for ${getMonthName(
+            parseInt(currentMonth)
+          )} ${currentYear} has been set up successfully!`,
           [{ text: "OK", onPress: () => router.replace("/") }]
         );
       }
@@ -316,7 +336,9 @@ export default function OnboardingScreen() {
                         parseInt(month as string)
                       )} ${year}`
                     : "Edit Your Monthly Budget"
-                  : "Set Your Monthly Allowances"}
+                  : `Set Budget for ${getMonthName(
+                      new Date().getMonth() + 1
+                    )} ${new Date().getFullYear()}`}
               </Text>
               <Text style={styles.headerSubtitle}>
                 {isEditMode
@@ -325,7 +347,9 @@ export default function OnboardingScreen() {
                         parseInt(month as string)
                       )} ${year}`
                     : "Update your budget categories and amounts"
-                  : "Define your budget categories to start tracking your expenses"}
+                  : `Create your monthly budget categories for ${getMonthName(
+                      new Date().getMonth() + 1
+                    )} ${new Date().getFullYear()}. This will be your budget for the current month.`}
               </Text>
             </View>
 

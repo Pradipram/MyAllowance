@@ -22,43 +22,36 @@ export default function Index() {
   const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
-  const [hasMonthData, setHasMonthData] = useState(true);
+  const [hasMonthData, setHasMonthData] = useState(false);
 
   useEffect(() => {
-    checkSetupStatus();
+    loadMonthData();
   }, []);
 
   useEffect(() => {
-    if (isSetupComplete) {
-      loadMonthData();
-    }
-  }, [currentDate, isSetupComplete]);
+    loadMonthData();
+  }, [currentDate]);
 
   // Refresh data when screen comes into focus (e.g., returning from edit)
   useFocusEffect(
     useCallback(() => {
-      if (isSetupComplete) {
-        loadMonthData();
-      }
-    }, [isSetupComplete, currentDate])
+      loadMonthData();
+    }, [currentDate])
   );
-
-  const checkSetupStatus = async () => {
-    try {
-      const setupComplete = await StorageService.isSetupComplete();
-      setIsSetupComplete(setupComplete);
-    } catch (error) {
-      console.error("Error checking setup status:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const loadMonthData = async () => {
     setIsLoading(true);
     try {
       const month = (currentDate.getMonth() + 1).toString();
       const year = currentDate.getFullYear();
+
+      // Check global setup status first
+      const globalSetupComplete = await StorageService.isSetupComplete();
+      const baseCategories = await StorageService.getBudgetCategories();
+
+      // If no base categories exist, setup is definitely not complete
+      const actualSetupComplete =
+        globalSetupComplete && baseCategories.length > 0;
 
       // Load monthly budget data
       const monthData = await StorageService.getMonthlyBudgetData(month, year);
@@ -72,21 +65,41 @@ export default function Index() {
 
       if (monthData && monthData.categories.length > 0) {
         setBudgetCategories(monthData.categories);
-        setIsSetupComplete(true);
+        setHasMonthData(true);
+        setIsSetupComplete(actualSetupComplete);
       } else {
-        // Load base categories if no month data exists
-        const baseCategories = await StorageService.getBudgetCategories();
-        if (baseCategories.length > 0) {
-          setBudgetCategories(
-            baseCategories.map((cat) => ({ ...cat, spent: 0 }))
-          );
-          setIsSetupComplete(true);
+        setHasMonthData(false);
+
+        // For current month or future months, load base categories as template
+        // For past months, show zero budgets (no inheritance from template)
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+
+        const isCurrentOrFutureMonth =
+          year > currentYear ||
+          (year === currentYear && parseInt(month) >= currentMonth);
+
+        if (isCurrentOrFutureMonth) {
+          // Load base categories if no month data exists for current/future months
+          if (actualSetupComplete) {
+            setBudgetCategories(
+              baseCategories.map((cat) => ({ ...cat, spent: 0 }))
+            );
+            setIsSetupComplete(true);
+          } else {
+            setBudgetCategories([]);
+            setIsSetupComplete(false);
+          }
         } else {
-          setIsSetupComplete(false);
+          // For past months with no data, show empty state but keep global setup status
+          setBudgetCategories([]);
+          setIsSetupComplete(actualSetupComplete);
         }
       }
     } catch (error) {
       console.error("Error loading month data:", error);
+      setHasMonthData(false);
       setIsSetupComplete(false);
     } finally {
       setIsLoading(false);
@@ -255,13 +268,30 @@ export default function Index() {
           ) : !hasMonthData && budgetCategories.length === 0 ? (
             <View style={styles.noDataContainer}>
               <Ionicons name="calendar-outline" size={60} color="#ccc" />
-              <Text style={styles.noDataTitle}>No Data Available</Text>
+              <Text style={styles.noDataTitle}>No Budget Set</Text>
               <Text style={styles.noDataText}>
-                No budget data found for {getMonthYearString()}.
-                {currentDate.getMonth() === new Date().getMonth() &&
-                currentDate.getFullYear() === new Date().getFullYear()
-                  ? " Start by adding some expenses to track your spending this month."
-                  : " This month doesn't have any recorded budget data."}
+                {(() => {
+                  const currentYear = new Date().getFullYear();
+                  const currentMonth = new Date().getMonth() + 1;
+                  const displayYear = currentDate.getFullYear();
+                  const displayMonth = currentDate.getMonth() + 1;
+
+                  const isCurrentMonth =
+                    displayYear === currentYear &&
+                    displayMonth === currentMonth;
+                  const isPastMonth =
+                    displayYear < currentYear ||
+                    (displayYear === currentYear &&
+                      displayMonth < currentMonth);
+
+                  if (isCurrentMonth) {
+                    return "No budget set for this month. Tap 'Set Budget' to get started with your budget planning.";
+                  } else if (isPastMonth) {
+                    return `No budget was set for ${getMonthYearString()}. Past months without budget setup show zero spending limits.`;
+                  } else {
+                    return `No budget set for ${getMonthYearString()} yet. You can set up a budget for future months.`;
+                  }
+                })()}
               </Text>
             </View>
           ) : budgetCategories.length > 0 ? (
