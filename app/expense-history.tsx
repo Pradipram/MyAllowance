@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,19 +14,32 @@ import { BudgetCategory, Transaction } from "../types/budget";
 import { StorageService } from "../utils/storage";
 
 export default function ExpenseHistoryScreen() {
-  const { month, year } = useLocalSearchParams<{
+  const { month, year, category } = useLocalSearchParams<{
     month?: string;
     year?: string;
+    category?: string;
   }>();
   const [expenses, setExpenses] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [preSelectedCategory, setPreSelectedCategory] =
+    useState<BudgetCategory | null>(null);
 
   useEffect(() => {
     loadData();
-  }, [month, year]);
+  }, [month, year, category]);
+
+  // Set selected category when category parameter is provided
+  useEffect(() => {
+    if (category && category !== "all") {
+      setSelectedCategory(category);
+      // Find category details for header
+      const categoryDetails = categories.find((cat) => cat.id === category);
+      setPreSelectedCategory(categoryDetails || null);
+    }
+  }, [category, categories]);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -242,11 +255,76 @@ export default function ExpenseHistoryScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#007AFF" />
+        </TouchableOpacity>
+
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>
+            {preSelectedCategory
+              ? `${preSelectedCategory.name} - Expenses`
+              : `Expense History - ${getMonthYearString()}`}
+          </Text>
+          {preSelectedCategory && (
+            <Text style={styles.headerSubtitle}>{getMonthYearString()}</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Category Progress (when specific category is selected) */}
+      {preSelectedCategory && (
+        <View style={styles.categoryProgressCard}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>Total Spent</Text>
+            <Text style={styles.progressAmount}>
+              ₹{getTotalExpenses().toLocaleString()} / ₹
+              {preSelectedCategory.amount.toLocaleString()}
+            </Text>
+          </View>
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarBackground}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${Math.min(
+                      (getTotalExpenses() / preSelectedCategory.amount) * 100,
+                      100
+                    )}%`,
+                    backgroundColor:
+                      getTotalExpenses() / preSelectedCategory.amount > 0.8
+                        ? "#ff4444"
+                        : getTotalExpenses() / preSelectedCategory.amount > 0.6
+                        ? "#ff9500"
+                        : "#28a745",
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressPercentage}>
+              {Math.round(
+                (getTotalExpenses() / preSelectedCategory.amount) * 100
+              )}
+              %
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Summary Card */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Total Expenses</Text>
+            <Text style={styles.summaryLabel}>
+              {preSelectedCategory
+                ? `${preSelectedCategory.name} Spent`
+                : "Total Expenses"}
+            </Text>
             <Text style={styles.summaryAmount}>
               ₹{getTotalExpenses().toLocaleString()}
             </Text>
@@ -258,19 +336,21 @@ export default function ExpenseHistoryScreen() {
         </View>
       </View>
 
-      {/* Category Filter */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Filter by Category</Text>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={filterCategories}
-          renderItem={renderCategoryFilter}
-          keyExtractor={(item) => item.id}
-          style={styles.filterList}
-          contentContainerStyle={styles.filterListContent}
-        />
-      </View>
+      {/* Category Filter - Only show when no specific category is selected */}
+      {!preSelectedCategory && (
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Filter by Category</Text>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={filterCategories}
+            renderItem={renderCategoryFilter}
+            keyExtractor={(item) => item.id}
+            style={styles.filterList}
+            contentContainerStyle={styles.filterListContent}
+          />
+        </View>
+      )}
 
       {/* Expenses List */}
       {filteredExpenses.length > 0 ? (
@@ -288,15 +368,38 @@ export default function ExpenseHistoryScreen() {
         <View style={styles.emptyState}>
           <Ionicons name="receipt-outline" size={60} color="#ccc" />
           <Text style={styles.emptyStateTitle}>
-            {selectedCategory === "all"
+            {preSelectedCategory
+              ? `No ${preSelectedCategory.name} Expenses`
+              : selectedCategory === "all"
               ? "No Expenses Yet"
               : "No Expenses in This Category"}
           </Text>
           <Text style={styles.emptyStateText}>
-            {selectedCategory === "all"
+            {preSelectedCategory
+              ? `You haven't added any ${preSelectedCategory.name.toLowerCase()} expenses this month. Start tracking your ${preSelectedCategory.name.toLowerCase()} spending!`
+              : selectedCategory === "all"
               ? "Start by adding your first expense using the + button"
               : "Try selecting a different category or add expenses to this category"}
           </Text>
+        </View>
+      )}
+
+      {/* View All Categories button (when specific category is selected) */}
+      {preSelectedCategory && (
+        <View style={styles.bottomButton}>
+          <TouchableOpacity
+            style={styles.viewAllButton}
+            onPress={() => {
+              // Navigate to expense history without category filter
+              const currentMonth = (new Date().getMonth() + 1).toString();
+              const currentYear = new Date().getFullYear().toString();
+              router.push(
+                `/expense-history?month=${currentMonth}&year=${currentYear}`
+              );
+            }}
+          >
+            <Text style={styles.viewAllButtonText}>View All Categories</Text>
+          </TouchableOpacity>
         </View>
       )}
     </SafeAreaView>
@@ -484,5 +587,104 @@ const styles = StyleSheet.create({
     color: "#999",
     textAlign: "center",
     lineHeight: 24,
+  },
+  // Header styles
+  header: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
+  // Category progress styles
+  categoryProgressCard: {
+    backgroundColor: "#ffffff",
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 8,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  progressHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  progressLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  progressAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#007AFF",
+  },
+  progressBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  progressBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  progressPercentage: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    minWidth: 40,
+    textAlign: "right",
+  },
+  // Bottom button styles
+  bottomButton: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 16,
+  },
+  viewAllButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewAllButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

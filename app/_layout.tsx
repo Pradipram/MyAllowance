@@ -29,6 +29,20 @@ export default function RootLayout() {
             presentation: "modal",
           }}
         />
+        <Stack.Screen
+          name="expense-history"
+          options={{
+            title: "Expense History",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="add-expense"
+          options={{
+            title: "Add Expense",
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );

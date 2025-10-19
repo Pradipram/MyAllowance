@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AutoBudgetSuggestion from "../components/AutoBudgetSuggestion";
 import { BudgetCategory, MonthlyBudget } from "../types/budget";
 import { StorageService } from "../utils/storage";
 
@@ -28,21 +30,49 @@ export default function OnboardingScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isMonthSpecificEdit, setIsMonthSpecificEdit] = useState(false);
+  const [showAutoSuggestion, setShowAutoSuggestion] = useState(false);
+  const [budgetSuggestions, setBudgetSuggestions] = useState<any[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [showMonthSelector, setShowMonthSelector] = useState(false);
+
+  // Helper function to get available months
+  const getAvailableMonthsData = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    const months = [];
+
+    // Add current month and next 2 months (total 3 months)
+    for (let i = 0; i < 3; i++) {
+      const date = new Date(currentYear, currentMonth - 1 + i, 1);
+      const monthNum = date.getMonth() + 1;
+      const yearNum = date.getFullYear();
+      const monthName = date.toLocaleString("default", { month: "long" });
+
+      months.push({
+        value: `${monthNum}-${yearNum}`,
+        label: `${monthName} ${yearNum}`,
+        month: monthNum,
+        year: yearNum,
+      });
+    }
+
+    return months;
+  };
 
   useEffect(() => {
-    // Check if trying to edit a non-current month
+    // Check if trying to edit a month beyond the 3-month limit
     if (month && year) {
-      const today = new Date();
-      const currentMonth = today.getMonth() + 1;
-      const currentYear = today.getFullYear();
+      const availableMonths = getAvailableMonthsData();
+      const requestedMonth = `${month}-${year}`;
+      const isValidMonth = availableMonths.some(
+        (m) => m.value === requestedMonth
+      );
 
-      if (
-        parseInt(month as string) !== currentMonth ||
-        parseInt(year as string) !== currentYear
-      ) {
+      if (!isValidMonth) {
         Alert.alert(
           "Access Restricted",
-          "Budget editing is only allowed for the current month. You will be redirected to the dashboard.",
+          "Budget editing is only allowed for the current month and next 2 months. You will be redirected to the dashboard.",
           [{ text: "OK", onPress: () => router.replace("/") }]
         );
         return;
@@ -50,7 +80,24 @@ export default function OnboardingScreen() {
     }
 
     loadExistingCategories();
+    initializeSelectedMonth();
   }, []);
+
+  const initializeSelectedMonth = () => {
+    // Initialize with current month if no specific month is provided
+    if (!month || !year) {
+      const today = new Date();
+      const currentMonth = today.getMonth() + 1;
+      const currentYear = today.getFullYear();
+      setSelectedMonth(`${currentMonth}-${currentYear}`);
+    } else {
+      setSelectedMonth(`${month}-${year}`);
+    }
+  };
+
+  const getAvailableMonths = () => {
+    return getAvailableMonthsData();
+  };
 
   const loadExistingCategories = async () => {
     try {
@@ -77,16 +124,16 @@ export default function OnboardingScreen() {
             );
             setCategories(categoryInputs);
           } else {
-            // If no month data, load base categories for this month
+            // If no month data exists, load base category names but with empty amounts for new month setup
             const existingCategories =
               await StorageService.getBudgetCategories();
             if (existingCategories.length > 0) {
-              setIsEditMode(true);
+              setIsEditMode(false); // This is a new month setup, not editing existing
               const categoryInputs: CategoryInput[] = existingCategories.map(
                 (cat, index) => ({
                   id: (index + 1).toString(),
                   name: cat.name,
-                  amount: cat.amount.toString(),
+                  amount: "", // Empty amounts for new month
                 })
               );
               setCategories(categoryInputs);
@@ -107,11 +154,66 @@ export default function OnboardingScreen() {
             setCategories(categoryInputs);
           }
         }
+      } else {
+        // New user setup - check for auto suggestions
+        await checkForAutoSuggestions();
       }
     } catch (error) {
       console.error("Error loading existing categories:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkForAutoSuggestions = async () => {
+    try {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+
+      const shouldShow = await StorageService.shouldShowAutoSuggestion(
+        currentYear,
+        currentMonth
+      );
+
+      if (shouldShow) {
+        // Get suggestions from storage
+        const suggestions = await StorageService.generateBudgetSuggestions(
+          currentYear,
+          currentMonth
+        );
+
+        if (suggestions.length > 0) {
+          // Calculate spending data for the last 3 months
+          const monthlySpending =
+            await StorageService.getLastThreeMonthsSpending(
+              currentYear,
+              currentMonth
+            );
+
+          const suggestionData = suggestions.map((category) => {
+            const spendingHistory = monthlySpending[category.id] || [];
+            const averageSpent =
+              spendingHistory.length > 0
+                ? Math.round(
+                    spendingHistory.reduce((sum, amount) => sum + amount, 0) /
+                      spendingHistory.length
+                  )
+                : 0;
+
+            return {
+              category,
+              averageSpent,
+              suggestedBudget: category.amount,
+            };
+          });
+
+          setBudgetSuggestions(suggestionData);
+          setShowAutoSuggestion(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking for auto suggestions:", error);
     }
   };
 
@@ -156,6 +258,11 @@ export default function OnboardingScreen() {
       return;
     }
 
+    if (!selectedMonth) {
+      Alert.alert("Error", "Please select a month for your budget.");
+      return;
+    }
+
     try {
       // Convert to proper BudgetCategory format
       const budgetCategories: BudgetCategory[] = validCategories.map((cat) => ({
@@ -165,63 +272,48 @@ export default function OnboardingScreen() {
         spent: 0,
       }));
 
-      if ((isMonthSpecificEdit || (month && year)) && month && year) {
-        // Save to month-specific storage
-        const totalBudget = budgetCategories.reduce(
-          (sum, cat) => sum + cat.amount,
-          0
-        );
-        const monthlyBudget: MonthlyBudget = {
-          id: `${year}_${month}`,
-          month: month as string,
-          year: parseInt(year as string),
-          categories: budgetCategories,
-          totalBudget: totalBudget,
-          totalSpent: 0,
-        };
+      // Parse selected month
+      const [selectedMonthNum, selectedYear] = selectedMonth.split("-");
 
-        await StorageService.saveMonthlyBudgetData(monthlyBudget);
+      const totalBudget = budgetCategories.reduce(
+        (sum, cat) => sum + cat.amount,
+        0
+      );
+      const monthlyBudget: MonthlyBudget = {
+        id: `${selectedYear}_${selectedMonthNum}`,
+        month: selectedMonthNum,
+        year: parseInt(selectedYear),
+        categories: budgetCategories,
+        totalBudget: totalBudget,
+        totalSpent: 0,
+      };
 
-        Alert.alert(
-          "Success",
-          `Your budget for ${getMonthName(
-            parseInt(month as string)
-          )} ${year} has been updated successfully!`,
-          [{ text: "OK", onPress: () => router.replace("/") }]
-        );
-      } else {
-        // For initial setup - save to current month specifically
-        const today = new Date();
-        const currentMonth = (today.getMonth() + 1).toString();
-        const currentYear = today.getFullYear();
+      // Save to the selected month
+      await StorageService.saveMonthlyBudgetData(monthlyBudget);
 
-        const totalBudget = budgetCategories.reduce(
-          (sum, cat) => sum + cat.amount,
-          0
-        );
-        const monthlyBudget: MonthlyBudget = {
-          id: `${currentYear}_${currentMonth}`,
-          month: currentMonth,
-          year: currentYear,
-          categories: budgetCategories,
-          totalBudget: totalBudget,
-          totalSpent: 0,
-        };
+      // If this is the current month and initial setup, also save as template
+      const today = new Date();
+      const currentMonth = (today.getMonth() + 1).toString();
+      const currentYear = today.getFullYear().toString();
 
-        // Save current month budget
-        await StorageService.saveMonthlyBudgetData(monthlyBudget);
-        // Also save as base template for future months
+      if (
+        selectedMonthNum === currentMonth &&
+        selectedYear === currentYear &&
+        !isEditMode
+      ) {
         await StorageService.saveBudgetCategories(budgetCategories);
         await StorageService.setSetupComplete(true);
-
-        Alert.alert(
-          "Success",
-          `Your budget for ${getMonthName(
-            parseInt(currentMonth)
-          )} ${currentYear} has been set up successfully!`,
-          [{ text: "OK", onPress: () => router.replace("/") }]
-        );
       }
+
+      Alert.alert(
+        "Success",
+        `Your budget for ${getMonthName(
+          parseInt(selectedMonthNum)
+        )} ${selectedYear} has been ${
+          isEditMode ? "updated" : "set up"
+        } successfully!`,
+        [{ text: "OK", onPress: () => router.replace("/") }]
+      );
     } catch (error) {
       Alert.alert("Error", "Failed to save budget. Please try again.");
       console.error("Save error:", error);
@@ -297,6 +389,25 @@ export default function OnboardingScreen() {
     }
   };
 
+  const handleApplyAllSuggestions = () => {
+    // Apply all suggested budgets
+    const categoryInputs: CategoryInput[] = budgetSuggestions.map(
+      (item, index) => ({
+        id: (index + 1).toString(),
+        name: item.category.name,
+        amount: item.suggestedBudget.toString(),
+      })
+    );
+
+    setCategories(categoryInputs);
+    setShowAutoSuggestion(false);
+  };
+
+  const handleCustomizeManually = () => {
+    // Close suggestion popup and let user customize manually
+    setShowAutoSuggestion(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {isLoading ? (
@@ -330,27 +441,50 @@ export default function OnboardingScreen() {
           >
             <View style={styles.header}>
               <Text style={styles.headerTitle}>
-                {isEditMode
-                  ? isMonthSpecificEdit && month && year
-                    ? `Edit Budget for ${getMonthName(
-                        parseInt(month as string)
-                      )} ${year}`
-                    : "Edit Your Monthly Budget"
-                  : `Set Budget for ${getMonthName(
-                      new Date().getMonth() + 1
-                    )} ${new Date().getFullYear()}`}
+                {selectedMonth
+                  ? (() => {
+                      const [monthNum, yearNum] = selectedMonth.split("-");
+                      return `${
+                        isEditMode ? "Edit" : "Set"
+                      } Budget for ${getMonthName(
+                        parseInt(monthNum)
+                      )} ${yearNum}`;
+                    })()
+                  : isEditMode
+                  ? "Edit Your Monthly Budget"
+                  : "Set Your Monthly Budget"}
               </Text>
               <Text style={styles.headerSubtitle}>
-                {isEditMode
-                  ? isMonthSpecificEdit && month && year
-                    ? `Update your budget categories for ${getMonthName(
-                        parseInt(month as string)
-                      )} ${year}`
-                    : "Update your budget categories and amounts"
-                  : `Create your monthly budget categories for ${getMonthName(
-                      new Date().getMonth() + 1
-                    )} ${new Date().getFullYear()}. This will be your budget for the current month.`}
+                {selectedMonth
+                  ? (() => {
+                      const [monthNum, yearNum] = selectedMonth.split("-");
+                      const monthName = getMonthName(parseInt(monthNum));
+                      return `${
+                        isEditMode ? "Update" : "Create"
+                      } your budget categories for ${monthName} ${yearNum}`;
+                    })()
+                  : `${
+                      isEditMode ? "Update" : "Create"
+                    } your budget categories and amounts`}
               </Text>
+            </View>
+
+            {/* Month Selector */}
+            <View style={styles.monthSelectorContainer}>
+              <Text style={styles.monthSelectorLabel}>Select Month:</Text>
+              <TouchableOpacity
+                style={styles.monthSelectorButton}
+                onPress={() => setShowMonthSelector(true)}
+              >
+                <Text style={styles.monthSelectorText}>
+                  {selectedMonth
+                    ? getAvailableMonths().find(
+                        (m) => m.value === selectedMonth
+                      )?.label || "Select Month"
+                    : "Select Month"}
+                </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.categoriesContainer}>
@@ -444,6 +578,68 @@ export default function OnboardingScreen() {
           </View>
         </>
       )}
+
+      {/* Month Selector Modal */}
+      <Modal
+        visible={showMonthSelector}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowMonthSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Month</Text>
+              <TouchableOpacity onPress={() => setShowMonthSelector(false)}>
+                <Text style={styles.modalCloseButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSubtitle}>
+              You can only set budgets for the current month and next 2 months
+            </Text>
+
+            <View style={styles.monthOptions}>
+              {getAvailableMonths().map((monthOption, index) => (
+                <TouchableOpacity
+                  key={monthOption.value}
+                  style={[
+                    styles.monthOption,
+                    selectedMonth === monthOption.value &&
+                      styles.monthOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setSelectedMonth(monthOption.value);
+                    setShowMonthSelector(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.monthOptionText,
+                      selectedMonth === monthOption.value &&
+                        styles.monthOptionTextSelected,
+                    ]}
+                  >
+                    {monthOption.label}
+                  </Text>
+                  {index === 0 && (
+                    <Text style={styles.currentMonthBadge}>Current</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Auto Budget Suggestion Popup */}
+      <AutoBudgetSuggestion
+        visible={showAutoSuggestion}
+        suggestions={budgetSuggestions}
+        onApplyAll={handleApplyAllSuggestions}
+        onCustomize={handleCustomizeManually}
+        onClose={() => setShowAutoSuggestion(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -684,5 +880,122 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#ff4444",
     marginLeft: 8,
+  },
+  monthSelectorContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  monthSelectorLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  monthSelectorButton: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  monthSelectorText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: "#666",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1a1a1a",
+  },
+  modalCloseButton: {
+    fontSize: 20,
+    color: "#666",
+    fontWeight: "bold",
+    padding: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  monthOptions: {
+    gap: 12,
+  },
+  monthOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+    backgroundColor: "#f8f9fa",
+  },
+  monthOptionSelected: {
+    borderColor: "#007AFF",
+    backgroundColor: "#f0f8ff",
+  },
+  monthOptionText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  monthOptionTextSelected: {
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  currentMonthBadge: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#28a745",
+    backgroundColor: "#d4edda",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
 });

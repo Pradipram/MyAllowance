@@ -223,4 +223,127 @@ export const StorageService = {
       throw error;
     }
   },
+
+  // Auto Budget Suggestion Functions
+  async getLastThreeMonthsSpending(
+    currentYear: number,
+    currentMonth: number
+  ): Promise<{ [categoryId: string]: number[] }> {
+    try {
+      const monthlySpending: { [categoryId: string]: number[] } = {};
+
+      // Get last 3 months
+      const months = [];
+      for (let i = 1; i <= 3; i++) {
+        let month = currentMonth - i;
+        let year = currentYear;
+
+        if (month <= 0) {
+          month += 12;
+          year -= 1;
+        }
+
+        months.push({ month: month.toString().padStart(2, "0"), year });
+      }
+
+      // Collect spending data for each month
+      for (let monthIndex = 0; monthIndex < months.length; monthIndex++) {
+        const { month, year } = months[monthIndex];
+        const transactions = await this.getMonthTransactions(month, year);
+
+        // Calculate total spending per category for this month
+        const monthCategoryTotals: { [categoryId: string]: number } = {};
+
+        transactions.forEach((transaction) => {
+          if (!monthCategoryTotals[transaction.categoryId]) {
+            monthCategoryTotals[transaction.categoryId] = 0;
+          }
+          monthCategoryTotals[transaction.categoryId] += transaction.amount;
+        });
+
+        // Add monthly totals to the spending history
+        Object.keys(monthCategoryTotals).forEach((categoryId) => {
+          if (!monthlySpending[categoryId]) {
+            monthlySpending[categoryId] = [];
+          }
+          monthlySpending[categoryId].push(monthCategoryTotals[categoryId]);
+        });
+      }
+
+      return monthlySpending;
+    } catch (error) {
+      console.error("Error getting last three months spending:", error);
+      return {};
+    }
+  },
+
+  async generateBudgetSuggestions(
+    currentYear: number,
+    currentMonth: number
+  ): Promise<BudgetCategory[]> {
+    try {
+      // Get base categories (template)
+      const baseCategories = await this.getBudgetCategories();
+      if (baseCategories.length === 0) {
+        return [];
+      }
+
+      // Get spending patterns from last 3 months
+      const monthlySpending = await this.getLastThreeMonthsSpending(
+        currentYear,
+        currentMonth
+      );
+
+      const suggestions: BudgetCategory[] = baseCategories.map((category) => {
+        const spendingHistory = monthlySpending[category.id] || [];
+
+        let suggestedAmount = category.amount; // Default to current amount
+
+        if (spendingHistory.length > 0) {
+          // Calculate average spending
+          const averageSpending =
+            spendingHistory.reduce((sum, amount) => sum + amount, 0) /
+            spendingHistory.length;
+
+          // Add 10% buffer to average spending, but minimum of current budget
+          suggestedAmount = Math.max(
+            Math.round(averageSpending * 1.1),
+            category.amount
+          );
+        }
+
+        return {
+          ...category,
+          amount: suggestedAmount,
+          spent: 0, // Reset spent amount for new month
+        };
+      });
+
+      return suggestions;
+    } catch (error) {
+      console.error("Error generating budget suggestions:", error);
+      return [];
+    }
+  },
+
+  async shouldShowAutoSuggestion(
+    currentYear: number,
+    currentMonth: number
+  ): Promise<boolean> {
+    try {
+      // Check if user has historical data (at least 2 months)
+      const monthlySpending = await this.getLastThreeMonthsSpending(
+        currentYear,
+        currentMonth
+      );
+      const categoriesWithHistory = Object.keys(monthlySpending).filter(
+        (categoryId) => monthlySpending[categoryId].length >= 2
+      );
+
+      return categoriesWithHistory.length > 0;
+    } catch (error) {
+      console.error("Error checking auto suggestion eligibility:", error);
+      return false;
+    }
+  },
 };

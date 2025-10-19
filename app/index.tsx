@@ -3,6 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +24,7 @@ export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
   const [hasMonthData, setHasMonthData] = useState(false);
+  const [showAutoBudgetPrompt, setShowAutoBudgetPrompt] = useState(false);
 
   useEffect(() => {
     loadMonthData();
@@ -36,6 +38,10 @@ export default function Index() {
   useFocusEffect(
     useCallback(() => {
       loadMonthData();
+      // Check for auto budget suggestions after a brief delay
+      setTimeout(() => {
+        checkForAutoBudgetSuggestion();
+      }, 1000);
     }, [currentDate])
   );
 
@@ -137,6 +143,37 @@ export default function Index() {
     return getTotalBudget() - getTotalSpent();
   };
 
+  const checkForAutoBudgetSuggestion = async () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      const shouldShow = await StorageService.shouldShowAutoSuggestion(
+        currentYear,
+        currentMonth
+      );
+
+      if (shouldShow && isSetupComplete && budgetCategories.length === 0) {
+        // Show prompt only if user has setup complete but no current month budget
+        Alert.alert(
+          "Smart Budget Available! 🎯",
+          "We can suggest your budget based on your past spending patterns. Would you like to see our recommendations?",
+          [
+            { text: "Maybe Later", style: "cancel" },
+            {
+              text: "Show Suggestions",
+              onPress: () => {
+                router.push("/onboarding");
+              },
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error checking for auto budget suggestion:", error);
+    }
+  };
+
   const getMonthYearString = () => {
     const months = [
       "Jan",
@@ -204,6 +241,28 @@ export default function Index() {
       currentDate.getMonth() === today.getMonth() &&
       currentDate.getFullYear() === today.getFullYear()
     );
+  };
+
+  const isEditableMonth = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+
+    // Check if the displayed month is within the next 3 months
+    for (let i = 0; i < 3; i++) {
+      const date = new Date(currentYear, currentMonth - 1 + i, 1);
+      const monthNum = date.getMonth() + 1;
+      const yearNum = date.getFullYear();
+
+      if (
+        currentDate.getMonth() + 1 === monthNum &&
+        currentDate.getFullYear() === yearNum
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   if (isLoading) {
@@ -354,7 +413,18 @@ export default function Index() {
                   const progressColor = getProgressColor(percentage);
 
                   return (
-                    <View key={category.id} style={styles.categoryCard}>
+                    <TouchableOpacity
+                      key={category.id}
+                      style={styles.categoryCard}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        const month = (currentDate.getMonth() + 1).toString();
+                        const year = currentDate.getFullYear().toString();
+                        router.push(
+                          `/expense-history?month=${month}&year=${year}&category=${category.id}`
+                        );
+                      }}
+                    >
                       <View style={styles.categoryHeader}>
                         <Text style={styles.categoryName}>{category.name}</Text>
                         <Text style={styles.categoryAmount}>
@@ -378,13 +448,13 @@ export default function Index() {
                           {Math.round(percentage)}%
                         </Text>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })}
               </View>
 
               <View style={styles.quickActionsSection}>
-                {isCurrentMonth() ? (
+                {isEditableMonth() ? (
                   <TouchableOpacity
                     style={styles.editBudgetButton}
                     onPress={() => {
@@ -400,7 +470,8 @@ export default function Index() {
                   <View style={styles.editBudgetDisabled}>
                     <Ionicons name="lock-closed" size={20} color="#999" />
                     <Text style={styles.editBudgetDisabledText}>
-                      Budget editing only available for current month
+                      Budget editing only available for current and next 2
+                      months
                     </Text>
                   </View>
                 )}
