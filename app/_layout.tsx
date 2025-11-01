@@ -14,7 +14,7 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
-          name="onboarding"
+          name="set-budget"
           options={{
             title: "Setup Budget",
             headerShown: false,

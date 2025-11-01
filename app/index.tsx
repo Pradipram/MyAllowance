@@ -1,3 +1,7 @@
+// import logo from "@/assets/images/logo.png";
+import { styles } from "@/assets/styles/index.style";
+import NoBudgetSet from "@/components/noBudgetSet";
+import { getMonthYearString } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -5,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -21,7 +24,7 @@ export default function Index() {
     []
   );
   const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
   const [hasMonthData, setHasMonthData] = useState(false);
   const [showAutoBudgetPrompt, setShowAutoBudgetPrompt] = useState(false);
@@ -32,7 +35,7 @@ export default function Index() {
 
   useEffect(() => {
     loadMonthData();
-  }, [currentDate]);
+  }, [selectedDate]);
 
   // Refresh data when screen comes into focus (e.g., returning from edit)
   useFocusEffect(
@@ -42,14 +45,14 @@ export default function Index() {
       setTimeout(() => {
         checkForAutoBudgetSuggestion();
       }, 1000);
-    }, [currentDate])
+    }, [selectedDate])
   );
 
   const loadMonthData = async () => {
     setIsLoading(true);
     try {
-      const month = (currentDate.getMonth() + 1).toString();
-      const year = currentDate.getFullYear();
+      const month = (selectedDate.getMonth() + 1).toString();
+      const year = selectedDate.getFullYear();
 
       // Check global setup status first
       const globalSetupComplete = await StorageService.isSetupComplete();
@@ -163,7 +166,7 @@ export default function Index() {
             {
               text: "Show Suggestions",
               onPress: () => {
-                router.push("/onboarding");
+                router.push("/set-budget?autoSuggest=true");
               },
             },
           ]
@@ -174,53 +177,35 @@ export default function Index() {
     }
   };
 
-  const getMonthYearString = () => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-  };
-
   const changeMonth = (direction: "prev" | "next") => {
-    const newDate = new Date(currentDate);
+    const newDate = new Date(selectedDate);
     const today = new Date();
 
     if (direction === "prev") {
       newDate.setMonth(newDate.getMonth() - 1);
-      setCurrentDate(newDate);
+      setSelectedDate(newDate);
     } else {
       newDate.setMonth(newDate.getMonth() + 1);
-      if (
-        newDate.getFullYear() < today.getFullYear() ||
-        (newDate.getFullYear() === today.getFullYear() &&
-          newDate.getMonth() <= today.getMonth())
-      ) {
-        setCurrentDate(newDate);
+      setSelectedDate(newDate);
+      if (isFutureThreeMonth()) {
+        newDate.setMonth(newDate.getMonth() - 1);
+        setSelectedDate(newDate);
       }
     }
   };
 
-  const isFutureMonth = () => {
+  const isFutureThreeMonth = () => {
     const today = new Date();
-    const nextMonth = new Date(currentDate);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    // const selectedDate = new Date(selectedDate);
 
-    return (
-      nextMonth.getFullYear() > today.getFullYear() ||
-      (nextMonth.getFullYear() === today.getFullYear() &&
-        nextMonth.getMonth() > today.getMonth())
-    );
+    // Calculate the date 3 months from now
+    const threeMonthsLater = new Date(today);
+    threeMonthsLater.setMonth(today.getMonth() + 2);
+    // console.log("Three Months Later:", threeMonthsLater);
+
+    // Allow only future months within 3 months range
+    // return selectedDate > today && selectedDate <= threeMonthsLater;
+    return selectedDate > threeMonthsLater;
   };
 
   const getProgressPercentage = (spent: number, budget: number) => {
@@ -238,8 +223,8 @@ export default function Index() {
   const isCurrentMonth = () => {
     const today = new Date();
     return (
-      currentDate.getMonth() === today.getMonth() &&
-      currentDate.getFullYear() === today.getFullYear()
+      selectedDate.getMonth() === today.getMonth() &&
+      selectedDate.getFullYear() === today.getFullYear()
     );
   };
 
@@ -255,8 +240,8 @@ export default function Index() {
       const yearNum = date.getFullYear();
 
       if (
-        currentDate.getMonth() + 1 === monthNum &&
-        currentDate.getFullYear() === yearNum
+        selectedDate.getMonth() + 1 === monthNum &&
+        selectedDate.getFullYear() === yearNum
       ) {
         return true;
       }
@@ -276,590 +261,192 @@ export default function Index() {
     );
   }
 
-  if (isSetupComplete) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.monthSelector}>
-            <TouchableOpacity
-              style={styles.monthArrow}
-              onPress={() => changeMonth("prev")}
-            >
-              <Ionicons name="chevron-back" size={24} color="#007AFF" />
-            </TouchableOpacity>
-            <Text
-              style={[
-                styles.monthText,
-                isCurrentMonth() && styles.currentMonthText,
-              ]}
-            >
-              {getMonthYearString()}
-              {isCurrentMonth() && (
-                <Text style={styles.currentMonthIndicator}> • Current</Text>
-              )}
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.monthArrow,
-                isFutureMonth() && styles.disabledArrow,
-              ]}
-              onPress={() => changeMonth("next")}
-              disabled={isFutureMonth()}
-            >
-              <Ionicons
-                name="chevron-forward"
-                size={24}
-                color={isFutureMonth() ? "#ccc" : "#007AFF"}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <ScrollView
-          style={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {isMonthDataLoading ? (
-            <View style={styles.monthLoadingContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
-              <Text style={styles.monthLoadingText}>Loading month data...</Text>
-            </View>
-          ) : !hasMonthData && budgetCategories.length === 0 ? (
-            <View style={styles.noDataContainer}>
-              <Ionicons name="calendar-outline" size={60} color="#ccc" />
-              <Text style={styles.noDataTitle}>No Budget Set</Text>
-              <Text style={styles.noDataText}>
-                {(() => {
-                  const currentYear = new Date().getFullYear();
-                  const currentMonth = new Date().getMonth() + 1;
-                  const displayYear = currentDate.getFullYear();
-                  const displayMonth = currentDate.getMonth() + 1;
-
-                  const isCurrentMonth =
-                    displayYear === currentYear &&
-                    displayMonth === currentMonth;
-                  const isPastMonth =
-                    displayYear < currentYear ||
-                    (displayYear === currentYear &&
-                      displayMonth < currentMonth);
-
-                  if (isCurrentMonth) {
-                    return "No budget set for this month. Tap 'Set Budget' to get started with your budget planning.";
-                  } else if (isPastMonth) {
-                    return `No budget was set for ${getMonthYearString()}. Past months without budget setup show zero spending limits.`;
-                  } else {
-                    return `No budget set for ${getMonthYearString()} yet. You can set up a budget for future months.`;
-                  }
-                })()}
-              </Text>
-            </View>
-          ) : budgetCategories.length > 0 ? (
-            <>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>Monthly Overview</Text>
-                <View style={styles.summaryRow}>
-                  <View style={styles.summaryItem}>
-                    <Text style={styles.summaryLabel}>Total Budget</Text>
-                    <Text style={styles.summaryAmount}>
-                      ₹{getTotalBudget().toLocaleString()}
-                    </Text>
-                  </View>
-                  <View style={styles.summaryItem}>
-                    <Text style={styles.summaryLabel}>Total Spent</Text>
-                    <Text style={[styles.summaryAmount, styles.spentAmount]}>
-                      ₹{getTotalSpent().toLocaleString()}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.remainingSection}>
-                  <Text style={styles.remainingLabel}>Remaining</Text>
-                  <Text
-                    style={[
-                      styles.remainingAmount,
-                      { color: getRemaining() >= 0 ? "#28a745" : "#ff4444" },
-                    ]}
-                  >
-                    ₹{Math.abs(getRemaining()).toLocaleString()}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Quick Actions */}
-              <View style={styles.quickActionsSection}>
-                <TouchableOpacity
-                  style={styles.quickActionButton}
-                  onPress={() => {
-                    const month = (currentDate.getMonth() + 1).toString();
-                    const year = currentDate.getFullYear();
-                    router.push(
-                      `./expense-history?month=${month}&year=${year}`
-                    );
-                  }}
-                >
-                  <Ionicons name="time-outline" size={20} color="#007AFF" />
-                  <Text style={styles.quickActionText}>Expense History</Text>
-                  <Ionicons name="chevron-forward" size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.categoriesSection}>
-                <Text style={styles.sectionTitle}>Budget Categories</Text>
-                {budgetCategories.map((category) => {
-                  const spent = getCategorySpent(category.id);
-                  const percentage = getProgressPercentage(
-                    spent,
-                    category.amount
-                  );
-                  const progressColor = getProgressColor(percentage);
-
-                  return (
-                    <TouchableOpacity
-                      key={category.id}
-                      style={styles.categoryCard}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        const month = (currentDate.getMonth() + 1).toString();
-                        const year = currentDate.getFullYear().toString();
-                        router.push(
-                          `/expense-history?month=${month}&year=${year}&category=${category.id}`
-                        );
-                      }}
-                    >
-                      <View style={styles.categoryHeader}>
-                        <Text style={styles.categoryName}>{category.name}</Text>
-                        <Text style={styles.categoryAmount}>
-                          ₹{spent.toLocaleString()} / ₹
-                          {category.amount.toLocaleString()}
-                        </Text>
-                      </View>
-                      <View style={styles.progressBarContainer}>
-                        <View style={styles.progressBarBackground}>
-                          <View
-                            style={[
-                              styles.progressBarFill,
-                              {
-                                width: `${percentage}%`,
-                                backgroundColor: progressColor,
-                              },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.progressPercentage}>
-                          {Math.round(percentage)}%
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              <View style={styles.quickActionsSection}>
-                {isEditableMonth() ? (
-                  <TouchableOpacity
-                    style={styles.editBudgetButton}
-                    onPress={() => {
-                      const month = (currentDate.getMonth() + 1).toString();
-                      const year = currentDate.getFullYear().toString();
-                      router.push(`/onboarding?month=${month}&year=${year}`);
-                    }}
-                  >
-                    <Ionicons name="settings" size={20} color="#007AFF" />
-                    <Text style={styles.editBudgetText}>Edit Budget</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.editBudgetDisabled}>
-                    <Ionicons name="lock-closed" size={20} color="#999" />
-                    <Text style={styles.editBudgetDisabledText}>
-                      Budget editing only available for current and next 2
-                      months
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </>
-          ) : null}
-        </ScrollView>
-
-        {isCurrentMonth() && (
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => {
-              const month = (currentDate.getMonth() + 1).toString();
-              const year = currentDate.getFullYear().toString();
-              router.push(`/add-expense?month=${month}&year=${year}`);
-            }}
-          >
-            <Ionicons name="add" size={32} color="#ffffff" />
-          </TouchableOpacity>
-        )}
-      </SafeAreaView>
-    );
-  }
-
+  // if (isSetupComplete || 1) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.welcomeHeader}>
-          <Ionicons name="wallet" size={80} color="#007AFF" />
-          <Text style={styles.title}>My Allowance</Text>
-          <Text style={styles.subtitle}>
-            Track your monthly budget and expenses with ease
-          </Text>
-        </View>
-        <View style={styles.buttonContainer}>
+      <View style={styles.header}>
+        <View style={styles.monthSelector}>
           <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push("/onboarding")}
+            style={styles.monthArrow}
+            onPress={() => changeMonth("prev")}
           >
-            <Text style={styles.primaryButtonText}>Set Up Budget</Text>
+            <Ionicons name="chevron-back" size={24} color="#007AFF" />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push("/learn-more")}
+          <Text
+            style={[
+              styles.monthText,
+              isCurrentMonth() && styles.currentMonthText,
+            ]}
           >
-            <Text style={styles.secondaryButtonText}>Learn More</Text>
+            {getMonthYearString(selectedDate)}
+            {isCurrentMonth() && (
+              <Text style={styles.currentMonthIndicator}> • Current</Text>
+            )}
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.monthArrow,
+              isFutureThreeMonth() && styles.disabledArrow,
+            ]}
+            onPress={() => changeMonth("next")}
+            disabled={isFutureThreeMonth()}
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={24}
+              color={isFutureThreeMonth() ? "#ccc" : "#007AFF"}
+            />
           </TouchableOpacity>
         </View>
       </View>
+
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {isMonthDataLoading ? (
+          <View style={styles.monthLoadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.monthLoadingText}>Loading month data...</Text>
+          </View>
+        ) : !hasMonthData && budgetCategories.length === 0 ? (
+          <NoBudgetSet selectedDate={selectedDate} />
+        ) : budgetCategories.length > 0 ? (
+          <>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Monthly Overview</Text>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Total Budget</Text>
+                  <Text style={styles.summaryAmount}>
+                    ₹{getTotalBudget().toLocaleString()}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Total Spent</Text>
+                  <Text style={[styles.summaryAmount, styles.spentAmount]}>
+                    ₹{getTotalSpent().toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.remainingSection}>
+                <Text style={styles.remainingLabel}>Remaining</Text>
+                <Text
+                  style={[
+                    styles.remainingAmount,
+                    { color: getRemaining() >= 0 ? "#28a745" : "#ff4444" },
+                  ]}
+                >
+                  ₹{Math.abs(getRemaining()).toLocaleString()}
+                </Text>
+              </View>
+            </View>
+
+            {/* Quick Actions */}
+            <View style={styles.quickActionsSection}>
+              <TouchableOpacity
+                style={styles.quickActionButton}
+                onPress={() => {
+                  const month = (selectedDate.getMonth() + 1).toString();
+                  const year = selectedDate.getFullYear();
+                  router.push(`./expense-history?month=${month}&year=${year}`);
+                }}
+              >
+                <Ionicons name="time-outline" size={20} color="#007AFF" />
+                <Text style={styles.quickActionText}>Expense History</Text>
+                <Ionicons name="chevron-forward" size={16} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.categoriesSection}>
+              <Text style={styles.sectionTitle}>Budget Categories</Text>
+              {budgetCategories.map((category) => {
+                const spent = getCategorySpent(category.id);
+                const percentage = getProgressPercentage(
+                  spent,
+                  category.amount
+                );
+                const progressColor = getProgressColor(percentage);
+
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={styles.categoryCard}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const month = (selectedDate.getMonth() + 1).toString();
+                      const year = selectedDate.getFullYear().toString();
+                      router.push(
+                        `/expense-history?month=${month}&year=${year}&category=${category.id}`
+                      );
+                    }}
+                  >
+                    <View style={styles.categoryHeader}>
+                      <Text style={styles.categoryName}>{category.name}</Text>
+                      <Text style={styles.categoryAmount}>
+                        ₹{spent.toLocaleString()} / ₹
+                        {category.amount.toLocaleString()}
+                      </Text>
+                    </View>
+                    <View style={styles.progressBarContainer}>
+                      <View style={styles.progressBarBackground}>
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${percentage}%`,
+                              backgroundColor: progressColor,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.progressPercentage}>
+                        {Math.round(percentage)}%
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.quickActionsSection}>
+              {isEditableMonth() ? (
+                <TouchableOpacity
+                  style={styles.editBudgetButton}
+                  onPress={() => {
+                    const month = (selectedDate.getMonth() + 1).toString();
+                    const year = selectedDate.getFullYear().toString();
+                    router.push(`/set-budget?month=${month}&year=${year}`);
+                  }}
+                >
+                  <Ionicons name="settings" size={20} color="#007AFF" />
+                  <Text style={styles.editBudgetText}>Edit Budget</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.editBudgetDisabled}>
+                  <Ionicons name="lock-closed" size={20} color="#999" />
+                  <Text style={styles.editBudgetDisabledText}>
+                    Budget editing only available for current and next 2 months
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        ) : null}
+      </ScrollView>
+
+      {isCurrentMonth() && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => {
+            const month = (selectedDate.getMonth() + 1).toString();
+            const year = selectedDate.getFullYear().toString();
+            router.push(`/add-expense?month=${month}&year=${year}`);
+          }}
+        >
+          <Ionicons name="add" size={32} color="#ffffff" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 12,
-  },
-  header: {
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
-  },
-  monthSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  monthArrow: {
-    padding: 8,
-  },
-  disabledArrow: {
-    opacity: 0.3,
-  },
-  monthText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    marginHorizontal: 20,
-    minWidth: 120,
-    textAlign: "center",
-  },
-  currentMonthText: {
-    color: "#007AFF",
-  },
-  currentMonthIndicator: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#007AFF",
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  monthLoadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  monthLoadingText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 12,
-  },
-  noDataContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 20,
-  },
-  noDataTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#666",
-    marginTop: 20,
-    marginBottom: 12,
-  },
-  noDataText: {
-    fontSize: 16,
-    color: "#999",
-    textAlign: "center",
-    lineHeight: 24,
-  },
-  summaryCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 24,
-    marginTop: 20,
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  summaryItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  summaryLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 8,
-  },
-  summaryAmount: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#007AFF",
-  },
-  spentAmount: {
-    color: "#ff9500",
-  },
-  remainingSection: {
-    alignItems: "center",
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#e9ecef",
-  },
-  remainingLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 8,
-  },
-  remainingAmount: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  categoriesSection: {
-    marginBottom: 100,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    marginBottom: 16,
-  },
-  categoryCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
-  },
-  categoryAmount: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-  },
-  progressBarContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  progressBarBackground: {
-    flex: 1,
-    height: 8,
-    backgroundColor: "#e9ecef",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  progressPercentage: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#666",
-    minWidth: 35,
-    textAlign: "right",
-  },
-  quickActionsSection: {
-    marginBottom: 20,
-  },
-  editBudgetButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    paddingVertical: 16,
-    borderWidth: 2,
-    borderColor: "#007AFF",
-    borderStyle: "dashed",
-  },
-  editBudgetText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007AFF",
-    marginLeft: 8,
-  },
-  editBudgetDisabled: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-    borderStyle: "dashed",
-  },
-  editBudgetDisabledText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#999",
-    marginLeft: 8,
-    textAlign: "center",
-  },
-  fab: {
-    position: "absolute",
-    bottom: 30,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007AFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  welcomeHeader: {
-    alignItems: "center",
-    marginBottom: 60,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    marginTop: 20,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 24,
-  },
-  buttonContainer: {
-    width: "100%",
-    gap: 16,
-  },
-  primaryButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: "center",
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  primaryButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  secondaryButton: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#007AFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  secondaryButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#007AFF",
-  },
-  quickActionButton: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  quickActionText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    flex: 1,
-    marginLeft: 12,
-  },
-});

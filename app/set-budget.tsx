@@ -5,13 +5,13 @@ import {
   Alert,
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { styles } from "../assets/styles/onboarding.style";
 import AutoBudgetSuggestion from "../components/AutoBudgetSuggestion";
 import { BudgetCategory, MonthlyBudget } from "../types/budget";
 import { StorageService } from "../utils/storage";
@@ -292,24 +292,22 @@ export default function OnboardingScreen() {
       await StorageService.saveMonthlyBudgetData(monthlyBudget);
 
       // If this is the current month and initial setup, also save as template
-      const today = new Date();
-      const currentMonth = (today.getMonth() + 1).toString();
-      const currentYear = today.getFullYear().toString();
+      // const today = new Date();
+      // const currentMonth = (today.getMonth() + 1).toString();
+      // const currentYear = today.getFullYear().toString();
 
-      if (
-        selectedMonthNum === currentMonth &&
-        selectedYear === currentYear &&
-        !isEditMode
-      ) {
-        await StorageService.saveBudgetCategories(budgetCategories);
-        await StorageService.setSetupComplete(true);
-      }
+      // if (
+      //   selectedMonthNum === currentMonth &&
+      //   selectedYear === currentYear &&
+      //   !isEditMode
+      // ) {
+      //   await StorageService.saveBudgetCategories(budgetCategories);
+      //   await StorageService.setSetupComplete(true);
+      // }
 
       Alert.alert(
         "Success",
-        `Your budget for ${getMonthName(
-          parseInt(selectedMonthNum)
-        )} ${selectedYear} has been ${
+        `Your budget for ${getMonthName()} ${selectedYear} has been ${
           isEditMode ? "updated" : "set up"
         } successfully!`,
         [{ text: "OK", onPress: () => router.replace("/") }]
@@ -327,7 +325,10 @@ export default function OnboardingScreen() {
     }, 0);
   };
 
-  const getMonthName = (monthNum: number) => {
+  const getMonthName = () => {
+    const [monthStr, yearStr] = selectedMonth.split("-");
+    const monthNum = parseInt(monthStr, 10);
+    const yearNum = parseInt(yearStr, 10);
     const months = [
       "Jan",
       "Feb",
@@ -342,7 +343,7 @@ export default function OnboardingScreen() {
       "Nov",
       "Dec",
     ];
-    return months[monthNum - 1] || "Unknown";
+    return months[monthNum - 1] + "-" + yearNum || "Unknown";
   };
 
   const deleteBudget = () => {
@@ -441,7 +442,7 @@ export default function OnboardingScreen() {
           >
             <View style={styles.header}>
               <Text style={styles.headerTitle}>
-                {selectedMonth
+                {/* {selectedMonth
                   ? (() => {
                       const [monthNum, yearNum] = selectedMonth.split("-");
                       return `${
@@ -452,10 +453,11 @@ export default function OnboardingScreen() {
                     })()
                   : isEditMode
                   ? "Edit Your Monthly Budget"
-                  : "Set Your Monthly Budget"}
+                  : "Set Your Monthly Budget"} */}
+                Set Budget for {getMonthName()}
               </Text>
               <Text style={styles.headerSubtitle}>
-                {selectedMonth
+                {/* {selectedMonth
                   ? (() => {
                       const [monthNum, yearNum] = selectedMonth.split("-");
                       const monthName = getMonthName(parseInt(monthNum));
@@ -465,7 +467,8 @@ export default function OnboardingScreen() {
                     })()
                   : `${
                       isEditMode ? "Update" : "Create"
-                    } your budget categories and amounts`}
+                    } your budget categories and amounts`} */}
+                Create your budget categories for {getMonthName()}
               </Text>
             </View>
 
@@ -476,34 +479,23 @@ export default function OnboardingScreen() {
                 style={styles.monthSelectorButton}
                 onPress={() => setShowMonthSelector(true)}
               >
-                <Text style={styles.monthSelectorText}>
-                  {selectedMonth
-                    ? getAvailableMonths().find(
-                        (m) => m.value === selectedMonth
-                      )?.label || "Select Month"
-                    : "Select Month"}
-                </Text>
+                <Text style={styles.monthSelectorText}>{getMonthName()}</Text>
                 <Text style={styles.dropdownArrow}>▼</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Categories */}
             <View style={styles.categoriesContainer}>
-              {categories.map((category, index) => (
+              {categories.map((category) => (
                 <View key={category.id} style={styles.categoryCard}>
                   <View style={styles.categoryHeader}>
-                    <Text style={styles.categoryNumber}>#{index + 1}</Text>
-                    {categories.length > 1 && (
-                      <TouchableOpacity
-                        onPress={() => removeCategory(category.id)}
-                        style={styles.removeButton}
-                      >
-                        <Ionicons
-                          name="close-circle"
-                          size={24}
-                          color="#ff4444"
-                        />
-                      </TouchableOpacity>
-                    )}
+                    <Text style={styles.categoryNumber}>#{category.id}</Text>
+                    <TouchableOpacity
+                      onPress={() => removeCategory(category.id)}
+                      style={styles.removeButton}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#ff4444" />
+                    </TouchableOpacity>
                   </View>
 
                   <View style={styles.inputContainer}>
@@ -643,359 +635,3 @@ export default function OnboardingScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 12,
-  },
-  navHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
-    backgroundColor: "#ffffff",
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007AFF",
-    marginLeft: 8,
-  },
-  deleteButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "#fff5f5",
-    borderWidth: 1,
-    borderColor: "#ff4444",
-  },
-  deleteButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#ff4444",
-    marginLeft: 6,
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  header: {
-    paddingTop: 20,
-    paddingBottom: 30,
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  categoriesContainer: {
-    marginBottom: 20,
-  },
-  categoryCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  categoryNumber: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#007AFF",
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  removeButton: {
-    padding: 4,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: "#1a1a1a",
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-  },
-  amountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-    paddingHorizontal: 16,
-  },
-  currencySymbol: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginRight: 8,
-  },
-  amountInput: {
-    flex: 1,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: "#1a1a1a",
-  },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#007AFF",
-    borderStyle: "dashed",
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007AFF",
-    marginLeft: 8,
-  },
-  totalContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: "#007AFF",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  totalLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 4,
-  },
-  totalAmount: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#007AFF",
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: "#ffffff",
-    borderTopWidth: 1,
-    borderTopColor: "#e9ecef",
-  },
-  saveButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: "center",
-    shadowColor: "#007AFF",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  saveButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  footerDeleteButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff5f5",
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: "#ff4444",
-  },
-  footerDeleteButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ff4444",
-    marginLeft: 8,
-  },
-  monthSelectorContainer: {
-    marginBottom: 20,
-    paddingHorizontal: 4,
-  },
-  monthSelectorLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  monthSelectorButton: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  monthSelectorText: {
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
-  },
-  dropdownArrow: {
-    fontSize: 12,
-    color: "#666",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  modalContent: {
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-  },
-  modalCloseButton: {
-    fontSize: 20,
-    color: "#666",
-    fontWeight: "bold",
-    padding: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  monthOptions: {
-    gap: 12,
-  },
-  monthOption: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-    backgroundColor: "#f8f9fa",
-  },
-  monthOptionSelected: {
-    borderColor: "#007AFF",
-    backgroundColor: "#f0f8ff",
-  },
-  monthOptionText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-  },
-  monthOptionTextSelected: {
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-  currentMonthBadge: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#28a745",
-    backgroundColor: "#d4edda",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-});
