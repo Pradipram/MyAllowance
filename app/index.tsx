@@ -14,10 +14,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../contexts/AuthContext";
 import { BudgetCategory, Transaction } from "../types/budget";
 import { StorageService } from "../utils/storage";
 
 export default function Index() {
+  const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>(
@@ -28,6 +30,24 @@ export default function Index() {
   const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
   const [hasMonthData, setHasMonthData] = useState(false);
   const [showAutoBudgetPrompt, setShowAutoBudgetPrompt] = useState(false);
+
+  const handleLogout = async () => {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+            router.replace("/login" as any);
+          } catch (error) {
+            Alert.alert("Error", "Failed to sign out. Please try again.");
+          }
+        },
+      },
+    ]);
+  };
 
   useEffect(() => {
     loadMonthData();
@@ -250,6 +270,13 @@ export default function Index() {
     return false;
   };
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.replace("/login" as any);
+    }
+  }, [isAuthenticated, authLoading]);
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -298,6 +325,19 @@ export default function Index() {
             />
           </TouchableOpacity>
         </View>
+
+        {/* User Profile Button */}
+        <TouchableOpacity
+          style={styles.userProfileButton}
+          onPress={handleLogout}
+        >
+          <View style={styles.userAvatar}>
+            <Ionicons name="person" size={20} color="#007AFF" />
+          </View>
+          <Text style={styles.userNameText} numberOfLines={1}>
+            {user?.fullName || "User"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -347,9 +387,13 @@ export default function Index() {
               <TouchableOpacity
                 style={styles.quickActionButton}
                 onPress={() => {
-                  const month = (selectedDate.getMonth() + 1).toString();
-                  const year = selectedDate.getFullYear();
-                  router.push(`./expense-history?month=${month}&year=${year}`);
+                  // const month = (selectedDate.getMonth() + 1).toString();
+                  // const year = selectedDate.getFullYear();
+                  router.push(
+                    `./expense-history?month=${(
+                      selectedDate.getMonth() + 1
+                    ).toString()}&year=${selectedDate.getFullYear()}`
+                  );
                 }}
               >
                 <Ionicons name="time-outline" size={20} color="#007AFF" />

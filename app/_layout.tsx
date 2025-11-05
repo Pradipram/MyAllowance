@@ -1,9 +1,10 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { AuthProvider } from "../contexts/AuthContext";
 
 export default function RootLayout() {
   return (
-    <>
+    <AuthProvider>
       <StatusBar style="auto" />
       <Stack>
         <Stack.Screen
@@ -14,11 +15,32 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="login"
+          options={{
+            title: "Sign In",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="signup"
+          options={{
+            title: "Sign Up",
+            headerShown: false,
+          }}
+        />
+        {/* <Stack.Screen
+          name="onboarding"
+          options={{
+            title: "Set Budget",
+            headerShown: false,
+          }}
+        /> */}
+        <Stack.Screen
           name="set-budget"
           options={{
-            title: "Setup Budget",
+            title: "Set Budget",
             headerShown: false,
-            presentation: "modal",
+            // presentation: "modal",
           }}
         />
         <Stack.Screen
@@ -44,6 +66,6 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </>
+    </AuthProvider>
   );
 }

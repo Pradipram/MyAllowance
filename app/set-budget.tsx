@@ -1,9 +1,12 @@
+import { styles } from "@/assets/styles/set-budget.style";
+import Header from "@/components/header/header";
+import MonthSelector from "@/components/modal/month-selector";
+import { getAvailableMonthsData } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
-  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -11,7 +14,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { styles } from "../assets/styles/onboarding.style";
 import AutoBudgetSuggestion from "../components/AutoBudgetSuggestion";
 import { BudgetCategory, MonthlyBudget } from "../types/budget";
 import { StorageService } from "../utils/storage";
@@ -28,37 +30,12 @@ export default function OnboardingScreen() {
     { id: "1", name: "", amount: "" },
   ]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true);
   const [isMonthSpecificEdit, setIsMonthSpecificEdit] = useState(false);
   const [showAutoSuggestion, setShowAutoSuggestion] = useState(false);
   const [budgetSuggestions, setBudgetSuggestions] = useState<any[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [showMonthSelector, setShowMonthSelector] = useState(false);
-
-  // Helper function to get available months
-  const getAvailableMonthsData = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth() + 1;
-    const currentYear = today.getFullYear();
-    const months = [];
-
-    // Add current month and next 2 months (total 3 months)
-    for (let i = 0; i < 3; i++) {
-      const date = new Date(currentYear, currentMonth - 1 + i, 1);
-      const monthNum = date.getMonth() + 1;
-      const yearNum = date.getFullYear();
-      const monthName = date.toLocaleString("default", { month: "long" });
-
-      months.push({
-        value: `${monthNum}-${yearNum}`,
-        label: `${monthName} ${yearNum}`,
-        month: monthNum,
-        year: yearNum,
-      });
-    }
-
-    return months;
-  };
 
   useEffect(() => {
     // Check if trying to edit a month beyond the 3-month limit
@@ -93,10 +70,6 @@ export default function OnboardingScreen() {
     } else {
       setSelectedMonth(`${month}-${year}`);
     }
-  };
-
-  const getAvailableMonths = () => {
-    return getAvailableMonthsData();
   };
 
   const loadExistingCategories = async () => {
@@ -291,20 +264,6 @@ export default function OnboardingScreen() {
       // Save to the selected month
       await StorageService.saveMonthlyBudgetData(monthlyBudget);
 
-      // If this is the current month and initial setup, also save as template
-      // const today = new Date();
-      // const currentMonth = (today.getMonth() + 1).toString();
-      // const currentYear = today.getFullYear().toString();
-
-      // if (
-      //   selectedMonthNum === currentMonth &&
-      //   selectedYear === currentYear &&
-      //   !isEditMode
-      // ) {
-      //   await StorageService.saveBudgetCategories(budgetCategories);
-      //   await StorageService.setSetupComplete(true);
-      // }
-
       Alert.alert(
         "Success",
         `Your budget for ${getMonthName()} ${selectedYear} has been ${
@@ -417,60 +376,11 @@ export default function OnboardingScreen() {
         </View>
       ) : (
         <>
-          {isEditMode && (
-            <View style={styles.navHeader}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.back()}
-              >
-                <Ionicons name="arrow-back" size={24} color="#007AFF" />
-                <Text style={styles.backButtonText}>Back</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={deleteBudget}
-              >
-                <Ionicons name="trash" size={20} color="#ff4444" />
-                <Text style={styles.deleteButtonText}>Delete Budget</Text>
-              </TouchableOpacity>
-            </View>
-          )}
           <ScrollView
             style={styles.scrollContainer}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>
-                {/* {selectedMonth
-                  ? (() => {
-                      const [monthNum, yearNum] = selectedMonth.split("-");
-                      return `${
-                        isEditMode ? "Edit" : "Set"
-                      } Budget for ${getMonthName(
-                        parseInt(monthNum)
-                      )} ${yearNum}`;
-                    })()
-                  : isEditMode
-                  ? "Edit Your Monthly Budget"
-                  : "Set Your Monthly Budget"} */}
-                Set Budget for {getMonthName()}
-              </Text>
-              <Text style={styles.headerSubtitle}>
-                {/* {selectedMonth
-                  ? (() => {
-                      const [monthNum, yearNum] = selectedMonth.split("-");
-                      const monthName = getMonthName(parseInt(monthNum));
-                      return `${
-                        isEditMode ? "Update" : "Create"
-                      } your budget categories for ${monthName} ${yearNum}`;
-                    })()
-                  : `${
-                      isEditMode ? "Update" : "Create"
-                    } your budget categories and amounts`} */}
-                Create your budget categories for {getMonthName()}
-              </Text>
-            </View>
+            <Header heading={`set budget for ${getMonthName()}`} />
 
             {/* Month Selector */}
             <View style={styles.monthSelectorContainer}>
@@ -551,78 +461,29 @@ export default function OnboardingScreen() {
               style={styles.saveButton}
               onPress={validateAndSave}
             >
-              <Text style={styles.saveButtonText}>
-                {isEditMode ? "Update Budget" : "Save & Continue"}
-              </Text>
+              <Text style={styles.saveButtonText}>Save & Continue</Text>
             </TouchableOpacity>
 
-            {isEditMode && (
-              <TouchableOpacity
-                style={styles.footerDeleteButton}
-                onPress={deleteBudget}
-              >
-                <Ionicons name="trash-outline" size={20} color="#ff4444" />
-                <Text style={styles.footerDeleteButtonText}>
-                  Delete Entire Budget
-                </Text>
-              </TouchableOpacity>
-            )}
+            {/* {isEditMode && ( */}
+            <TouchableOpacity
+              style={styles.footerDeleteButton}
+              onPress={deleteBudget}
+            >
+              <Ionicons name="trash-outline" size={20} color="#ff4444" />
+              <Text style={styles.footerDeleteButtonText}>Reset Budget</Text>
+            </TouchableOpacity>
+            {/* )} */}
           </View>
         </>
       )}
 
       {/* Month Selector Modal */}
-      <Modal
-        visible={showMonthSelector}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowMonthSelector(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Month</Text>
-              <TouchableOpacity onPress={() => setShowMonthSelector(false)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.modalSubtitle}>
-              You can only set budgets for the current month and next 2 months
-            </Text>
-
-            <View style={styles.monthOptions}>
-              {getAvailableMonths().map((monthOption, index) => (
-                <TouchableOpacity
-                  key={monthOption.value}
-                  style={[
-                    styles.monthOption,
-                    selectedMonth === monthOption.value &&
-                      styles.monthOptionSelected,
-                  ]}
-                  onPress={() => {
-                    setSelectedMonth(monthOption.value);
-                    setShowMonthSelector(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.monthOptionText,
-                      selectedMonth === monthOption.value &&
-                        styles.monthOptionTextSelected,
-                    ]}
-                  >
-                    {monthOption.label}
-                  </Text>
-                  {index === 0 && (
-                    <Text style={styles.currentMonthBadge}>Current</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <MonthSelector
+        showMonthSelector={showMonthSelector}
+        setShowMonthSelector={setShowMonthSelector}
+        selectedMonth={selectedMonth}
+        setSelectedMonth={setSelectedMonth}
+      />
 
       {/* Auto Budget Suggestion Popup */}
       <AutoBudgetSuggestion

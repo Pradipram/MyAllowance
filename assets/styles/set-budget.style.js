@@ -238,8 +238,11 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
   },
   monthSelectorContainer: {
-    marginBottom: 20,
-    paddingHorizontal: 4,
+    // marginBottom: 20,
+    // margin: 20,
+    // paddingHorizontal: 4,
+    marginVertical: 20,
+    // backgroundColor: "red",
   },
   monthSelectorLabel: {
     fontSize: 16,
