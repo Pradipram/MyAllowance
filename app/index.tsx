@@ -1,8 +1,12 @@
 // import logo from "@/assets/images/logo.png";
 import { styles } from "@/assets/styles/index.style";
 import NoBudgetSet from "@/components/noBudgetSet";
+import ProfileModal from "@/components/profile/profile-modal";
+import ProfileIcon from "@/components/profile/profileIcon";
+import { supabase } from "@/utils/superbase";
 import { getMonthYearString } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
+import { User } from "@supabase/supabase-js";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -14,12 +18,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../contexts/AuthContext";
 import { BudgetCategory, Transaction } from "../types/budget";
 import { StorageService } from "../utils/storage";
 
 export default function Index() {
-  const { isAuthenticated, isLoading: authLoading, user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>(
@@ -30,23 +32,65 @@ export default function Index() {
   const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
   const [hasMonthData, setHasMonthData] = useState(false);
   const [showAutoBudgetPrompt, setShowAutoBudgetPrompt] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
-  const handleLogout = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-            router.replace("/login" as any);
-          } catch (error) {
-            Alert.alert("Error", "Failed to sign out. Please try again.");
-          }
-        },
-      },
-    ]);
+  // Check authentication status
+  useEffect(() => {
+    checkAuthStatus();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event);
+        if (session?.user) {
+          setUser(session.user);
+          // console.log("User data:", session.user);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+          router.replace("/login");
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      setAuthLoading(true);
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Error getting session:", error);
+        setIsAuthenticated(false);
+        router.replace("/login");
+        return;
+      }
+
+      if (session?.user) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        router.replace("/login");
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      setIsAuthenticated(false);
+      router.replace("/login");
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -271,13 +315,13 @@ export default function Index() {
   };
 
   // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.replace("/login" as any);
-    }
-  }, [isAuthenticated, authLoading]);
+  // useEffect(() => {
+  //   if (!authLoading && !isAuthenticated) {
+  //     router.replace("/login" as any);
+  //   }
+  // }, [isAuthenticated, authLoading]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -286,6 +330,10 @@ export default function Index() {
         </View>
       </SafeAreaView>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect to login via useEffect
   }
 
   // if (isSetupComplete || 1) {
@@ -326,17 +374,13 @@ export default function Index() {
           </TouchableOpacity>
         </View>
 
-        {/* User Profile Button */}
+        {/* Profile Icon */}
         <TouchableOpacity
-          style={styles.userProfileButton}
-          onPress={handleLogout}
+          style={styles.profileIcon}
+          onPress={() => setShowProfileModal(true)}
         >
-          <View style={styles.userAvatar}>
-            <Ionicons name="person" size={20} color="#007AFF" />
-          </View>
-          <Text style={styles.userNameText} numberOfLines={1}>
-            {user?.fullName || "User"}
-          </Text>
+          {/* <Ionicons name="person-circle-outline" size={32} color="#007AFF" /> */}
+          <ProfileIcon fullName={user?.user_metadata.fullName} size={32} />
         </TouchableOpacity>
       </View>
 
@@ -491,6 +535,18 @@ export default function Index() {
           <Ionicons name="add" size={32} color="#ffffff" />
         </TouchableOpacity>
       )}
+
+      {/* Profile Modal */}
+      <ProfileModal
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        // user={{
+        //   email: user?.email,
+        //   fullName: user?.user_metadata?.fullName || user?.email?.split("@")[0],
+        //   createdAt: user?.created_at,
+        // }}
+        user={user}
+      />
     </SafeAreaView>
   );
 }

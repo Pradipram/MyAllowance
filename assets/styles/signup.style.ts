@@ -17,6 +17,34 @@ export const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 32,
   },
+  brandingContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    marginBottom: -15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logo: {
+    width: 80,
+    height: 80,
+  },
+  appName: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#007AFF",
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  tagline: {
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic",
+    textAlign: "center",
+  },
   header: {
     alignItems: "center",
     marginBottom: 40,

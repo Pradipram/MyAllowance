@@ -1,10 +1,21 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { AuthProvider } from "../contexts/AuthContext";
 
 export default function RootLayout() {
+  // useEffect(() => {
+  //   const handleDeepLink = async (event: any) => {
+  //     const url = event.url;
+  //     // const { data, error } = await supabase.auth.getSessionFromUrl({ url });
+  //     // if (error) console.error("Supabase Session Error:", error);
+  //     console.log("url", url);
+  //   };
+
+  //   const subscription = Linking.addEventListener("url", handleDeepLink);
+
+  //   return () => subscription.remove();
+  // }, []);
   return (
-    <AuthProvider>
+    <>
       <StatusBar style="auto" />
       <Stack>
         <Stack.Screen
@@ -28,13 +39,6 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
-        {/* <Stack.Screen
-          name="onboarding"
-          options={{
-            title: "Set Budget",
-            headerShown: false,
-          }}
-        /> */}
         <Stack.Screen
           name="set-budget"
           options={{
@@ -62,10 +66,10 @@ export default function RootLayout() {
           name="add-expense"
           options={{
             title: "Add Expense",
-            headerShown: false,
+            headerShown: true,
           }}
         />
       </Stack>
-    </AuthProvider>
+    </>
   );
 }

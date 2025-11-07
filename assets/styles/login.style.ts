@@ -17,6 +17,34 @@ export const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 32,
   },
+  brandingContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    marginBottom: -15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logo: {
+    width: 80,
+    height: 80,
+  },
+  appName: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#007AFF",
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  tagline: {
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic",
+    textAlign: "center",
+  },
   header: {
     alignItems: "center",
     marginBottom: 40,
@@ -33,9 +61,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
   },
-  formContainer: {
-    flex: 1,
-  },
+  formContainer: {},
   inputContainer: {
     marginBottom: 20,
   },
@@ -143,6 +169,7 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
+    marginBottom: 0,
   },
   googleIcon: {
     marginRight: 12,
@@ -156,7 +183,8 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 32,
+    marginTop: 0,
+    paddingTop: 0,
   },
   signUpText: {
     fontSize: 16,

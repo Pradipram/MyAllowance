@@ -1,9 +1,13 @@
 import { styles } from "@/assets/styles/login.style";
+import LoaderModal from "@/components/modal/loader-modal";
+import { supabase } from "@/utils/superbase";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,14 +17,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../contexts/AuthContext";
+
+// Configure WebBrowser for OAuth
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { signInWithEmail, signInWithGoogle, isLoading, resetPassword } =
-    useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isforgetPasswordLoading, setIsForgetPasswordLoading] = useState(false);
 
   const handleEmailLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -33,30 +39,31 @@ export default function LoginScreen() {
       return;
     }
 
+    setIsLoading(true);
     try {
-      await signInWithEmail(email, password);
-      router.replace("/");
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error
-          ? error.message
-          : "Failed to sign in. Please try again."
-      );
-    }
-  };
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithGoogle();
+      if (error) {
+        Alert.alert("Error", error.message);
+        return;
+      }
+
+      // Check if user and session exist
+      if (!data.user || !data.session) {
+        Alert.alert("Error", "Failed to sign in. Please try again.");
+        return;
+      }
+
+      // Success! Navigate to home
       router.replace("/");
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error
-          ? error.message
-          : "Failed to sign in with Google. Please try again."
-      );
+      console.error("Login error:", error);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,10 +79,19 @@ export default function LoginScreen() {
     }
 
     try {
-      await resetPassword(email);
+      setIsForgetPasswordLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "myallowance://auth/reset-password",
+      });
+
+      if (error) {
+        Alert.alert("Error", error.message);
+        return;
+      }
+
       Alert.alert(
         "Success",
-        "Password reset email sent! Please check your inbox."
+        "Password reset email sent! Please check your inbox and follow the instructions. But wait Sorry currently this feature in under development."
       );
     } catch (error) {
       Alert.alert(
@@ -84,6 +100,8 @@ export default function LoginScreen() {
           ? error.message
           : "Failed to send password reset email. Please try again."
       );
+    } finally {
+      setIsForgetPasswordLoading(false);
     }
   };
 
@@ -103,6 +121,19 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Branding Section */}
+          <View style={styles.brandingContainer}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("@/assets/images/myallowanceicon.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.appName}>MyAllowance</Text>
+            <Text style={styles.tagline}>Smart budgeting made effortless.</Text>
+          </View>
+
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Welcome Back</Text>
@@ -193,14 +224,14 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
+            {/* <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
-            </View>
+            </View> */}
 
             {/* Google Sign In Button */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[styles.googleButton, isLoading && styles.buttonDisabled]}
               onPress={handleGoogleLogin}
               disabled={isLoading}
@@ -212,7 +243,7 @@ export default function LoginScreen() {
                 style={styles.googleIcon}
               />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Sign Up Link */}
@@ -222,6 +253,10 @@ export default function LoginScreen() {
               <Text style={styles.signUpLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
+          <LoaderModal
+            visible={isforgetPasswordLoading}
+            message="Sending reset email..."
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

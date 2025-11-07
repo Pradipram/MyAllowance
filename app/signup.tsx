@@ -1,9 +1,12 @@
 import { styles } from "@/assets/styles/signup.style";
+import { supabase } from "@/utils/superbase";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,7 +16,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../contexts/AuthContext";
+
+// Configure WebBrowser for OAuth
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
@@ -22,7 +26,8 @@ export default function SignupScreen() {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { signUpWithEmail, signInWithGoogle, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  // const { signUpWithEmail, signInWithGoogle, isLoading } = useAuth();
 
   const handleEmailSignup = async () => {
     if (
@@ -49,38 +54,101 @@ export default function SignupScreen() {
       Alert.alert("Error", "Passwords do not match");
       return;
     }
-
+    setIsLoading(true);
     try {
-      await signUpWithEmail(fullName, email, password);
-    } catch (error) {
-      if (error instanceof Error && error.message === "VERIFICATION_REQUIRED") {
-        Alert.alert(
-          "Success",
-          "Account created successfully! Please check your email for verification.",
-          [{ text: "OK", onPress: () => router.replace("/login" as any) }]
-        );
-      } else {
-        Alert.alert(
-          "Error",
-          error instanceof Error
-            ? error.message
-            : "Failed to create account. Please try again."
-        );
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            fullName: fullName,
+          },
+        },
+      });
+
+      if (error) {
+        Alert.alert("Error", error.message);
+        return;
       }
+
+      // Check if user was created successfully
+      if (!data.user) {
+        Alert.alert("Error", "Failed to create account. Please try again.");
+        return;
+      }
+
+      // Success! User may need to verify email depending on Supabase settings
+      Alert.alert(
+        "Success",
+        "Account created successfully! Please check your email for verification.",
+        [{ text: "OK", onPress: () => router.replace("/" as any) }]
+      );
+    } catch (e) {
+      console.error("Signup error:", e);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // const handleGoogleSignup = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const redirectUrl = process.env.EXPO_PUBLIC_APP_DEEP_LINK_CALLBACK;
+
+  //     if (!redirectUrl) {
+  //       Alert.alert("Error", "Missing app deep link config.");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     const { data, error } = await supabase.auth.signInWithOAuth({
+  //       provider: "google",
+  //       options: {
+  //         redirectTo: redirectUrl,
+  //         skipBrowserRedirect: true, // <-- This is the fix for "localhost"
+  //       },
+  //     });
+
+  //     if (error) {
+  //       Alert.alert("Error", error.message);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     if (data?.url) {
+  //       // This just opens the browser.
+  //       // We will NOT handle the result here.
+  //       await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Error", "Failed to ssign up with Google.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleGoogleSignup = async () => {
     try {
-      await signInWithGoogle();
-      router.replace("/");
+      const redirectUrl = process.env.EXPO_PUBLIC_APP_DEEP_LINK_CALLBACK;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        console.log("Opening URL: ", data.url);
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+      }
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error
-          ? error.message
-          : "Failed to sign up with Google. Please try again."
-      );
+      console.log("Error while google signup: ", error);
+      Alert.alert("Google Auth Error");
     }
   };
 
@@ -100,6 +168,19 @@ export default function SignupScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Branding Section */}
+          <View style={styles.brandingContainer}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("@/assets/images/myallowanceicon.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.appName}>MyAllowance</Text>
+            <Text style={styles.tagline}>Smart budgeting made effortless.</Text>
+          </View>
+
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
@@ -241,14 +322,14 @@ export default function SignupScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
+            {/* <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
-            </View>
+            </View> */}
 
             {/* Google Sign Up Button */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[styles.googleButton, isLoading && styles.buttonDisabled]}
               onPress={handleGoogleSignup}
               disabled={isLoading}
@@ -260,7 +341,7 @@ export default function SignupScreen() {
                 style={styles.googleIcon}
               />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Terms and Privacy */}

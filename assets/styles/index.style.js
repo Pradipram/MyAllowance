@@ -22,11 +22,18 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e9ecef",
     position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   monthSelector: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    flex: 1,
+  },
+  profileIcon: {
+    padding: 4,
   },
   monthArrow: {
     padding: 8,
