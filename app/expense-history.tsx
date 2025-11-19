@@ -1,8 +1,8 @@
 import { styles } from "@/assets/styles/expense-history.style";
 import Header from "@/components/header/header";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BudgetCategory, Transaction } from "../types/budget";
-import { StorageService } from "../utils/storage";
 
 export default function ExpenseHistoryScreen() {
   const { month, year, category } = useLocalSearchParams<{
@@ -28,9 +27,9 @@ export default function ExpenseHistoryScreen() {
   const [preSelectedCategory, setPreSelectedCategory] =
     useState<BudgetCategory | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [month, year, category]);
+  // useEffect(() => {
+  //   loadData();
+  // }, [month, year, category]);
 
   // Set selected category when category parameter is provided
   useEffect(() => {
@@ -43,48 +42,48 @@ export default function ExpenseHistoryScreen() {
   }, [category, categories]);
 
   // Refresh data when screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [])
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     loadData();
+  //   }, [])
+  // );
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      // Use passed parameters or default to current date
-      const targetMonth = month || (new Date().getMonth() + 1).toString();
-      const targetYear = year ? parseInt(year) : new Date().getFullYear();
+  // const loadData = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     // Use passed parameters or default to current date
+  //     const targetMonth = month || (new Date().getMonth() + 1).toString();
+  //     const targetYear = year ? parseInt(year) : new Date().getFullYear();
 
-      // Load transactions for the specified month
-      const monthTransactions = await StorageService.getMonthTransactions(
-        targetMonth,
-        targetYear
-      );
+  //     // Load transactions for the specified month
+  //     const monthTransactions = await StorageService.getMonthTransactions(
+  //       targetMonth,
+  //       targetYear
+  //     );
 
-      // Load categories for filtering
-      const monthData = await StorageService.getMonthlyBudgetData(
-        targetMonth,
-        targetYear
-      );
-      if (monthData) {
-        setCategories(monthData.categories);
-      } else {
-        const baseCategories = await StorageService.getBudgetCategories();
-        setCategories(baseCategories);
-      }
+  //     // Load categories for filtering
+  //     const monthData = await StorageService.getMonthlyBudgetData(
+  //       targetMonth,
+  //       targetYear
+  //     );
+  //     if (monthData) {
+  //       setCategories(monthData.categories);
+  //     } else {
+  //       const baseCategories = await StorageService.getBudgetCategories();
+  //       setCategories(baseCategories);
+  //     }
 
-      setExpenses(monthTransactions);
+  //     setExpenses(monthTransactions);
 
-      // Set the current month display to match the loaded data
-      const displayDate = new Date(targetYear, parseInt(targetMonth) - 1, 1);
-      setCurrentMonth(displayDate);
-    } catch (error) {
-      console.error("Error loading expense history:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     // Set the current month display to match the loaded data
+  //     const displayDate = new Date(targetYear, parseInt(targetMonth) - 1, 1);
+  //     setCurrentMonth(displayDate);
+  //   } catch (error) {
+  //     console.error("Error loading expense history:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const getCategoryById = (categoryId: string): BudgetCategory | undefined => {
     return categories.find((cat) => cat.id === categoryId);
@@ -326,7 +325,7 @@ export default function ExpenseHistoryScreen() {
       </View>
 
       {/* Category Filter - Only show when no specific category is selected */}
-      {!preSelectedCategory && (
+      {/* {!preSelectedCategory && (
         <View style={styles.filterSection}>
           <Text style={styles.filterLabel}>Filter by Category</Text>
           <FlatList
@@ -339,7 +338,7 @@ export default function ExpenseHistoryScreen() {
             contentContainerStyle={styles.filterListContent}
           />
         </View>
-      )}
+      )} */}
 
       {/* Expenses List */}
       {filteredExpenses.length > 0 ? (

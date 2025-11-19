@@ -1,13 +1,13 @@
 import { styles } from "@/assets/styles/set-budget.style";
-import { getAvailableMonthsData } from "@/utils/utility";
+import { getAvailableMonthsData, getMonthYearString } from "@/utils/utility";
 import React from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 interface MonthSelectorProps {
   showMonthSelector: boolean;
   setShowMonthSelector: (show: boolean) => void;
-  selectedMonth: string;
-  setSelectedMonth: (month: string) => void;
+  selectedMonth: Date;
+  setSelectedMonth: (month: Date) => void;
 }
 
 const MonthSelector = ({
@@ -37,27 +37,29 @@ const MonthSelector = ({
           </Text>
 
           <View style={styles.monthOptions}>
-            {getAvailableMonthsData().map((monthOption, index) => (
+            {getAvailableMonthsData().map((date, index) => (
               <TouchableOpacity
-                key={monthOption.value}
+                key={index}
                 style={[
                   styles.monthOption,
-                  selectedMonth === monthOption.value &&
+                  selectedMonth.getFullYear() === date.getFullYear() &&
+                    selectedMonth.getMonth() === date.getMonth() &&
                     styles.monthOptionSelected,
                 ]}
                 onPress={() => {
-                  setSelectedMonth(monthOption.value);
+                  setSelectedMonth(date);
                   setShowMonthSelector(false);
                 }}
               >
                 <Text
                   style={[
                     styles.monthOptionText,
-                    selectedMonth === monthOption.value &&
+                    selectedMonth.getFullYear() === date.getFullYear() &&
+                      selectedMonth.getMonth() === date.getMonth() &&
                       styles.monthOptionTextSelected,
                   ]}
                 >
-                  {monthOption.label}
+                  {getMonthYearString(date)}
                 </Text>
                 {index === 0 && (
                   <Text style={styles.currentMonthBadge}>Current</Text>

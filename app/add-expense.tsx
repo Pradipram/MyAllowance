@@ -1,12 +1,17 @@
+import { styles } from "@/assets/styles/add-expense.style";
+import { getMonthBudget } from "@/services/budget";
+import { insertTransaction } from "@/services/transaction";
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,19 +19,34 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BudgetCategory, Transaction } from "../types/budget";
-import { StorageService } from "../utils/storage";
+
+const defaultTransaction: Transaction = {
+  // id: "",
+  userId: "",
+  categoryId: "",
+  categoryName: "",
+  amount: 0,
+  description: "",
+  date: new Date(),
+  month: new Date().getMonth() + 1,
+  year: new Date().getFullYear(),
+  type: "expense",
+  paymentMode: "upi",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  isDeleted: false,
+};
 
 export default function AddExpenseScreen() {
   const { month, year } = useLocalSearchParams();
+  const [isBudgetLoading, setIsBudgetLoading] = useState(true);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date());
+  const [transaction, setTransaction] =
+    useState<Transaction>(defaultTransaction);
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [paymentMode, setPaymentMode] = useState<string>("upi");
+  const [screenshots, setScreenshots] = useState<string[]>([]);
 
   const paymentModes = [
     { id: "cash", name: "Cash", icon: "cash-outline" },
@@ -56,30 +76,27 @@ export default function AddExpenseScreen() {
       }
     }
 
-    loadCategories();
+    loadBudget();
   }, []);
 
-  const loadCategories = async () => {
+  const loadBudget = async () => {
     try {
-      const today = new Date();
-      const month = (today.getMonth() + 1).toString();
-      const year = today.getFullYear();
-
-      // Load current month's budget data
-      const monthData = await StorageService.getMonthlyBudgetData(month, year);
-
-      if (monthData) {
-        setCategories(monthData.categories);
+      setIsBudgetLoading(true);
+      const res = await getMonthBudget(
+        parseInt(month as string),
+        parseInt(year as string)
+      );
+      if (res) {
+        // setBudget(res);
+        setCategories(res.categories);
       } else {
-        // Fallback to base categories
-        const baseCategories = await StorageService.getBudgetCategories();
-        setCategories(baseCategories);
+        setCategories([]);
       }
     } catch (error) {
-      console.error("Error loading categories:", error);
-      Alert.alert("Error", "Failed to load categories. Please try again.");
+      console.error("Error loading budget:", error);
+      setCategories([]);
     } finally {
-      setIsLoading(false);
+      setIsBudgetLoading(false);
     }
   };
 
@@ -101,101 +118,76 @@ export default function AddExpenseScreen() {
     }
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
     setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) {
-      setDate(selectedDate);
+      setTransaction({
+        ...transaction,
+        date: selectedDate,
+        month: selectedDate.getMonth() + 1,
+        year: selectedDate.getFullYear(),
+      });
     }
   };
 
-  const validateAndSave = async () => {
-    // Validation
-    if (!selectedCategory) {
+  const handleAddScreenshot = () => {
+    // Placeholder for image picker
+    Alert.alert(
+      "Coming Soon",
+      "Screenshot upload feature will be available soon!"
+    );
+  };
+
+  const handleRemoveScreenshot = (index: number) => {
+    setScreenshots(screenshots.filter((_, i) => i !== index));
+  };
+
+  const validateTransaction = () => {
+    if (!transaction.categoryId) {
       Alert.alert("Error", "Please select a category.");
-      return;
+      return false;
     }
 
-    if (!amount.trim() || isNaN(Number(amount)) || Number(amount) <= 0) {
+    if (
+      !transaction.amount ||
+      isNaN(transaction.amount) ||
+      transaction.amount <= 0
+    ) {
       Alert.alert("Error", "Please enter a valid amount.");
-      return;
+      return false;
     }
 
-    if (!paymentMode) {
+    if (!transaction.paymentMode) {
       Alert.alert("Error", "Please select a payment mode.");
+      return false;
+    }
+    return true;
+  };
+
+  const addTransaction = async () => {
+    console.log("Add transaction function called", transaction);
+    if (!validateTransaction()) {
       return;
     }
-
     setIsSaving(true);
-
     try {
-      const expenseAmount = Number(amount);
-      const today = new Date();
-      const month = (today.getMonth() + 1).toString();
-      const year = today.getFullYear();
-
-      // Load current month's data
-      let monthData = await StorageService.getMonthlyBudgetData(month, year);
-
-      if (!monthData) {
-        // Create new month data from base categories
-        const baseCategories = await StorageService.getBudgetCategories();
-        monthData = {
-          id: `${year}_${month}`,
-          month: month,
-          year: year,
-          categories: baseCategories.map((cat) => ({ ...cat, spent: 0 })),
-          totalBudget: baseCategories.reduce((sum, cat) => sum + cat.amount, 0),
-          totalSpent: 0,
-        };
-      }
-
-      // Update the spent amount for the selected category
-      const updatedCategories = monthData.categories.map((cat) => {
-        if (cat.id === selectedCategory) {
-          return { ...cat, spent: (cat.spent || 0) + expenseAmount };
-        }
-        return cat;
-      });
-
-      // Update month data
-      const updatedMonthData = {
-        ...monthData,
-        categories: updatedCategories,
-        totalSpent: updatedCategories.reduce(
-          (sum, cat) => sum + (cat.spent || 0),
-          0
-        ),
-      };
-
-      // Save updated month data
-      await StorageService.saveMonthlyBudgetData(updatedMonthData);
-
-      // Create and save transaction record
-      const transaction: Transaction = {
-        id: Date.now().toString(),
-        categoryId: selectedCategory,
-        amount: expenseAmount,
-        description: description.trim() || "No description",
-        date: date,
-        type: "expense",
-        paymentMode: paymentMode,
-      };
-
-      // Save transaction
-      await StorageService.saveTransaction(transaction);
-
+      const res = await insertTransaction(transaction as Transaction);
+      console.log("Transaction added successfully:", res);
       Alert.alert("Success", "Expense added successfully!", [
         { text: "OK", onPress: () => router.replace("/") },
       ]);
     } catch (error) {
-      console.error("Error saving expense:", error);
-      Alert.alert("Error", "Failed to save expense. Please try again.");
+      console.error("Error adding transaction:", error);
+      Alert.alert("Error", "Failed to add transaction. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (isBudgetLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -230,15 +222,21 @@ export default function AddExpenseScreen() {
                 key={category.id}
                 style={[
                   styles.categoryChip,
-                  selectedCategory === category.id &&
+                  transaction.categoryId === category.id &&
                     styles.categoryChipSelected,
                 ]}
-                onPress={() => setSelectedCategory(category.id)}
+                onPress={() =>
+                  setTransaction({
+                    ...transaction,
+                    categoryId: category.id as string,
+                    categoryName: category.name,
+                  })
+                }
               >
                 <Text
                   style={[
                     styles.categoryChipText,
-                    selectedCategory === category.id &&
+                    transaction.categoryId === category.id &&
                       styles.categoryChipTextSelected,
                   ]}
                 >
@@ -256,8 +254,13 @@ export default function AddExpenseScreen() {
             <Text style={styles.currencySymbol}>₹</Text>
             <TextInput
               style={styles.amountInput}
-              value={amount}
-              onChangeText={setAmount}
+              value={transaction.amount?.toString() || ""}
+              onChangeText={(text) =>
+                setTransaction({
+                  ...transaction,
+                  amount: text ? Number(text) : 0,
+                })
+              }
               placeholder="0.00"
               keyboardType="numeric"
               maxLength={10}
@@ -270,8 +273,10 @@ export default function AddExpenseScreen() {
           <Text style={styles.label}>Description (Optional)</Text>
           <TextInput
             style={styles.descriptionInput}
-            value={description}
-            onChangeText={setDescription}
+            value={transaction.description || ""}
+            onChangeText={(text) =>
+              setTransaction({ ...transaction, description: text })
+            }
             placeholder="e.g., Dinner at Dominos"
             maxLength={100}
             multiline
@@ -286,7 +291,9 @@ export default function AddExpenseScreen() {
             onPress={() => setShowDatePicker(true)}
           >
             <Ionicons name="calendar-outline" size={20} color="#007AFF" />
-            <Text style={styles.dateText}>{formatDate(date)}</Text>
+            <Text style={styles.dateText}>
+              {formatDate(transaction.date || new Date())}
+            </Text>
             <Ionicons name="chevron-down" size={20} color="#666" />
           </TouchableOpacity>
         </View>
@@ -300,19 +307,25 @@ export default function AddExpenseScreen() {
                 key={mode.id}
                 style={[
                   styles.paymentModeCard,
-                  paymentMode === mode.id && styles.paymentModeCardSelected,
+                  transaction.paymentMode === mode.id &&
+                    styles.paymentModeCardSelected,
                 ]}
-                onPress={() => setPaymentMode(mode.id)}
+                onPress={() =>
+                  setTransaction({ ...transaction, paymentMode: mode.id })
+                }
               >
                 <Ionicons
                   name={mode.icon as any}
                   size={24}
-                  color={paymentMode === mode.id ? "#ffffff" : "#007AFF"}
+                  color={
+                    transaction.paymentMode === mode.id ? "#ffffff" : "#007AFF"
+                  }
                 />
                 <Text
                   style={[
                     styles.paymentModeText,
-                    paymentMode === mode.id && styles.paymentModeTextSelected,
+                    transaction.paymentMode === mode.id &&
+                      styles.paymentModeTextSelected,
                   ]}
                 >
                   {mode.name}
@@ -322,11 +335,51 @@ export default function AddExpenseScreen() {
           </View>
         </View>
 
+        {/* Screenshots Upload */}
+        <View style={styles.formSection}>
+          <Text style={styles.label}>Screenshots (Optional)</Text>
+          <Text style={styles.helperText}>Add payment receipts or bills</Text>
+
+          {/* Upload Button */}
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleAddScreenshot}
+          >
+            <Ionicons name="camera-outline" size={24} color="#007AFF" />
+            <Text style={styles.uploadButtonText}>Add Screenshot</Text>
+          </TouchableOpacity>
+
+          {/* Screenshots Preview */}
+          {screenshots.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.screenshotsContainer}
+            >
+              {screenshots.map((uri, index) => (
+                <View key={index} style={styles.screenshotWrapper}>
+                  <Image
+                    source={{ uri }}
+                    style={styles.screenshotImage}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveScreenshot(index)}
+                  >
+                    <Ionicons name="close-circle" size={24} color="#ff4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-            onPress={validateAndSave}
+            onPress={addTransaction}
             disabled={isSaving}
           >
             <Text style={styles.saveButtonText}>
@@ -347,7 +400,7 @@ export default function AddExpenseScreen() {
       {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
-          value={date}
+          value={transaction.date || new Date()}
           mode="date"
           display="default"
           onChange={handleDateChange}
@@ -357,176 +410,3 @@ export default function AddExpenseScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  formSection: {
-    marginTop: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    marginBottom: 12,
-  },
-  categoryScrollView: {
-    flexDirection: "row",
-  },
-  categoryChip: {
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-  },
-  categoryChipSelected: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  categoryChipText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-  },
-  categoryChipTextSelected: {
-    color: "#ffffff",
-  },
-  amountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-    paddingHorizontal: 16,
-  },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#007AFF",
-    marginRight: 8,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    paddingVertical: 16,
-  },
-  descriptionInput: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: "#1a1a1a",
-    minHeight: 50,
-    textAlignVertical: "top",
-  },
-  dateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  dateText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    marginLeft: 12,
-  },
-  buttonContainer: {
-    marginTop: 40,
-    marginBottom: 40,
-    gap: 16,
-  },
-  saveButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: "center",
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#ccc",
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  saveButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  cancelButton: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  paymentModeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  paymentModeCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    minWidth: 100,
-    flex: 1,
-  },
-  paymentModeCardSelected: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  paymentModeText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-    marginTop: 8,
-    textAlign: "center",
-  },
-  paymentModeTextSelected: {
-    color: "#ffffff",
-  },
-});

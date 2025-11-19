@@ -1,8 +1,7 @@
 import { styles } from "@/assets/styles/signup.style";
-import { supabase } from "@/utils/superbase";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
   Alert,
@@ -128,29 +127,29 @@ export default function SignupScreen() {
   //   }
   // };
 
-  const handleGoogleSignup = async () => {
-    try {
-      const redirectUrl = process.env.EXPO_PUBLIC_APP_DEEP_LINK_CALLBACK;
+  // const handleGoogleSignup = async () => {
+  //   try {
+  //     const redirectUrl = process.env.EXPO_PUBLIC_APP_DEEP_LINK_CALLBACK;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: true,
-        },
-      });
+  //     const { data, error } = await supabase.auth.signInWithOAuth({
+  //       provider: "google",
+  //       options: {
+  //         redirectTo: redirectUrl,
+  //         skipBrowserRedirect: true,
+  //       },
+  //     });
 
-      if (error) throw error;
+  //     if (error) throw error;
 
-      if (data?.url) {
-        console.log("Opening URL: ", data.url);
-        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-      }
-    } catch (error) {
-      console.log("Error while google signup: ", error);
-      Alert.alert("Google Auth Error");
-    }
-  };
+  //     if (data?.url) {
+  //       console.log("Opening URL: ", data.url);
+  //       await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+  //     }
+  //   } catch (error) {
+  //     console.log("Error while google signup: ", error);
+  //     Alert.alert("Google Auth Error");
+  //   }
+  // };
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

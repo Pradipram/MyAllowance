@@ -1,6 +1,6 @@
 import { styles } from "@/assets/styles/login.style";
 import LoaderModal from "@/components/modal/loader-modal";
-import { supabase } from "@/utils/superbase";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";

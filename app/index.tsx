@@ -1,45 +1,34 @@
 // import logo from "@/assets/images/logo.png";
 import { styles } from "@/assets/styles/index.style";
+import IndexHeader from "@/components/header/index-header";
 import NoBudgetSet from "@/components/noBudgetSet";
 import ProfileModal from "@/components/profile/profile-modal";
-import ProfileIcon from "@/components/profile/profileIcon";
-import { supabase } from "@/utils/superbase";
-import { getMonthYearString } from "@/utils/utility";
+import { getMonthBudget } from "@/services/budget";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
-import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BudgetCategory, Transaction } from "../types/budget";
-import { StorageService } from "../utils/storage";
+import { MonthlyBudget } from "../types/budget";
 
 export default function Index() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSetupComplete, setIsSetupComplete] = useState(false);
-  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>(
-    []
-  );
-  const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
+  const [isBudgetLoading, setIsBudgetLoading] = useState(false);
+  const [monthBudget, setMonthBudget] = useState<MonthlyBudget | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
-  const [hasMonthData, setHasMonthData] = useState(false);
-  const [showAutoBudgetPrompt, setShowAutoBudgetPrompt] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
   // Check authentication status
   useEffect(() => {
-    checkAuthStatus();
+    // checkAuthStatus();
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -47,11 +36,8 @@ export default function Index() {
         console.log("Auth state changed:", event);
         if (session?.user) {
           setUser(session.user);
-          // console.log("User data:", session.user);
-          setIsAuthenticated(true);
         } else {
           setUser(null);
-          setIsAuthenticated(false);
           router.replace("/login");
         }
       }
@@ -62,214 +48,40 @@ export default function Index() {
     };
   }, []);
 
-  const checkAuthStatus = async () => {
-    try {
-      setAuthLoading(true);
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("Error getting session:", error);
-        setIsAuthenticated(false);
-        router.replace("/login");
-        return;
-      }
-
-      if (session?.user) {
-        setUser(session.user);
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-        router.replace("/login");
-      }
-    } catch (error) {
-      console.error("Error checking auth status:", error);
-      setIsAuthenticated(false);
-      router.replace("/login");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadMonthData();
-  }, []);
-
   useEffect(() => {
     loadMonthData();
   }, [selectedDate]);
 
-  // Refresh data when screen comes into focus (e.g., returning from edit)
-  useFocusEffect(
-    useCallback(() => {
-      loadMonthData();
-      // Check for auto budget suggestions after a brief delay
-      setTimeout(() => {
-        checkForAutoBudgetSuggestion();
-      }, 1000);
-    }, [selectedDate])
-  );
-
   const loadMonthData = async () => {
-    setIsLoading(true);
     try {
-      const month = (selectedDate.getMonth() + 1).toString();
-      const year = selectedDate.getFullYear();
-
-      // Check global setup status first
-      const globalSetupComplete = await StorageService.isSetupComplete();
-      const baseCategories = await StorageService.getBudgetCategories();
-
-      // If no base categories exist, setup is definitely not complete
-      const actualSetupComplete =
-        globalSetupComplete && baseCategories.length > 0;
-
-      // Load monthly budget data
-      const monthData = await StorageService.getMonthlyBudgetData(month, year);
-
-      // Load monthly transactions
-      const transactions = await StorageService.getMonthTransactions(
-        month,
-        year
+      setIsBudgetLoading(true);
+      const res = await await getMonthBudget(
+        selectedDate.getMonth() + 1,
+        selectedDate.getFullYear()
       );
-      setMonthTransactions(transactions);
-
-      if (monthData && monthData.categories.length > 0) {
-        setBudgetCategories(monthData.categories);
-        setHasMonthData(true);
-        setIsSetupComplete(actualSetupComplete);
-      } else {
-        setHasMonthData(false);
-
-        // For current month or future months, load base categories as template
-        // For past months, show zero budgets (no inheritance from template)
-        const currentDate = new Date();
-        const currentYear = currentDate.getFullYear();
-        const currentMonth = currentDate.getMonth() + 1;
-
-        const isCurrentOrFutureMonth =
-          year > currentYear ||
-          (year === currentYear && parseInt(month) >= currentMonth);
-
-        if (isCurrentOrFutureMonth) {
-          // Load base categories if no month data exists for current/future months
-          if (actualSetupComplete) {
-            setBudgetCategories(
-              baseCategories.map((cat) => ({ ...cat, spent: 0 }))
-            );
-            setIsSetupComplete(true);
-          } else {
-            setBudgetCategories([]);
-            setIsSetupComplete(false);
-          }
-        } else {
-          // For past months with no data, show empty state but keep global setup status
-          setBudgetCategories([]);
-          setIsSetupComplete(actualSetupComplete);
-        }
-      }
+      // console.log("Loaded month budget:", res);
+      setMonthBudget(res);
     } catch (error) {
-      console.error("Error loading month data:", error);
-      setHasMonthData(false);
-      setIsSetupComplete(false);
+      console.error("Error loading month budget:", error);
     } finally {
-      setIsLoading(false);
+      setIsBudgetLoading(false);
     }
-  };
-
-  const getTotalBudget = () => {
-    return budgetCategories.reduce((total, cat) => total + cat.amount, 0);
-  };
-
-  const getTotalSpent = () => {
-    if (!monthTransactions || monthTransactions.length === 0) {
-      return budgetCategories.reduce(
-        (total, cat) => total + (cat.spent || 0),
-        0
-      );
-    }
-    return monthTransactions.reduce(
-      (total, transaction) => total + transaction.amount,
-      0
-    );
   };
 
   const getCategorySpent = (categoryId: string): number => {
-    if (!monthTransactions || monthTransactions.length === 0) {
-      const category = budgetCategories.find((cat) => cat.id === categoryId);
-      return category?.spent || 0;
-    }
-    return monthTransactions
-      .filter((transaction) => transaction.categoryId === categoryId)
-      .reduce((total, transaction) => total + transaction.amount, 0);
+    // if (!monthTransactions || monthTransactions.length === 0) {
+    //   const category = budgetCategories.find((cat) => cat.id === categoryId);
+    //   return category?.spent || 0;
+    // }
+    // return monthTransactions
+    //   .filter((transaction) => transaction.categoryId === categoryId)
+    //   .reduce((total, transaction) => total + transaction.amount, 0);
+    return 0;
   };
 
   const getRemaining = () => {
-    return getTotalBudget() - getTotalSpent();
-  };
-
-  const checkForAutoBudgetSuggestion = async () => {
-    try {
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth() + 1;
-
-      const shouldShow = await StorageService.shouldShowAutoSuggestion(
-        currentYear,
-        currentMonth
-      );
-
-      if (shouldShow && isSetupComplete && budgetCategories.length === 0) {
-        // Show prompt only if user has setup complete but no current month budget
-        Alert.alert(
-          "Smart Budget Available! 🎯",
-          "We can suggest your budget based on your past spending patterns. Would you like to see our recommendations?",
-          [
-            { text: "Maybe Later", style: "cancel" },
-            {
-              text: "Show Suggestions",
-              onPress: () => {
-                router.push("/set-budget?autoSuggest=true");
-              },
-            },
-          ]
-        );
-      }
-    } catch (error) {
-      console.error("Error checking for auto budget suggestion:", error);
-    }
-  };
-
-  const changeMonth = (direction: "prev" | "next") => {
-    const newDate = new Date(selectedDate);
-    const today = new Date();
-
-    if (direction === "prev") {
-      newDate.setMonth(newDate.getMonth() - 1);
-      setSelectedDate(newDate);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
-      setSelectedDate(newDate);
-      if (isFutureThreeMonth()) {
-        newDate.setMonth(newDate.getMonth() - 1);
-        setSelectedDate(newDate);
-      }
-    }
-  };
-
-  const isFutureThreeMonth = () => {
-    const today = new Date();
-    // const selectedDate = new Date(selectedDate);
-
-    // Calculate the date 3 months from now
-    const threeMonthsLater = new Date(today);
-    threeMonthsLater.setMonth(today.getMonth() + 2);
-    // console.log("Three Months Later:", threeMonthsLater);
-
-    // Allow only future months within 3 months range
-    // return selectedDate > today && selectedDate <= threeMonthsLater;
-    return selectedDate > threeMonthsLater;
+    // return getTotalBudget() - getTotalSpent();
+    return 0;
   };
 
   const getProgressPercentage = (spent: number, budget: number) => {
@@ -292,36 +104,7 @@ export default function Index() {
     );
   };
 
-  const isEditableMonth = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth() + 1;
-    const currentYear = today.getFullYear();
-
-    // Check if the displayed month is within the next 3 months
-    for (let i = 0; i < 3; i++) {
-      const date = new Date(currentYear, currentMonth - 1 + i, 1);
-      const monthNum = date.getMonth() + 1;
-      const yearNum = date.getFullYear();
-
-      if (
-        selectedDate.getMonth() + 1 === monthNum &&
-        selectedDate.getFullYear() === yearNum
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  // Redirect to login if not authenticated
-  // useEffect(() => {
-  //   if (!authLoading && !isAuthenticated) {
-  //     router.replace("/login" as any);
-  //   }
-  // }, [isAuthenticated, authLoading]);
-
-  if (authLoading || isLoading) {
+  if (isBudgetLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -332,70 +115,25 @@ export default function Index() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // Will redirect to login via useEffect
-  }
-
   // if (isSetupComplete || 1) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.monthSelector}>
-          <TouchableOpacity
-            style={styles.monthArrow}
-            onPress={() => changeMonth("prev")}
-          >
-            <Ionicons name="chevron-back" size={24} color="#007AFF" />
-          </TouchableOpacity>
-          <Text
-            style={[
-              styles.monthText,
-              isCurrentMonth() && styles.currentMonthText,
-            ]}
-          >
-            {getMonthYearString(selectedDate)}
-            {isCurrentMonth() && (
-              <Text style={styles.currentMonthIndicator}> • Current</Text>
-            )}
-          </Text>
-          <TouchableOpacity
-            style={[
-              styles.monthArrow,
-              isFutureThreeMonth() && styles.disabledArrow,
-            ]}
-            onPress={() => changeMonth("next")}
-            disabled={isFutureThreeMonth()}
-          >
-            <Ionicons
-              name="chevron-forward"
-              size={24}
-              color={isFutureThreeMonth() ? "#ccc" : "#007AFF"}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Profile Icon */}
-        <TouchableOpacity
-          style={styles.profileIcon}
-          onPress={() => setShowProfileModal(true)}
-        >
-          {/* <Ionicons name="person-circle-outline" size={32} color="#007AFF" /> */}
-          <ProfileIcon fullName={user?.user_metadata.fullName} size={32} />
-        </TouchableOpacity>
-      </View>
+      {/* Header */}
+      <IndexHeader
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        isCurrentMonth={isCurrentMonth}
+        setShowProfileModal={setShowProfileModal}
+        user={user}
+      />
 
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {isMonthDataLoading ? (
-          <View style={styles.monthLoadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.monthLoadingText}>Loading month data...</Text>
-          </View>
-        ) : !hasMonthData && budgetCategories.length === 0 ? (
+        {!monthBudget || monthBudget?.categories.length === 0 ? (
           <NoBudgetSet selectedDate={selectedDate} />
-        ) : budgetCategories.length > 0 ? (
+        ) : (
           <>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Monthly Overview</Text>
@@ -403,13 +141,13 @@ export default function Index() {
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Total Budget</Text>
                   <Text style={styles.summaryAmount}>
-                    ₹{getTotalBudget().toLocaleString()}
+                    ₹{monthBudget.totalBudget.toLocaleString()}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Total Spent</Text>
                   <Text style={[styles.summaryAmount, styles.spentAmount]}>
-                    ₹{getTotalSpent().toLocaleString()}
+                    ₹{monthBudget.totalSpent.toLocaleString()}
                   </Text>
                 </View>
               </View>
@@ -448,8 +186,8 @@ export default function Index() {
 
             <View style={styles.categoriesSection}>
               <Text style={styles.sectionTitle}>Budget Categories</Text>
-              {budgetCategories.map((category) => {
-                const spent = getCategorySpent(category.id);
+              {monthBudget?.categories.map((category) => {
+                const spent = getCategorySpent(category.id as string);
                 const percentage = getProgressPercentage(
                   spent,
                   category.amount
@@ -498,29 +236,23 @@ export default function Index() {
             </View>
 
             <View style={styles.quickActionsSection}>
-              {isEditableMonth() ? (
-                <TouchableOpacity
-                  style={styles.editBudgetButton}
-                  onPress={() => {
-                    const month = (selectedDate.getMonth() + 1).toString();
-                    const year = selectedDate.getFullYear().toString();
-                    router.push(`/set-budget?month=${month}&year=${year}`);
-                  }}
-                >
-                  <Ionicons name="settings" size={20} color="#007AFF" />
-                  <Text style={styles.editBudgetText}>Edit Budget</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.editBudgetDisabled}>
-                  <Ionicons name="lock-closed" size={20} color="#999" />
-                  <Text style={styles.editBudgetDisabledText}>
-                    Budget editing only available for current and next 2 months
-                  </Text>
-                </View>
-              )}
+              <TouchableOpacity
+                style={styles.editBudgetButton}
+                onPress={() => {
+                  const month = (selectedDate.getMonth() + 1).toString();
+                  const year = selectedDate.getFullYear().toString();
+                  const budgetId = monthBudget?.id || "";
+                  router.push(
+                    `/set-budget?month=${month}&year=${year}&budgetId=${budgetId}`
+                  );
+                }}
+              >
+                <Ionicons name="settings" size={20} color="#007AFF" />
+                <Text style={styles.editBudgetText}>Edit Budget</Text>
+              </TouchableOpacity>
             </View>
           </>
-        ) : null}
+        )}
       </ScrollView>
 
       {isCurrentMonth() && (
@@ -540,11 +272,6 @@ export default function Index() {
       <ProfileModal
         visible={showProfileModal}
         onClose={() => setShowProfileModal(false)}
-        // user={{
-        //   email: user?.email,
-        //   fullName: user?.user_metadata?.fullName || user?.email?.split("@")[0],
-        //   createdAt: user?.created_at,
-        // }}
         user={user}
       />
     </SafeAreaView>

@@ -1,5 +1,5 @@
 import { styles } from "@/assets/styles/profile-modal.style";
-import { supabase } from "@/utils/superbase";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
 import { router } from "expo-router";
