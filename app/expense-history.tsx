@@ -51,11 +51,6 @@ export default function ExpenseHistoryScreen() {
     }
   };
 
-  // const getCategoryById = (categoryId: string): BudgetCategory | undefined => {
-  //   // return categories.find((cat) => cat.id === categoryId);
-  //   return undefined;
-  // };
-
   const getCategoryIcon = (categoryName: string): string => {
     const iconMap: { [key: string]: string } = {
       Food: "restaurant-outline",
@@ -128,7 +123,7 @@ export default function ExpenseHistoryScreen() {
     // const categoryName = category?.name || "Unknown";
     const categoryName = item.category_name || "Unknown";
     const icon = getCategoryIcon(categoryName);
-    console.log("Rendering expense item:", item, "with icon:", icon);
+    // console.log("Rendering expense item:", item, "with icon:", icon);
 
     return (
       <View style={styles.expenseItem}>

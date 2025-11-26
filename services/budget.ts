@@ -103,6 +103,7 @@ const updateMonthlyBudget = async (budget: MonthlyBudget) => {
     .update({
       total_budget: budget.totalBudget,
       total_spent: budget.totalSpent,
+      updated_at: new Date(),
     })
     .eq("id", budget.id);
 
@@ -184,6 +185,7 @@ export const getMonthBudget = async (month: number, year: number) => {
     totalBudget: budgetData.total_budget,
     totalSpent: budgetData.total_spent,
     categories: categoriesData || [],
+    // created_at: budgetData.created_at,
   };
 
   return monthlyBudget;

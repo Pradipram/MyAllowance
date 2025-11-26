@@ -234,8 +234,11 @@ export default function Index() {
                   const month = (selectedDate.getMonth() + 1).toString();
                   const year = selectedDate.getFullYear().toString();
                   const budgetId = monthBudget?.id || "";
+                  // router.push(
+                  //   `/set-budget?month=${month}&year=${year}&budgetId=${budgetId}`
+                  // );
                   router.push(
-                    `/set-budget?month=${month}&year=${year}&budgetId=${budgetId}`
+                    `/set-budget?selected_date=${selectedDate.toISOString()}`
                   );
                 }}
               >
@@ -254,6 +257,9 @@ export default function Index() {
             const month = (selectedDate.getMonth() + 1).toString();
             const year = selectedDate.getFullYear().toString();
             router.push(`/add-expense?month=${month}&year=${year}`);
+            // router.push(
+            //   `/set-budget?selectedDate=${selectedDate.toISOString()}`
+            // );
           }}
         >
           <Ionicons name="add" size={32} color="#ffffff" />

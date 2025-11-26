@@ -21,11 +21,12 @@ export default function OnboardingScreen() {
   const params = useLocalSearchParams();
   const [budget, setBudget] = useState<MonthlyBudget | null>(null);
   const [isBudgetLoading, setIsBudgetLoading] = useState(false);
-  const [selectedMonthDate, setSelectedMonthDate] = useState<Date>(new Date());
+  const [selectedMonthDate, setSelectedMonthDate] = useState<Date>(
+    new Date(params.selected_date as string) || new Date()
+  );
   const [showMonthSelector, setShowMonthSelector] = useState(false);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
 
-  // Load budget data when component mounts
   useEffect(() => {
     loadMonthData();
   }, [selectedMonthDate]);
@@ -41,6 +42,7 @@ export default function OnboardingScreen() {
       if (res) {
         // Existing budget loaded
         setBudget(res);
+        // console.log("Loaded existing budget", res);
       } else {
         // No budget found - initialize with empty category
         setBudget({
@@ -141,9 +143,6 @@ export default function OnboardingScreen() {
         totalSpent: 0,
       };
 
-      // console.log("Saving Monthly Budget:", monthlyBudget);
-      // // Save to the selected month
-      // await StorageService.saveMonthlyBudgetData(monthlyBudget);
       const res = await saveOrUpdateMonthlyBudget(monthlyBudget);
 
       console.log("Save Response:", res);
