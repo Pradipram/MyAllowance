@@ -1,5 +1,5 @@
 import { styles } from "@/assets/styles/add-expense.style";
-import { getMonthBudget } from "@/services/budget";
+import ShowCategory from "@/components/expense/show-category";
 import { insertTransaction } from "@/services/transaction";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
@@ -18,29 +18,28 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BudgetCategory, Transaction } from "../types/budget";
+import { Transaction } from "../types/budget";
 
 const defaultTransaction: Transaction = {
   // id: "",
-  userId: "",
-  categoryId: "",
-  categoryName: "",
+  user_id: "",
+  category_id: "",
+  category_name: "",
   amount: 0,
   description: "",
   date: new Date(),
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
   type: "expense",
-  paymentMode: "upi",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  isDeleted: false,
+  payment_mode: "upi",
+  created_at: new Date(),
+  updated_at: new Date(),
+  is_deleted: false,
 };
 
 export default function AddExpenseScreen() {
   const { month, year } = useLocalSearchParams();
-  const [isBudgetLoading, setIsBudgetLoading] = useState(true);
-  const [categories, setCategories] = useState<BudgetCategory[]>([]);
+
   const [transaction, setTransaction] =
     useState<Transaction>(defaultTransaction);
 
@@ -76,29 +75,8 @@ export default function AddExpenseScreen() {
       }
     }
 
-    loadBudget();
+    // loadBudget();
   }, []);
-
-  const loadBudget = async () => {
-    try {
-      setIsBudgetLoading(true);
-      const res = await getMonthBudget(
-        parseInt(month as string),
-        parseInt(year as string)
-      );
-      if (res) {
-        // setBudget(res);
-        setCategories(res.categories);
-      } else {
-        setCategories([]);
-      }
-    } catch (error) {
-      console.error("Error loading budget:", error);
-      setCategories([]);
-    } finally {
-      setIsBudgetLoading(false);
-    }
-  };
 
   const formatDate = (date: Date) => {
     const today = new Date();
@@ -146,7 +124,7 @@ export default function AddExpenseScreen() {
   };
 
   const validateTransaction = () => {
-    if (!transaction.categoryId) {
+    if (!transaction.category_id) {
       Alert.alert("Error", "Please select a category.");
       return false;
     }
@@ -160,7 +138,7 @@ export default function AddExpenseScreen() {
       return false;
     }
 
-    if (!transaction.paymentMode) {
+    if (!transaction.payment_mode) {
       Alert.alert("Error", "Please select a payment mode.");
       return false;
     }
@@ -168,14 +146,14 @@ export default function AddExpenseScreen() {
   };
 
   const addTransaction = async () => {
-    console.log("Add transaction function called", transaction);
+    // console.log("Add transaction function called", transaction);
     if (!validateTransaction()) {
       return;
     }
     setIsSaving(true);
     try {
       const res = await insertTransaction(transaction as Transaction);
-      console.log("Transaction added successfully:", res);
+      // console.log("Transaction added successfully:", res);
       Alert.alert("Success", "Expense added successfully!", [
         { text: "OK", onPress: () => router.replace("/") },
       ]);
@@ -186,16 +164,6 @@ export default function AddExpenseScreen() {
       setIsSaving(false);
     }
   };
-
-  if (isBudgetLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading categories...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -210,42 +178,15 @@ export default function AddExpenseScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Category Selection */}
-        <View style={styles.formSection}>
-          <Text style={styles.label}>Category *</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryScrollView}
-          >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryChip,
-                  transaction.categoryId === category.id &&
-                    styles.categoryChipSelected,
-                ]}
-                onPress={() =>
-                  setTransaction({
-                    ...transaction,
-                    categoryId: category.id as string,
-                    categoryName: category.name,
-                  })
-                }
-              >
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    transaction.categoryId === category.id &&
-                      styles.categoryChipTextSelected,
-                  ]}
-                >
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        <ShowCategory
+          selectedCategoryId={transaction.category_id}
+          onSelectCategory={(category_id, category_name) =>
+            setTransaction({ ...transaction, category_id, category_name })
+          }
+          month={transaction.month}
+          year={transaction.year}
+          // setIsBudgetLoading={setIsBudgetLoading}
+        />
 
         {/* Amount Input */}
         <View style={styles.formSection}>
@@ -307,24 +248,24 @@ export default function AddExpenseScreen() {
                 key={mode.id}
                 style={[
                   styles.paymentModeCard,
-                  transaction.paymentMode === mode.id &&
+                  transaction.payment_mode === mode.id &&
                     styles.paymentModeCardSelected,
                 ]}
                 onPress={() =>
-                  setTransaction({ ...transaction, paymentMode: mode.id })
+                  setTransaction({ ...transaction, payment_mode: mode.id })
                 }
               >
                 <Ionicons
                   name={mode.icon as any}
                   size={24}
                   color={
-                    transaction.paymentMode === mode.id ? "#ffffff" : "#007AFF"
+                    transaction.payment_mode === mode.id ? "#ffffff" : "#007AFF"
                   }
                 />
                 <Text
                   style={[
                     styles.paymentModeText,
-                    transaction.paymentMode === mode.id &&
+                    transaction.payment_mode === mode.id &&
                       styles.paymentModeTextSelected,
                   ]}
                 >

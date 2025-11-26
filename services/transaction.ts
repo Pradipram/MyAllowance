@@ -130,7 +130,7 @@ import { supabase } from "@/utils/supabase";
 // };
 
 export const insertTransaction = async (transaction: Transaction) => {
-  console.log("🔔 Inserting transaction:", transaction);
+  // console.log("🔔 Inserting transaction:", transaction);
 
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user.id;
@@ -138,14 +138,14 @@ export const insertTransaction = async (transaction: Transaction) => {
 
   const { data, error } = await supabase.rpc("insert_full_transaction", {
     p_user_id: userId,
-    p_category_id: transaction.categoryId,
-    p_category_name: transaction.categoryName,
+    p_category_id: transaction.category_id,
+    p_category_name: transaction.category_name,
     p_description: transaction.description || "",
     p_date: transaction.date,
     p_month: transaction.month,
     p_year: transaction.year,
     p_type: transaction.type || "expense",
-    p_payment_mode: transaction.paymentMode,
+    p_payment_mode: transaction.payment_mode,
     p_amount: transaction.amount,
   });
 
@@ -155,4 +155,27 @@ export const insertTransaction = async (transaction: Transaction) => {
   }
 
   return data;
+};
+
+export const getTransactions = async (month: number, year: number) => {
+  const session = await supabase.auth.getSession();
+  const userId = session.data.session?.user.id;
+  if (!userId) throw new Error("User not authenticated");
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("month", month)
+    .eq("year", year)
+    .eq("is_deleted", false)
+    .order("date", { ascending: false });
+
+  if (error) {
+    console.error("❌ Error fetching transactions:", error);
+    throw error;
+  }
+
+  console.log("✅ Transactions fetched:", data?.length || 0);
+  return data as Transaction[];
 };

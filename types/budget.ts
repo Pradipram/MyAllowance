@@ -5,22 +5,12 @@ export interface BudgetCategory {
   spent?: number;
 }
 
-// export interface Transaction {
-//   id: string;
-//   categoryId: string;
-//   amount: number;
-//   description: string;
-//   date: Date;
-//   type: "expense" | "income";
-//   paymentMode: string;
-// }
-
 export interface Transaction {
   id?: string;
-  userId: string;
+  user_id: string;
 
-  categoryId: string;
-  categoryName: string;
+  category_id: string;
+  category_name: string;
 
   amount: number;
   description: string;
@@ -30,15 +20,15 @@ export interface Transaction {
   year: number;
 
   type: "expense" | "income";
-  paymentMode: string;
+  payment_mode: string;
 
-  attachmentUrl?: string;
+  attachment_url?: string;
 
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 
-  isDeleted: boolean;
-  deletedAt?: Date;
+  is_deleted: boolean;
+  deleted_at?: Date;
 }
 
 export interface MonthlyBudget {

@@ -1,19 +1,24 @@
+const months = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 export const getMonthYearString = (selectedDate: Date) => {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
   return `${months[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`;
+};
+
+export const getMonthYearStringFromNumbers = (month: number, year: number) => {
+  return `${months[month - 1]} ${year}`;
 };
 
 // Helper function to get available months

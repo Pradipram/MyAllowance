@@ -68,22 +68,6 @@ export default function Index() {
     }
   };
 
-  const getCategorySpent = (categoryId: string): number => {
-    // if (!monthTransactions || monthTransactions.length === 0) {
-    //   const category = budgetCategories.find((cat) => cat.id === categoryId);
-    //   return category?.spent || 0;
-    // }
-    // return monthTransactions
-    //   .filter((transaction) => transaction.categoryId === categoryId)
-    //   .reduce((total, transaction) => total + transaction.amount, 0);
-    return 0;
-  };
-
-  const getRemaining = () => {
-    // return getTotalBudget() - getTotalSpent();
-    return 0;
-  };
-
   const getProgressPercentage = (spent: number, budget: number) => {
     if (budget === 0) return 0;
     return Math.min((spent / budget) * 100, 100);
@@ -102,6 +86,11 @@ export default function Index() {
       selectedDate.getMonth() === today.getMonth() &&
       selectedDate.getFullYear() === today.getFullYear()
     );
+  };
+
+  const getRemainingAmount = () => {
+    if (!monthBudget) return 0;
+    return monthBudget.totalBudget - monthBudget.totalSpent;
   };
 
   if (isBudgetLoading) {
@@ -156,10 +145,12 @@ export default function Index() {
                 <Text
                   style={[
                     styles.remainingAmount,
-                    { color: getRemaining() >= 0 ? "#28a745" : "#ff4444" },
+                    {
+                      color: getRemainingAmount() >= 0 ? "#28a745" : "#ff4444",
+                    },
                   ]}
                 >
-                  ₹{Math.abs(getRemaining()).toLocaleString()}
+                  ₹{Math.abs(getRemainingAmount()).toLocaleString()}
                 </Text>
               </View>
             </View>
@@ -187,7 +178,8 @@ export default function Index() {
             <View style={styles.categoriesSection}>
               <Text style={styles.sectionTitle}>Budget Categories</Text>
               {monthBudget?.categories.map((category) => {
-                const spent = getCategorySpent(category.id as string);
+                // const spent = getCategorySpent(category.id as string);
+                const spent = category.spent || 0;
                 const percentage = getProgressPercentage(
                   spent,
                   category.amount

@@ -1,93 +1,60 @@
 import { styles } from "@/assets/styles/expense-history.style";
+import ShowCategory from "@/components/expense/show-category";
 import Header from "@/components/header/header";
+import { getTransactions } from "@/services/transaction";
+import { getMonthYearStringFromNumbers } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BudgetCategory, Transaction } from "../types/budget";
+import { Transaction } from "../types/budget";
 
 export default function ExpenseHistoryScreen() {
-  const { month, year, category } = useLocalSearchParams<{
+  const { month, year, categoryId } = useLocalSearchParams<{
     month?: string;
     year?: string;
-    category?: string;
+    categoryId?: string;
   }>();
-  const [expenses, setExpenses] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<BudgetCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [preSelectedCategory, setPreSelectedCategory] =
-    useState<BudgetCategory | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isMonthTransactionsLoading, setIsMonthTransactionsLoading] =
+    useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
 
-  // useEffect(() => {
-  //   loadData();
-  // }, [month, year, category]);
-
-  // Set selected category when category parameter is provided
   useEffect(() => {
-    if (category && category !== "all") {
-      setSelectedCategory(category);
-      // Find category details for header
-      const categoryDetails = categories.find((cat) => cat.id === category);
-      setPreSelectedCategory(categoryDetails || null);
+    if (categoryId) {
+      setSelectedCategoryId(categoryId);
     }
-  }, [category, categories]);
+  }, [categoryId]);
 
   // Refresh data when screen comes into focus
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     loadData();
-  //   }, [])
-  // );
+  useFocusEffect(
+    useCallback(() => {
+      // loadData();
+      loadMonthTransactions();
+    }, [])
+  );
 
-  // const loadData = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     // Use passed parameters or default to current date
-  //     const targetMonth = month || (new Date().getMonth() + 1).toString();
-  //     const targetYear = year ? parseInt(year) : new Date().getFullYear();
-
-  //     // Load transactions for the specified month
-  //     const monthTransactions = await StorageService.getMonthTransactions(
-  //       targetMonth,
-  //       targetYear
-  //     );
-
-  //     // Load categories for filtering
-  //     const monthData = await StorageService.getMonthlyBudgetData(
-  //       targetMonth,
-  //       targetYear
-  //     );
-  //     if (monthData) {
-  //       setCategories(monthData.categories);
-  //     } else {
-  //       const baseCategories = await StorageService.getBudgetCategories();
-  //       setCategories(baseCategories);
-  //     }
-
-  //     setExpenses(monthTransactions);
-
-  //     // Set the current month display to match the loaded data
-  //     const displayDate = new Date(targetYear, parseInt(targetMonth) - 1, 1);
-  //     setCurrentMonth(displayDate);
-  //   } catch (error) {
-  //     console.error("Error loading expense history:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  const getCategoryById = (categoryId: string): BudgetCategory | undefined => {
-    return categories.find((cat) => cat.id === categoryId);
+  const loadMonthTransactions = async () => {
+    setIsMonthTransactionsLoading(true);
+    try {
+      const transactionsResponse = await getTransactions(
+        parseInt(month!),
+        parseInt(year!)
+      );
+      // console.log("Loaded month transactions:", transactionsResponse);
+      setTransactions(transactionsResponse || []);
+    } catch (error) {
+      console.error("Error loading month transactions:", error);
+    } finally {
+      setIsMonthTransactionsLoading(false);
+    }
   };
+
+  // const getCategoryById = (categoryId: string): BudgetCategory | undefined => {
+  //   // return categories.find((cat) => cat.id === categoryId);
+  //   return undefined;
+  // };
 
   const getCategoryIcon = (categoryName: string): string => {
     const iconMap: { [key: string]: string } = {
@@ -141,11 +108,11 @@ export default function ExpenseHistoryScreen() {
   };
 
   const getFilteredExpenses = (): Transaction[] => {
-    if (selectedCategory === "all") {
-      return expenses;
+    if (selectedCategoryId === "all") {
+      return transactions;
     }
-    return expenses.filter(
-      (expense) => expense.categoryId === selectedCategory
+    return transactions.filter(
+      (expense) => expense.category_id === selectedCategoryId
     );
   };
 
@@ -156,28 +123,12 @@ export default function ExpenseHistoryScreen() {
     );
   };
 
-  const getMonthYearString = (): string => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return `${months[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
-  };
-
   const renderExpenseItem = ({ item }: { item: Transaction }) => {
-    const category = getCategoryById(item.categoryId);
-    const categoryName = category?.name || "Unknown";
+    // const category = getCategoryById(item.categoryId);
+    // const categoryName = category?.name || "Unknown";
+    const categoryName = item.category_name || "Unknown";
     const icon = getCategoryIcon(categoryName);
+    console.log("Rendering expense item:", item, "with icon:", icon);
 
     return (
       <View style={styles.expenseItem}>
@@ -199,10 +150,12 @@ export default function ExpenseHistoryScreen() {
             </Text>
             <View style={styles.metaInfo}>
               <Text style={styles.dateText}>{formatDate(item.date)}</Text>
-              {item.paymentMode && (
+              {item.payment_mode && (
                 <>
                   <Text style={styles.dotSeparator}>•</Text>
-                  <Text style={styles.paymentModeText}>{item.paymentMode}</Text>
+                  <Text style={styles.paymentModeText}>
+                    {item.payment_mode}
+                  </Text>
                 </>
               )}
             </View>
@@ -212,30 +165,7 @@ export default function ExpenseHistoryScreen() {
     );
   };
 
-  const renderCategoryFilter = ({
-    item,
-  }: {
-    item: { id: string; name: string };
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.filterChip,
-        selectedCategory === item.id && styles.filterChipSelected,
-      ]}
-      onPress={() => setSelectedCategory(item.id)}
-    >
-      <Text
-        style={[
-          styles.filterChipText,
-          selectedCategory === item.id && styles.filterChipTextSelected,
-        ]}
-      >
-        {item.name}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  if (isLoading) {
+  if (isMonthTransactionsLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -246,73 +176,23 @@ export default function ExpenseHistoryScreen() {
     );
   }
 
-  const filterCategories = [
-    { id: "all", name: "All" },
-    ...categories.map((cat) => ({ id: cat.id, name: cat.name })),
-  ];
-
   const filteredExpenses = getFilteredExpenses();
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      {preSelectedCategory ? (
-        <Header
-          heading={`${preSelectedCategory.name} Expenses`}
-          subheading={getMonthYearString()}
-        />
-      ) : (
-        <Header heading={`Expense History - ${getMonthYearString()}`} />
-      )}
-      {/* Category Progress (when specific category is selected) */}
-      {preSelectedCategory && (
-        <View style={styles.categoryProgressCard}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressLabel}>Total Spent</Text>
-            <Text style={styles.progressAmount}>
-              ₹{getTotalExpenses().toLocaleString()} / ₹
-              {preSelectedCategory.amount.toLocaleString()}
-            </Text>
-          </View>
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBarBackground}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  {
-                    width: `${Math.min(
-                      (getTotalExpenses() / preSelectedCategory.amount) * 100,
-                      100
-                    )}%`,
-                    backgroundColor:
-                      getTotalExpenses() / preSelectedCategory.amount > 0.8
-                        ? "#ff4444"
-                        : getTotalExpenses() / preSelectedCategory.amount > 0.6
-                        ? "#ff9500"
-                        : "#28a745",
-                  },
-                ]}
-              />
-            </View>
-            <Text style={styles.progressPercentage}>
-              {Math.round(
-                (getTotalExpenses() / preSelectedCategory.amount) * 100
-              )}
-              %
-            </Text>
-          </View>
-        </View>
-      )}
+      <Header
+        heading={`Expense History - ${getMonthYearStringFromNumbers(
+          parseInt(month as string),
+          parseInt(year as string)
+        )}`}
+      />
 
       {/* Summary Card */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>
-              {preSelectedCategory
-                ? `${preSelectedCategory.name} Spent`
-                : "Total Expenses"}
-            </Text>
+            <Text style={styles.summaryLabel}>Total Expenses</Text>
             <Text style={styles.summaryAmount}>
               ₹{getTotalExpenses().toLocaleString()}
             </Text>
@@ -324,30 +204,28 @@ export default function ExpenseHistoryScreen() {
         </View>
       </View>
 
-      {/* Category Filter - Only show when no specific category is selected */}
-      {/* {!preSelectedCategory && (
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Filter by Category</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={filterCategories}
-            renderItem={renderCategoryFilter}
-            keyExtractor={(item) => item.id}
-            style={styles.filterList}
-            contentContainerStyle={styles.filterListContent}
-          />
-        </View>
-      )} */}
+      <View style={{ marginLeft: 30, marginBottom: 10 }}>
+        <ShowCategory
+          month={parseInt(month as string)}
+          year={parseInt(year as string)}
+          selectedCategoryId={selectedCategoryId}
+          // setIsBudgetLoading={setIsMonthTransactionsLoading}
+          onSelectCategory={(categoryId, categoryName) => {
+            // console.log("Selected category:", categoryId, categoryName);
+            setSelectedCategoryId(categoryId);
+          }}
+        />
+      </View>
 
       {/* Expenses List */}
+      {/* {filteredExpenses.length > 0 ? ( */}
       {filteredExpenses.length > 0 ? (
         <FlatList
           data={filteredExpenses.sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
           )}
           renderItem={renderExpenseItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id as string}
           style={styles.expensesList}
           contentContainerStyle={styles.expensesListContent}
           showsVerticalScrollIndicator={false}
@@ -356,38 +234,15 @@ export default function ExpenseHistoryScreen() {
         <View style={styles.emptyState}>
           <Ionicons name="receipt-outline" size={60} color="#ccc" />
           <Text style={styles.emptyStateTitle}>
-            {preSelectedCategory
-              ? `No ${preSelectedCategory.name} Expenses`
-              : selectedCategory === "all"
+            {selectedCategoryId === "all"
               ? "No Expenses Yet"
               : "No Expenses in This Category"}
           </Text>
           <Text style={styles.emptyStateText}>
-            {preSelectedCategory
-              ? `You haven't added any ${preSelectedCategory.name.toLowerCase()} expenses this month. Start tracking your ${preSelectedCategory.name.toLowerCase()} spending!`
-              : selectedCategory === "all"
+            {selectedCategoryId === "all"
               ? "Start by adding your first expense using the + button"
               : "Try selecting a different category or add expenses to this category"}
           </Text>
-        </View>
-      )}
-
-      {/* View All Categories button (when specific category is selected) */}
-      {preSelectedCategory && (
-        <View style={styles.bottomButton}>
-          <TouchableOpacity
-            style={styles.viewAllButton}
-            onPress={() => {
-              // Navigate to expense history without category filter
-              const currentMonth = (new Date().getMonth() + 1).toString();
-              const currentYear = new Date().getFullYear().toString();
-              router.push(
-                `/expense-history?month=${currentMonth}&year=${currentYear}`
-              );
-            }}
-          >
-            <Text style={styles.viewAllButtonText}>View All Categories</Text>
-          </TouchableOpacity>
         </View>
       )}
     </SafeAreaView>
