@@ -1,7 +1,11 @@
 import { styles } from "@/assets/styles/set-budget.style";
 import Header from "@/components/header/header";
 import MonthSelector from "@/components/modal/month-selector";
-import { getMonthBudget, saveOrUpdateMonthlyBudget } from "@/services/budget";
+import {
+  deleteMonthlyBudget,
+  getMonthBudget,
+  saveOrUpdateMonthlyBudget,
+} from "@/services/budget";
 import { getMonthYearString } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -198,10 +202,12 @@ export default function OnboardingScreen() {
         [
           {
             text: "OK",
-            onPress: () => {
+            onPress: async () => {
               // Reset to initial state
               // setCategories([{ name: "", amount: 0 }]);
-              setBudget(null);
+              // setBudget(null);
+              const res = await deleteMonthlyBudget(budget?.id!);
+              console.log("Delete Response:", res);
               router.replace("/");
             },
           },
