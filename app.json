@@ -2,7 +2,7 @@
   "expo": {
     "name": "MyAllowance",
     "slug": "MyAllowance",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/myallowanceicon.png",
     "scheme": "myallowance",
@@ -31,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/myallowanceicon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

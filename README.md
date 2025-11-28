@@ -1,17 +1,27 @@
 # My Allowance 💰
 
-A comprehensive React Native budget tracking app built with Expo that helps users manage their monthly expenses, track spending across different categories, and maintain detailed expense history with real-time financial insights.
+A comprehensive React Native budget tracking app built with Expo and Supabase that helps users manage their monthly expenses, track spending across different categories, and maintain detailed expense history with real-time financial insights.
 
 ## 📱 Features
 
 ### 🎯 Core Functionality
 
+- **User Authentication**: Secure email/password login and Google OAuth integration
 - **Monthly Budget Management**: Set up and edit budget categories with custom amounts
 - **Month-Specific Tracking**: Independent budget data for each month with seamless navigation
 - **Expense Tracking**: Add expenses with detailed information and payment mode tracking
+- **Receipt Upload**: Attach screenshots or photos of receipts to expenses
 - **Expense History**: Comprehensive transaction history with filtering and chronological sorting
 - **Progress Visualization**: Real-time progress bars with color-coded spending alerts
 - **Smart Navigation**: Month-by-month navigation with future month restrictions
+
+### 🔐 Authentication & Security
+
+- **Email/Password Authentication**: Secure user registration and login via Supabase
+- **Google OAuth**: One-tap sign-in with Google account
+- **Session Persistence**: Stay logged in across app restarts
+- **Password Reset**: Email-based password recovery flow
+- **Protected Routes**: Automatic redirect to login for unauthenticated users
 
 ### 💳 Advanced Expense Management
 
@@ -20,7 +30,8 @@ A comprehensive React Native budget tracking app built with Expo that helps user
 - **Payment Mode Tracking**: Cash, Card, UPI, Net Banking, and Other options with icons
 - **Date Selection**: Smart date picker with "Today"/"Yesterday" shortcuts
 - **Description Support**: Optional detailed descriptions for expenses
-- **Transaction Storage**: Automatic transaction recording for detailed history tracking
+- **Screenshot Attachments**: Upload receipt photos for expense verification
+- **Transaction Storage**: Automatic transaction recording in Supabase with ACID compliance
 
 ### 📊 Expense History & Analytics
 
@@ -55,6 +66,7 @@ A comprehensive React Native budget tracking app built with Expo that helps user
 - Node.js (v16 or higher)
 - Expo CLI
 - React Native development environment
+- Supabase account and project
 
 ### Installation
 
@@ -71,13 +83,35 @@ A comprehensive React Native budget tracking app built with Expo that helps user
    npm install
    ```
 
-3. **Start the development server**
+3. **Configure Supabase**
+
+   Create a `.env` file in the root directory:
+
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **Set up database**
+
+   Run the SQL migration files in your Supabase SQL Editor:
+
+   - `database/insert_transaction_atomic.sql`
+   - `database/delete_monthly_budget.sql`
+
+5. **Configure Google OAuth (Optional)**
+
+   - Set up OAuth credentials in Google Cloud Console
+   - Add redirect URIs in Supabase Auth settings
+   - Configure OAuth provider in Supabase dashboard
+
+6. **Start the development server**
 
    ```bash
    npx expo start
    ```
 
-4. **Run on device/emulator**
+7. **Run on device/emulator**
    - Scan QR code with Expo Go app (Android/iOS)
    - Press `a` for Android emulator
    - Press `i` for iOS simulator
@@ -86,55 +120,116 @@ A comprehensive React Native budget tracking app built with Expo that helps user
 
 ```
 MyAllowance/
-├── app/                    # Main application screens
-│   ├── index.tsx          # Dashboard with month navigation and quick actions
-│   ├── onboarding.tsx     # Budget setup and editing with month context
-│   ├── add-expense.tsx    # Expense entry form with payment mode tracking
-│   ├── expense-history.tsx # Comprehensive expense history with filtering
-│   ├── learn-more.tsx     # App information and comprehensive guide
-│   └── _layout.tsx        # Root layout configuration
-├── types/                 # TypeScript type definitions
-│   └── budget.ts          # Budget, Transaction, MonthlyBudget interfaces
-├── utils/                 # Utility functions and services
-│   └── storage.ts         # Complete AsyncStorage service with transaction management
-├── assets/                # Static assets (images, icons)
-└── README.md              # This comprehensive documentation
+├── app/                       # Main application screens
+│   ├── _layout.tsx           # Root layout with auth state management
+│   ├── index.tsx             # Dashboard with budget overview
+│   ├── login.tsx             # Authentication screen (email & OAuth)
+│   ├── signup.tsx            # User registration screen
+│   ├── set-budget.tsx        # Budget setup and editing
+│   ├── add-expense.tsx       # Expense entry with receipt upload
+│   ├── expense-history.tsx   # Transaction history viewer
+│   └── learn-more.tsx        # App information and guide
+├── services/                  # Business logic and API calls
+│   ├── budget.ts             # Budget CRUD operations
+│   └── transaction.ts        # Transaction management
+├── components/                # Reusable UI components
+│   ├── expense/
+│   │   └── show-category.tsx # Category selector component
+│   ├── header/
+│   │   └── header.tsx        # Custom header component
+│   └── modal/
+│       └── month-selector.tsx # Month picker modal
+├── database/                  # SQL migration files
+│   ├── insert_transaction_atomic.sql
+│   └── delete_monthly_budget.sql
+├── types/                     # TypeScript type definitions
+│   └── budget.ts             # Budget, Transaction interfaces
+├── utils/                     # Utility functions
+│   ├── supabase.ts           # Supabase client configuration
+│   └── storage.ts            # AsyncStorage helpers
+├── assets/                    # Static assets (images, styles)
+│   ├── images/
+│   └── styles/
+└── README.md                  # This comprehensive documentation
 ```
 
 ## 🛠️ Tech Stack
 
 - **Framework**: React Native with Expo SDK 54
 - **Language**: TypeScript for enhanced development experience
+- **Backend**: Supabase (PostgreSQL database, Authentication, Storage)
 - **Navigation**: Expo Router (file-based routing) with dynamic headers
-- **Storage**: AsyncStorage for local data persistence and transaction storage
 - **UI Components**: React Native core components + Ionicons for visual consistency
 - **Date Handling**: @react-native-community/datetimepicker for precise date selection
+- **State Management**: React hooks (useState, useEffect, useCallback)
 - **Development**: ESLint for code quality and consistency
 
-## 💾 Enhanced Data Storage
+## 💾 Database Architecture
 
-### Storage Architecture
+### Supabase Tables
 
 ```
-AsyncStorage Keys:
-├── budget_categories           # Base budget template categories
-├── user_setup_complete        # Onboarding completion flag
-├── monthly_budget_YYYY_MM     # Month-specific budget data
-│   ├── 2025_10               # October 2025 budget data
-│   ├── 2025_11               # November 2025 budget data
-│   └── ...                   # Other months with independent data
-├── transactions_YYYY_MM       # Month-specific transaction records
-│   ├── 2025_10               # October 2025 transactions
-│   ├── 2025_11               # November 2025 transactions
-│   └── ...                   # Complete transaction history
+Database Schema:
+├── users (managed by Supabase Auth)
+│
+├── monthly_budgets
+│   ├── id (UUID, primary key)
+│   ├── user_id (UUID, foreign key → users)
+│   ├── month (INTEGER)
+│   ├── year (INTEGER)
+│   ├── total_budget (NUMERIC)
+│   ├── total_spent (NUMERIC)
+│   ├── created_at (TIMESTAMP)
+│   └── updated_at (TIMESTAMP)
+│
+├── budget_categories
+│   ├── id (UUID, primary key)
+│   ├── monthly_budget_id (UUID, foreign key → monthly_budgets)
+│   ├── name (TEXT)
+│   ├── amount (NUMERIC)
+│   ├── spent (NUMERIC)
+│   └── created_at (TIMESTAMP)
+│
+└── transactions
+    ├── id (UUID, primary key)
+    ├── user_id (UUID, foreign key → users)
+    ├── category_id (UUID, foreign key → budget_categories)
+    ├── category_name (TEXT)
+    ├── amount (NUMERIC)
+    ├── description (TEXT)
+    ├── date (TIMESTAMP)
+    ├── month (INTEGER)
+    ├── year (INTEGER)
+    ├── type (TEXT: 'expense' | 'income')
+    ├── payment_mode (TEXT)
+    ├── attachment_url (TEXT, optional)
+    ├── is_deleted (BOOLEAN)
+    ├── created_at (TIMESTAMP)
+    └── updated_at (TIMESTAMP)
 ```
 
-### Advanced Data Models
+### ACID-Compliant Operations
 
-- **BudgetCategory**: Category name, amount, spent amount, visual indicators
-- **Transaction**: Complete expense details with ID, payment mode, date, description
-- **MonthlyBudget**: Complete month data with categories, totals, and metadata
-- **PaymentMode**: Structured payment method tracking with icons and validation
+- **Atomic Transactions**: PostgreSQL functions ensure all-or-nothing operations
+- **Consistency**: Foreign key constraints maintain data integrity
+- **Isolation**: Concurrent transactions handled with proper locking
+- **Durability**: Changes committed to disk only after successful completion
+
+### PostgreSQL Functions (RPC)
+
+```sql
+1. insert_full_transaction(...)
+   - Inserts transaction
+   - Updates category spent amount
+   - Updates monthly budget total_spent
+   - All operations atomic
+
+2. delete_monthly_budget(...)
+   - Verifies budget ownership
+   - Deletes associated categories
+   - Deletes budget record
+   - Cascading deletion with rollback support
+```
 
 ## 🎨 User Interface
 
@@ -155,144 +250,149 @@ AsyncStorage Keys:
 
 ## 📱 App Screens
 
-### 1. Dashboard (index.tsx)
+### 1. Authentication (login.tsx, signup.tsx)
+
+- **Email/Password Login**: Secure authentication with Supabase
+- **Google OAuth**: One-tap sign-in integration
+- **Registration**: User account creation with validation
+- **Password Reset**: Email-based recovery flow
+- **Session Management**: Persistent authentication across app restarts
+
+### 2. Dashboard (index.tsx)
 
 - **Monthly Budget Overview**: Complete budget visualization with progress bars
 - **Month Navigation**: Seamless navigation between months with current month highlighting
 - **Quick Actions**: Direct access to expense history and budget editing
 - **Smart Controls**: Context-aware buttons (Edit Budget, Add Expense) based on current month
-- **Real-Time Calculations**: Live spending totals calculated from actual transactions
+- **Real-Time Calculations**: Live spending totals from Supabase transactions
 - **Visual Progress Indicators**: Color-coded spending alerts and remaining balance display
 
-### 2. Expense History (expense-history.tsx)
+### 3. Set Budget (set-budget.tsx)
 
-- **Comprehensive Transaction List**: Chronological display of all expenses with details
-- **Advanced Filtering**: Filter by category or view all transactions
-- **Monthly Summary Card**: Total expenses and transaction count for selected period
-- **Smart Date Display**: Intelligent formatting (Today, Yesterday, specific dates)
-- **Payment Mode Indicators**: Visual icons showing payment method for each transaction
-- **Month-Specific Data**: Loads transactions for the selected month from dashboard
-- **Clean Navigation**: Dynamic header showing current month context
-
-### 3. Onboarding & Budget Setup (onboarding.tsx)
-
-- **Initial Budget Setup**: Comprehensive budget creation for new users
-- **Month-Specific Editing**: Edit budgets with proper month context and restrictions
-- **Category Management**: Add, remove, and edit budget categories with validation
-- **Access Control**: Current month editing restrictions with clear user feedback
+- **Budget Creation**: Set up monthly budgets with custom categories
+- **Category Management**: Add, edit, or remove budget categories
+- **Month-Specific Editing**: Edit budgets with proper month context
+- **Access Control**: Current month editing restrictions with feedback
 - **Smart Validation**: Ensures data integrity and prevents invalid configurations
+- **Budget Deletion**: Remove entire monthly budgets with confirmation
 
 ### 4. Add Expense (add-expense.tsx)
 
-- **Streamlined Entry**: Fast expense logging with intuitive form design
-- **Category Selection**: Visual category chips with clear selection indicators
-- **Payment Mode Grid**: Icon-based payment method selection with comprehensive options
-- **Smart Date Picker**: Default to current date with easy selection options
-- **Transaction Recording**: Automatic storage of complete transaction details
-- **Current Month Validation**: Prevents adding expenses to non-current months
+- **Streamlined Entry**: Fast expense logging with intuitive form
+- **Category Selection**: Visual category chips from your budget
+- **Payment Mode Grid**: Icon-based payment method selection
+- **Smart Date Picker**: Default to current date with easy selection
+- **Receipt Upload**: Attach screenshots or photos (UI ready)
+- **ACID Transactions**: Atomic database operations ensuring data consistency
 
-### 5. Learn More (learn-more.tsx)
+### 5. Expense History (expense-history.tsx)
 
-- **Comprehensive Guide**: Complete app features explanation and usage instructions
-- **Getting Started Tutorial**: Step-by-step guidance for new users
-- **Feature Highlights**: Detailed explanation of key functionality and benefits
-- **Best Practices**: Tips for effective budget management and expense tracking
+- **Transaction List**: Chronological display of all expenses
+- **Category Filtering**: Filter by category or view all
+- **Monthly Summary**: Total expenses and transaction count
+- **Smart Date Display**: Intelligent formatting (Today, Yesterday)
+- **Payment Mode Indicators**: Visual icons for each transaction
+- **Month-Specific Data**: Loads transactions from selected month
 
-## 🔧 Advanced Features Implementation
+## 🔧 Key Implementation Details
 
-### Month-Specific Data Management
-
-```typescript
-// Each month maintains completely independent budget and transaction data
-const monthData = await StorageService.getMonthlyBudgetData(month, year);
-const transactions = await StorageService.getMonthTransactions(month, year);
-```
-
-### Enhanced Access Control Logic
+### Authentication Flow
 
 ```typescript
-// Comprehensive current month validation with UI feedback
-const isCurrentMonth = () => {
-  return (
-    currentDate.getMonth() === today.getMonth() &&
-    currentDate.getFullYear() === today.getFullYear()
-  );
-};
-```
+// Supabase authentication with session persistence
+const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
 
-### Real-Time Progress Visualization
+// Google OAuth integration
+const { data, error } = await supabase.auth.signInWithOAuth({
+  provider: "google",
+});
 
-```typescript
-// Color-coded progress based on spending percentage with smooth transitions
-const getProgressColor = (percentage: number) => {
-  if (percentage >= 90) return "#ff4444"; // Red - Critical
-  if (percentage >= 75) return "#ff9500"; // Orange - Warning
-  if (percentage >= 50) return "#ffcc00"; // Yellow - Caution
-  return "#007AFF"; // Blue - Safe
-};
-```
-
-### Transaction Management System
-
-```typescript
-// Complete transaction lifecycle with automatic storage
-const transaction: Transaction = {
-  id: Date.now().toString(),
-  categoryId: selectedCategory,
-  amount: expenseAmount,
-  description: description.trim() || "No description",
-  date: selectedDate,
-  type: "expense",
-  paymentMode: selectedPaymentMode,
-};
-
-// Dual storage: Update budget categories AND save transaction
-await StorageService.saveMonthlyBudgetData(updatedMonthData);
-await StorageService.saveTransaction(transaction);
-```
-
-### Consistent Calculation Engine
-
-```typescript
-// Unified spending calculations across all screens
-const getTotalSpent = () => {
-  // Priority: Use actual transactions if available, fallback to budget data
-  if (monthTransactions && monthTransactions.length > 0) {
-    return monthTransactions.reduce(
-      (total, transaction) => total + transaction.amount,
-      0
-    );
+// Session persistence across app restarts
+supabase.auth.onAuthStateChange((event, session) => {
+  if (session?.user) {
+    setUser(session.user);
+  } else {
+    router.replace("/login");
   }
-  return budgetCategories.reduce((total, cat) => total + (cat.spent || 0), 0);
-};
+});
 ```
 
-### Smart Navigation with Parameter Passing
+### ACID Transaction Management
 
 ```typescript
-// Context-aware navigation with month/year parameters
-router.push(`./expense-history?month=${month}&year=${year}`);
+// Atomic transaction insertion with RPC
+const { data, error } = await supabase.rpc("insert_full_transaction", {
+  p_user_id: userId,
+  p_category_id: transaction.categoryId,
+  p_amount: transaction.amount,
+  // ... other parameters
+});
+
+// PostgreSQL function ensures:
+// 1. Insert transaction
+// 2. Update category spent
+// 3. Update monthly total_spent
+// All operations succeed or all rollback
+```
+
+### Budget Management
+
+```typescript
+// Separate insert/update logic for data integrity
+if (budget.id) {
+  // Update existing budget
+  await updateMonthlyBudget(budget);
+} else {
+  // Insert new budget
+  await insertMonthlyBudget(budget, user_id);
+}
+
+// Category upsert with proper ID preservation
+await upsertBudgetCategories(budget, budgetId);
+```
+
+### Data Fetching with Supabase
+
+```typescript
+// Fetch monthly budget with categories
+const { data: budgetData } = await supabase
+  .from("monthly_budgets")
+  .select("*")
+  .eq("month", month)
+  .eq("year", year)
+  .eq("user_id", user_id)
+  .maybeSingle();
+
+const { data: categoriesData } = await supabase
+  .from("budget_categories")
+  .select("*")
+  .eq("monthly_budget_id", budgetData.id);
 ```
 
 ## 🚀 Recent Enhancements & Updates
 
 ### ✅ Completed Features
 
-- **🔄 Logic Consistency Fix**: Total spent calculations now perfectly synchronized between dashboard and expense history
-- **📊 Advanced Expense History**: Complete transaction tracking with filtering, sorting, and detailed view
-- **🎨 UI Improvements**: Removed duplicate headers, streamlined navigation, enhanced visual design
-- **💾 Enhanced Storage**: Comprehensive transaction storage system with month-specific organization
-- **🔧 Real-Time Updates**: Live data refresh when navigating between screens
-- **📱 Dynamic Headers**: Context-aware screen titles showing current month information
-- **⚡ Performance Optimization**: Efficient data loading and state management
+- **🔐 Full Authentication System**: Email/password and Google OAuth with Supabase
+- **☁️ Cloud Database Migration**: Migrated from AsyncStorage to Supabase PostgreSQL
+- **⚡ ACID Compliance**: Atomic transactions ensuring data consistency
+- **🎨 Receipt Upload UI**: Screenshot attachment interface (backend pending)
+- **🗑️ Budget Deletion**: Atomic deletion with cascading category removal
+- **📊 Real-Time Sync**: Live data updates across all screens
+- **🔄 Session Persistence**: Stay logged in across app restarts
+- **💾 PostgreSQL Functions**: RPC for complex database operations
 
 ### 🎯 Key Improvements Made
 
-1. **Data Integrity**: Ensured all spending calculations use actual transaction data
-2. **User Experience**: Eliminated duplicate UI elements and improved navigation flow
-3. **Transaction Tracking**: Complete expense history with comprehensive filtering options
-4. **Month Synchronization**: Consistent month context across all screens
-5. **Visual Polish**: Clean, professional interface with proper spacing and typography
+1. **Authentication**: Complete user management with OAuth support
+2. **Data Integrity**: ACID-compliant transactions prevent data corruption
+3. **Scalability**: Cloud database supports unlimited users and data
+4. **Security**: Row-level security policies protect user data
+5. **Performance**: Optimized queries with proper indexing
+6. **Code Quality**: Refactored with separate service layers
 
 ## 🚀 Future Enhancements
 
@@ -368,14 +468,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Development Stats
 
-- **Lines of Code**: 2,500+ lines of TypeScript/TSX
-- **Screens**: 5 fully-featured screens with advanced functionality
-- **Components**: 20+ reusable UI components
-- **Storage Keys**: 10+ different data storage patterns
-- **Features**: 25+ major features implemented and tested
+- **Backend**: Supabase PostgreSQL with 3 main tables + Auth
+- **Lines of Code**: 3,500+ lines of TypeScript/TSX
+- **Screens**: 7 fully-featured screens with authentication
+- **Components**: 25+ reusable UI components
+- **Database Functions**: 2 PostgreSQL RPC functions
+- **Features**: 30+ major features implemented
+- **Authentication**: Email/password + Google OAuth
+
+## 🙏 Acknowledgments
+
+- Built with [Expo](https://expo.dev) and [React Native](https://reactnative.dev)
+- Backend powered by [Supabase](https://supabase.com)
+- Icons from [Ionicons](https://ionic.io/ionicons)
+- Date picker from [@react-native-community](https://github.com/react-native-datetimepicker/datetimepicker)
+- TypeScript for type safety and developer experience
 
 ---
 
 **Happy Budgeting! 💰📱✨**
 
-_Transform your financial habits with intelligent budget tracking and expense management._
+_Transform your financial habits with intelligent budget tracking powered by Supabase._
