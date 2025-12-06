@@ -54,7 +54,11 @@ const NoBudgetSet: React.FC<NoBudgetSetProps> = ({ selectedDate }) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => router.push("/set-budget")}
+              onPress={() => {
+                router.push(
+                  `/set-budget?selected_date=${selectedDate.toISOString()}`
+                );
+              }}
             >
               <Text style={styles.primaryButtonText}>Set Up Budget</Text>
             </TouchableOpacity>

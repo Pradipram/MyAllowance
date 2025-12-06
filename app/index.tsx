@@ -231,12 +231,6 @@ export default function Index() {
               <TouchableOpacity
                 style={styles.editBudgetButton}
                 onPress={() => {
-                  const month = (selectedDate.getMonth() + 1).toString();
-                  const year = selectedDate.getFullYear().toString();
-                  const budgetId = monthBudget?.id || "";
-                  // router.push(
-                  //   `/set-budget?month=${month}&year=${year}&budgetId=${budgetId}`
-                  // );
                   router.push(
                     `/set-budget?selected_date=${selectedDate.toISOString()}`
                   );

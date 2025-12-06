@@ -25,14 +25,23 @@ export default function OnboardingScreen() {
   const params = useLocalSearchParams();
   const [budget, setBudget] = useState<MonthlyBudget | null>(null);
   const [isBudgetLoading, setIsBudgetLoading] = useState(false);
-  const [selectedMonthDate, setSelectedMonthDate] = useState<Date>(
-    new Date(params.selected_date as string) || new Date()
-  );
+
+  const [selectedMonthDate, setSelectedMonthDate] = useState<Date>(() => {
+    if (params.selected_date && typeof params.selected_date === "string") {
+      const date = new Date(params.selected_date);
+      return isNaN(date.getTime()) ? new Date() : date;
+    }
+    return new Date();
+  });
+
   const [showMonthSelector, setShowMonthSelector] = useState(false);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
 
   useEffect(() => {
-    loadMonthData();
+    if (!isNaN(selectedMonthDate.getTime())) {
+      loadMonthData();
+    }
+    // console.log("Selected month date:", selectedMonthDate);
   }, [selectedMonthDate]);
 
   const loadMonthData = async () => {
@@ -203,9 +212,6 @@ export default function OnboardingScreen() {
           {
             text: "OK",
             onPress: async () => {
-              // Reset to initial state
-              // setCategories([{ name: "", amount: 0 }]);
-              // setBudget(null);
               const res = await deleteMonthlyBudget(budget?.id!);
               console.log("Delete Response:", res);
               router.replace("/");
