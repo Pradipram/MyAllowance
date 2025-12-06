@@ -31,6 +31,7 @@ const upsertBudgetCategories = async (
         name: cat.name,
         amount: cat.amount,
         spent: cat.spent || 0,
+        index: cat.index,
       });
     } else {
       // New category - INSERT (id will be auto-generated)
@@ -39,6 +40,7 @@ const upsertBudgetCategories = async (
         name: cat.name,
         amount: cat.amount,
         spent: cat.spent || 0,
+        index: cat.index,
       });
     }
   });
@@ -97,7 +99,7 @@ const insertMonthlyBudget = async (budget: MonthlyBudget, user_id: string) => {
 
 const updateMonthlyBudget = async (budget: MonthlyBudget) => {
   // Update the budget
-  console.log("Updating Monthly Budget:", budget);
+  // console.log("Updating Monthly Budget:", budget);
   const { error: budgetError } = await supabase
     .from("monthly_budgets")
     .update({
@@ -117,7 +119,7 @@ const updateMonthlyBudget = async (budget: MonthlyBudget) => {
 
 export const saveOrUpdateMonthlyBudget = async (budget: MonthlyBudget) => {
   try {
-    console.log("Saving/Updating Budget:", budget);
+    // console.log("Saving/Updating Budget:", budget);
     const session = await supabase.auth.getSession();
     const user_id = session.data.session?.user.id;
     if (!user_id) throw new Error("User not authenticated");
@@ -130,7 +132,7 @@ export const saveOrUpdateMonthlyBudget = async (budget: MonthlyBudget) => {
     } else {
       // Insert new budget
       const res = await insertMonthlyBudget(budget, user_id);
-      console.log("Insert Response:", res);
+      // console.log("Insert Response:", res);
       return res;
     }
   } catch (error) {
@@ -170,12 +172,15 @@ export const getMonthBudget = async (month: number, year: number) => {
   // Fetch associated categories separately
   const { data: categoriesData, error: categoriesError } = await supabase
     .from("budget_categories")
-    .select("id, name, amount, spent")
-    .eq("monthly_budget_id", budgetData.id);
+    // .select("id, name, amount, spent, created_at")
+    .select("*")
+    .eq("monthly_budget_id", budgetData.id)
+    .order("index", { ascending: true });
 
   if (categoriesError) {
     console.error("❌ Error fetching budget categories:", categoriesError);
   }
+  // console.log("✅ Fetched budget categories:", categoriesData);
 
   // Transform the data to match MonthlyBudget type
   const monthlyBudget: MonthlyBudget = {

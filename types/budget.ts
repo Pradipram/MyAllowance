@@ -2,6 +2,7 @@ export interface BudgetCategory {
   id?: string;
   name: string;
   amount: number;
+  index: number; // for ordering
   spent?: number;
 }
 

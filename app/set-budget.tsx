@@ -61,7 +61,7 @@ export default function OnboardingScreen() {
         setBudget({
           month: selectedMonthDate.getMonth() + 1,
           year: selectedMonthDate.getFullYear(),
-          categories: [{ name: "", amount: 0, spent: 0 }],
+          categories: [{ name: "", amount: 0, spent: 0, index: 0 }],
           totalBudget: 0,
           totalSpent: 0,
         });
@@ -90,7 +90,13 @@ export default function OnboardingScreen() {
       ...budget!,
       categories: [
         ...categories,
-        { id: undefined, name: "", amount: 0, spent: 0 },
+        {
+          id: undefined,
+          name: "",
+          amount: 0,
+          spent: 0,
+          index: categories.length,
+        },
       ],
     });
   };
@@ -140,6 +146,7 @@ export default function OnboardingScreen() {
           name: cat.name.trim(),
           amount: Number(cat.amount),
           spent: 0,
+          index: cat.index,
         })
       );
 
@@ -158,7 +165,7 @@ export default function OnboardingScreen() {
 
       const res = await saveOrUpdateMonthlyBudget(monthlyBudget);
 
-      console.log("Save Response:", res);
+      // console.log("Save Response:", res);
       Alert.alert(
         "Success",
         `Your budget for ${getMonthYearString(
