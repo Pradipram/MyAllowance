@@ -169,7 +169,8 @@ export const getTransactions = async (month: number, year: number) => {
     .eq("month", month)
     .eq("year", year)
     .eq("is_deleted", false)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("❌ Error fetching transactions:", error);
