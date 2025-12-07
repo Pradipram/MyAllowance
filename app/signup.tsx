@@ -62,6 +62,11 @@ export default function SignupScreen() {
           data: {
             fullName: fullName,
           },
+          emailRedirectTo: Platform.select({
+            ios: "myallowance://auth/callback",
+            android: "myallowance://auth/callback",
+            default: "myallowance://auth/callback",
+          }),
         },
       });
 
@@ -76,12 +81,22 @@ export default function SignupScreen() {
         return;
       }
 
-      // Success! User may need to verify email depending on Supabase settings
-      Alert.alert(
-        "Success",
-        "Account created successfully! Please check your email for verification.",
-        [{ text: "OK", onPress: () => router.replace("/" as any) }]
-      );
+      // Check if email confirmation is required
+      const needsEmailConfirmation = !data.session;
+
+      if (needsEmailConfirmation) {
+        // Email confirmation is enabled
+        Alert.alert(
+          "Verify Your Email",
+          `A verification email has been sent to ${email}. Please check your email and click the verification link to activate your account.`,
+          [{ text: "OK", onPress: () => router.replace("/login" as any) }]
+        );
+      } else {
+        // Email confirmation is disabled, user can proceed
+        Alert.alert("Success", "Account created successfully!", [
+          { text: "OK", onPress: () => router.replace("/" as any) },
+        ]);
+      }
     } catch (e) {
       console.error("Signup error:", e);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
