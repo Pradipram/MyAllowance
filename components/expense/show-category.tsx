@@ -19,6 +19,7 @@ const defaultCategory: BudgetCategory = {
   name: "All",
   amount: 0,
   spent: 0,
+  index: -1, // Put "All" at the beginning
 };
 
 const ShowCategory: React.FC<ShowCategoryProps> = ({
@@ -26,11 +27,11 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
   onSelectCategory,
   month,
   year,
-  from,
+  from = "expense-history", // Default to expense-history to maintain existing behavior
 }) => {
-  const [categories, setCategories] = useState<BudgetCategory[]>([
-    defaultCategory,
-  ]);
+  const [categories, setCategories] = useState<BudgetCategory[]>(
+    from === "add-expense" ? [] : [defaultCategory]
+  );
   const [isBudgetLoading, setIsBudgetLoading] = useState(false);
 
   const loadBudget = useCallback(async () => {
@@ -39,18 +40,23 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
       setIsBudgetLoading(true);
       const res = await getMonthBudget(month, year);
       if (res) {
-        setCategories([defaultCategory, ...res.categories]);
+        // Include "All" category only for expense-history, not for add-expense
+        const categoriesToShow =
+          from === "add-expense"
+            ? res.categories
+            : [defaultCategory, ...res.categories];
+        setCategories(categoriesToShow);
       } else {
-        setCategories([defaultCategory]);
+        setCategories(from === "add-expense" ? [] : [defaultCategory]);
       }
     } catch (error) {
       console.error("Error loading budget:", error);
-      setCategories([defaultCategory]);
+      setCategories(from === "add-expense" ? [] : [defaultCategory]);
     } finally {
       setIsBudgetLoading(false);
       console.log("✅ Finished loading budget categories");
     }
-  }, [month, year]);
+  }, [month, year, from]);
 
   useFocusEffect(
     useCallback(() => {

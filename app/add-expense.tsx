@@ -185,7 +185,7 @@ export default function AddExpenseScreen() {
           }
           month={transaction.month}
           year={transaction.year}
-          // setIsBudgetLoading={setIsBudgetLoading}
+          from="add-expense"
         />
 
         {/* Amount Input */}
