@@ -195,7 +195,7 @@ export default function Index() {
                       const month = (selectedDate.getMonth() + 1).toString();
                       const year = selectedDate.getFullYear().toString();
                       router.push(
-                        `/expense-history?month=${month}&year=${year}&category=${category.id}`
+                        `/expense-history?month=${month}&year=${year}&categoryId=${category.id}`
                       );
                     }}
                   >
