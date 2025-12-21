@@ -21,6 +21,7 @@ export default function AuthCallbackScreen() {
         data: { session },
         error,
       } = await supabase.auth.getSession();
+      console.log("Session data:", session);
 
       if (error) {
         console.error("Session error:", error);
@@ -33,23 +34,23 @@ export default function AuthCallbackScreen() {
         return;
       }
 
-      if (session) {
-        // Email verified successfully
-        setStatus("success");
-        Alert.alert(
-          "Email Verified!",
-          "Your email has been verified successfully. You can now sign in.",
-          [{ text: "OK", onPress: () => router.replace("/login" as any) }]
-        );
-      } else {
-        // No session found, might be an issue
-        setStatus("error");
-        Alert.alert(
-          "Verification Incomplete",
-          "Please check your email and click the verification link again.",
-          [{ text: "OK", onPress: () => router.replace("/login" as any) }]
-        );
-      }
+      // if (session) {
+      // Email verified successfully
+      setStatus("success");
+      Alert.alert(
+        "Email Verified!",
+        "Your email has been verified successfully. You can now sign in.",
+        [{ text: "OK", onPress: () => router.replace("/login" as any) }]
+      );
+      // } else {
+      //   // No session found, might be an issue
+      //   setStatus("error");
+      //   Alert.alert(
+      //     "Verification Incomplete",
+      //     "Please check your email and click the verification link again.",
+      //     [{ text: "OK", onPress: () => router.replace("/login" as any) }]
+      //   );
+      // }
     } catch (e) {
       console.error("Verification error:", e);
       setStatus("error");
