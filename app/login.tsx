@@ -1,5 +1,6 @@
 import { styles } from "@/assets/styles/login.style";
 import LoaderModal from "@/components/modal/loader-modal";
+import { handleGoogleoAuth } from "@/services/oAuth";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -108,6 +109,10 @@ export default function LoginScreen() {
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const handleGoogleLogin = async () => {
+    handleGoogleoAuth(setIsLoading);
   };
 
   return (
@@ -224,14 +229,14 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            {/* <View style={styles.dividerContainer}>
+            <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
-            </View> */}
+            </View>
 
             {/* Google Sign In Button */}
-            {/* <TouchableOpacity
+            <TouchableOpacity
               style={[styles.googleButton, isLoading && styles.buttonDisabled]}
               onPress={handleGoogleLogin}
               disabled={isLoading}
@@ -243,7 +248,7 @@ export default function LoginScreen() {
                 style={styles.googleIcon}
               />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
 
           {/* Sign Up Link */}

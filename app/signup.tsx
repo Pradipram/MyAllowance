@@ -1,4 +1,5 @@
 import { styles } from "@/assets/styles/signup.style";
+import { handleGoogleoAuth } from "@/services/oAuth";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -16,8 +17,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Configure WebBrowser for OAuth
-
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +25,6 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // const { signUpWithEmail, signInWithGoogle, isLoading } = useAuth();
 
   const handleEmailSignup = async () => {
     if (
@@ -105,70 +103,13 @@ export default function SignupScreen() {
     }
   };
 
-  // const handleGoogleSignup = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     const redirectUrl = process.env.EXPO_PUBLIC_APP_DEEP_LINK_CALLBACK;
-
-  //     if (!redirectUrl) {
-  //       Alert.alert("Error", "Missing app deep link config.");
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     const { data, error } = await supabase.auth.signInWithOAuth({
-  //       provider: "google",
-  //       options: {
-  //         redirectTo: redirectUrl,
-  //         skipBrowserRedirect: true, // <-- This is the fix for "localhost"
-  //       },
-  //     });
-
-  //     if (error) {
-  //       Alert.alert("Error", error.message);
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     if (data?.url) {
-  //       // This just opens the browser.
-  //       // We will NOT handle the result here.
-  //       await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-  //     }
-  //   } catch (error) {
-  //     Alert.alert("Error", "Failed to ssign up with Google.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const handleGoogleSignup = async () => {
-  //   try {
-  //     const redirectUrl = process.env.EXPO_PUBLIC_APP_DEEP_LINK_CALLBACK;
-
-  //     const { data, error } = await supabase.auth.signInWithOAuth({
-  //       provider: "google",
-  //       options: {
-  //         redirectTo: redirectUrl,
-  //         skipBrowserRedirect: true,
-  //       },
-  //     });
-
-  //     if (error) throw error;
-
-  //     if (data?.url) {
-  //       console.log("Opening URL: ", data.url);
-  //       await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-  //     }
-  //   } catch (error) {
-  //     console.log("Error while google signup: ", error);
-  //     Alert.alert("Google Auth Error");
-  //   }
-  // };
-
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const handleGoogleSignup = () => {
+    handleGoogleoAuth(setIsLoading);
   };
 
   return (
@@ -336,14 +277,14 @@ export default function SignupScreen() {
             </TouchableOpacity>
 
             {/* Divider */}
-            {/* <View style={styles.dividerContainer}>
+            <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
-            </View> */}
+            </View>
 
             {/* Google Sign Up Button */}
-            {/* <TouchableOpacity
+            <TouchableOpacity
               style={[styles.googleButton, isLoading && styles.buttonDisabled]}
               onPress={handleGoogleSignup}
               disabled={isLoading}
@@ -355,7 +296,7 @@ export default function SignupScreen() {
                 style={styles.googleIcon}
               />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
 
           {/* Terms and Privacy */}

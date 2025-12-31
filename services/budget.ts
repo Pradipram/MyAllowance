@@ -1,6 +1,5 @@
 import { MonthlyBudget } from "@/types/budget";
 import { supabase } from "@/utils/supabase";
-import { Alert } from "react-native";
 
 const upsertBudgetCategories = async (
   budget: MonthlyBudget,
@@ -146,7 +145,7 @@ export const getMonthBudget = async (month: number, year: number) => {
   const user_id = session.data.session?.user.id;
 
   if (!user_id) {
-    Alert.alert("Error", "User not authenticated");
+    // Alert.alert("Error", "User not authenticated");
     return null;
   }
 

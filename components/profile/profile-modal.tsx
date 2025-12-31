@@ -1,6 +1,7 @@
 import { styles } from "@/assets/styles/profile-modal.style";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { User } from "@supabase/supabase-js";
 import { router } from "expo-router";
 import React from "react";
@@ -31,6 +32,16 @@ export default function ProfileModal({
         onPress: async () => {
           try {
             setLoading(true);
+
+            // Configure Google Sign-In before signing out
+            GoogleSignin.configure({
+              webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+            });
+            // 1. Sign out from Google's Native SDK
+            // This clears the cached "Last Account Used" on the device
+            await GoogleSignin.signOut();
+
+            // 2. Sign out from Supabase (Backend)
             const { error } = await supabase.auth.signOut();
             if (error) {
               Alert.alert("Error", error.message);

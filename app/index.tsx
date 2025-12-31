@@ -49,7 +49,9 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    loadMonthData();
+    if (user) {
+      loadMonthData();
+    }
   }, [selectedDate]);
 
   const loadMonthData = async () => {
