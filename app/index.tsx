@@ -3,6 +3,7 @@ import { styles } from "@/assets/styles/index.style";
 import IndexHeader from "@/components/header/index-header";
 import NoBudgetSet from "@/components/noBudgetSet";
 import ProfileModal from "@/components/profile/profile-modal";
+import { checkForUpdates } from "@/components/version/updateChecker";
 import { getMonthBudget } from "@/services/budget";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,10 +26,11 @@ export default function Index() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   // Check authentication status
   useEffect(() => {
-    // checkAuthStatus();
+    checkForUpdates(false);
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -37,9 +39,10 @@ export default function Index() {
         if (session?.user) {
           setUser(session.user);
         } else {
-          setUser(null);
           router.replace("/login");
+          setUser(null);
         }
+        setIsLoadingUser(false);
       }
     );
 
@@ -52,7 +55,7 @@ export default function Index() {
     if (user) {
       loadMonthData();
     }
-  }, [selectedDate]);
+  }, [selectedDate, user]);
 
   const loadMonthData = async () => {
     try {
@@ -95,7 +98,7 @@ export default function Index() {
     return monthBudget.totalBudget - monthBudget.totalSpent;
   };
 
-  if (isBudgetLoading) {
+  if (isBudgetLoading || isLoadingUser) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
