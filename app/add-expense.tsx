@@ -1,6 +1,10 @@
 import { styles } from "@/assets/styles/add-expense.style";
 import ShowCategory from "@/components/expense/show-category";
-import { insertTransaction } from "@/services/transaction";
+import {
+  getTransactionById,
+  insertTransaction,
+  updateTransaction,
+} from "@/services/transaction";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -38,14 +42,14 @@ const defaultTransaction: Transaction = {
 };
 
 export default function AddExpenseScreen() {
-  const { month, year } = useLocalSearchParams();
-
+  const { month, year, isEditing, transactionId } = useLocalSearchParams();
   const [transaction, setTransaction] =
     useState<Transaction>(defaultTransaction);
-
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [screenshots, setScreenshots] = useState<string[]>([]);
+
+  const editingMode = Boolean(isEditing);
 
   const paymentModes = [
     { id: "cash", name: "Cash", icon: "cash-outline" },
@@ -57,6 +61,12 @@ export default function AddExpenseScreen() {
 
   useEffect(() => {
     // Check if trying to add expense for non-current month
+    // console.log("Params:", {
+    //   month,
+    //   year,
+    //   isEditing,
+    //   transactionId,
+    // });
     if (month && year) {
       const today = new Date();
       const currentMonth = today.getMonth() + 1;
@@ -77,6 +87,30 @@ export default function AddExpenseScreen() {
 
     // loadBudget();
   }, []);
+
+  useEffect(() => {
+    if (transactionId) {
+      fetchTransactionById();
+    }
+  }, [transactionId]);
+
+  const fetchTransactionById = async () => {
+    try {
+      setLoading(true);
+      const fetchedTransaction = await getTransactionById(
+        transactionId as string
+      );
+      // console.log("Fetched transaction for editing:", fetchedTransaction);
+      setTransaction({
+        ...fetchedTransaction,
+        date: new Date(fetchedTransaction.date),
+      });
+    } catch (error) {
+      console.error("Error fetching transaction:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatDate = (date: Date) => {
     const today = new Date();
@@ -150,7 +184,7 @@ export default function AddExpenseScreen() {
     if (!validateTransaction()) {
       return;
     }
-    setIsSaving(true);
+    setLoading(true);
     try {
       const res = await insertTransaction(transaction as Transaction);
       // console.log("Transaction added successfully:", res);
@@ -161,7 +195,27 @@ export default function AddExpenseScreen() {
       console.error("Error adding transaction:", error);
       Alert.alert("Error", "Failed to add transaction. Please try again.");
     } finally {
-      setIsSaving(false);
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateTransaction = async () => {
+    if (!validateTransaction()) {
+      return;
+    }
+    setLoading(true);
+    try {
+      // Update logic here
+      const res = await updateTransaction(transaction as Transaction);
+      // console.log("Transaction updated successfully:", res);
+      Alert.alert("Success", "Expense updated successfully!", [
+        { text: "OK", onPress: () => router.replace("/") },
+      ]);
+    } catch (error) {
+      console.error("Error updating transaction:", error);
+      Alert.alert("Error", "Failed to update transaction. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -169,7 +223,7 @@ export default function AddExpenseScreen() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen
         options={{
-          title: "Add New Expense",
+          title: editingMode ? "Edit Expense" : "Add New Expense",
           headerBackTitle: "Back",
         }}
       />
@@ -319,19 +373,25 @@ export default function AddExpenseScreen() {
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-            onPress={addTransaction}
-            disabled={isSaving}
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+            onPress={editingMode ? handleUpdateTransaction : addTransaction}
+            disabled={loading}
           >
             <Text style={styles.saveButtonText}>
-              {isSaving ? "Saving..." : "Save Expense"}
+              {editingMode
+                ? loading
+                  ? "Updating..."
+                  : "Update Expense"
+                : loading
+                ? "Saving..."
+                : "Save Expense"}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => router.back()}
-            disabled={isSaving}
+            disabled={loading}
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>

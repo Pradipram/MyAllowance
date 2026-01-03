@@ -1,12 +1,19 @@
 import { styles } from "@/assets/styles/expense-history.style";
 import ShowCategory from "@/components/expense/show-category";
 import Header from "@/components/header/header";
-import { getTransactions } from "@/services/transaction";
+import { deleteTransaction, getTransactions } from "@/services/transaction";
 import { getMonthYearStringFromNumbers } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Transaction } from "../types/budget";
 
@@ -20,6 +27,7 @@ export default function ExpenseHistoryScreen() {
   const [isMonthTransactionsLoading, setIsMonthTransactionsLoading] =
     useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (categoryId) {
@@ -118,6 +126,48 @@ export default function ExpenseHistoryScreen() {
     );
   };
 
+  const handleEditTransaction = (item: Transaction) => {
+    // Navigate to add-expense with transaction data
+    router.push({
+      pathname: "/add-expense",
+      params: {
+        isEditing: "true",
+        transactionId: item.id,
+      },
+    });
+  };
+
+  const handleDeleteTransaction = (item: Transaction) => {
+    Alert.alert(
+      "Delete Transaction",
+      `Are you sure you want to delete this ₹${item.amount.toLocaleString()} expense?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setDeletingId(item.id!);
+            try {
+              const deletedTx = await deleteTransaction(item.id as string);
+              Alert.alert("Success", "Transaction deleted successfully");
+
+              setTransactions((prev) => prev.filter((t) => t.id !== item.id));
+
+              Alert.alert("Success", "Transaction deleted successfully");
+              // console.log("Deleting transaction:", item);
+            } catch (error) {
+              console.error("Error deleting transaction:", error);
+              Alert.alert("Error", "Failed to delete transaction");
+            } finally {
+              setDeletingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderExpenseItem = ({ item }: { item: Transaction }) => {
     // const category = getCategoryById(item.categoryId);
     // const categoryName = category?.name || "Unknown";
@@ -143,16 +193,42 @@ export default function ExpenseHistoryScreen() {
             <Text style={styles.descriptionText} numberOfLines={1}>
               {item.description}
             </Text>
-            <View style={styles.metaInfo}>
-              <Text style={styles.dateText}>{formatDate(item.date)}</Text>
-              {item.payment_mode && (
-                <>
-                  <Text style={styles.dotSeparator}>•</Text>
-                  <Text style={styles.paymentModeText}>
-                    {item.payment_mode}
-                  </Text>
-                </>
-              )}
+            <View style={styles.expenseMetaRow}>
+              <View style={styles.metaInfo}>
+                <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+                {item.payment_mode && (
+                  <>
+                    <Text style={styles.dotSeparator}>•</Text>
+                    <Text style={styles.paymentModeText}>
+                      {item.payment_mode}
+                    </Text>
+                  </>
+                )}
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => handleEditTransaction(item)}
+                  activeOpacity={0.7}
+                  disabled={deletingId === item.id}
+                >
+                  <Ionicons name="create-outline" size={16} color="#007AFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteTransaction(item)}
+                  activeOpacity={0.7}
+                  disabled={deletingId === item.id}
+                >
+                  {deletingId === item.id ? (
+                    <ActivityIndicator size="small" color="#FF3B30" />
+                  ) : (
+                    <Ionicons name="trash-outline" size={16} color="#FF3B30" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>

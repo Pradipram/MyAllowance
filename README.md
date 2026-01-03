@@ -32,6 +32,9 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Description Support**: Optional detailed descriptions for expenses
 - **Screenshot Attachments**: Upload receipt photos for expense verification
 - **Transaction Storage**: Automatic transaction recording in Supabase with ACID compliance
+- **Edit Transactions**: Modify existing expense details (amount, category, date, payment mode)
+- **Delete Transactions**: Remove transactions with confirmation dialog and automatic budget recalculation
+- **Real-Time Budget Updates**: Automatic adjustment of spent amounts when editing or deleting
 
 ### 📊 Expense History & Analytics
 
@@ -41,6 +44,9 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Smart Date Display**: Intelligent date formatting (Today, Yesterday, specific dates)
 - **Payment Mode Indicators**: Visual icons showing how each expense was paid
 - **Cross-Month Navigation**: Seamlessly view history for any month
+- **Transaction Management**: Edit or delete any transaction directly from the list
+- **Loading Indicators**: Visual feedback during transaction deletion
+- **Auto-Refresh**: Dashboard updates automatically after transaction changes
 
 ### 🔒 Enhanced Access Control
 
@@ -172,6 +178,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Category Balancing**: Move unused budget from one category to another mid-month
 - **Emergency Buffer**: Always include a 10-15% buffer in your total budget
 - **Consistent Tracking**: Use descriptive expense descriptions for better analysis
+- **Fix Mistakes Quickly**: Use the edit feature to correct transaction errors immediately
+- **Regular Cleanup**: Remove duplicate or erroneous transactions to maintain data accuracy and integrity
 
 ## 🤝 Contributing
 

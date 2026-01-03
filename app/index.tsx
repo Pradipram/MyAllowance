@@ -8,8 +8,8 @@ import { getMonthBudget } from "@/services/budget";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -56,6 +56,15 @@ export default function Index() {
       loadMonthData();
     }
   }, [selectedDate, user]);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadMonthData();
+      }
+    }, [user, selectedDate])
+  );
 
   const loadMonthData = async () => {
     try {

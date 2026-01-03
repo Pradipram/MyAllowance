@@ -142,9 +142,16 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  expenseMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 2,
+  },
   metaInfo: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
   dateText: {
     fontSize: 12,
@@ -161,6 +168,31 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#999",
     textTransform: "capitalize",
+  },
+  // Action buttons
+  actionButtons: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  editButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "#f0f7ff",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#d0e7ff",
+  },
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "#fff5f5",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#ffd0d0",
   },
   emptyState: {
     flex: 1,
