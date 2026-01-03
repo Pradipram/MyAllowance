@@ -126,7 +126,7 @@ export const saveOrUpdateMonthlyBudget = async (budget: MonthlyBudget) => {
     if (budget.id) {
       // Update existing budget
       const res = await updateMonthlyBudget(budget);
-      console.log("Update Response:", res);
+      // console.log("Update Response:", res);
       return res;
     } else {
       // Insert new budget

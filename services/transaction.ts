@@ -177,6 +177,6 @@ export const getTransactions = async (month: number, year: number) => {
     throw error;
   }
 
-  console.log("✅ Transactions fetched:", data?.length || 0);
+  // console.log("✅ Transactions fetched:", data?.length || 0);
   return data as Transaction[];
 };

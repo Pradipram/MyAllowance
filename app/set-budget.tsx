@@ -145,7 +145,7 @@ export default function OnboardingScreen() {
           id: cat.id,
           name: cat.name.trim(),
           amount: Number(cat.amount),
-          spent: 0,
+          spent: cat.spent || 0,
           index: cat.index,
         })
       );
@@ -154,13 +154,14 @@ export default function OnboardingScreen() {
         (sum, cat) => sum + cat.amount,
         0
       );
+
       const monthlyBudget: MonthlyBudget = {
         id: budget?.id,
         month: selectedMonthDate.getMonth() + 1,
         year: parseInt(selectedMonthDate.getFullYear().toString()),
         categories: budgetCategories,
         totalBudget: totalBudget,
-        totalSpent: 0,
+        totalSpent: budget?.totalSpent || 0,
       };
 
       const res = await saveOrUpdateMonthlyBudget(monthlyBudget);

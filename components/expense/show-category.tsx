@@ -36,7 +36,7 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
 
   const loadBudget = useCallback(async () => {
     try {
-      console.log("🔄 Loading budget categories for", month, year);
+      // console.log("🔄 Loading budget categories for", month, year);
       setIsBudgetLoading(true);
       const res = await getMonthBudget(month, year);
       if (res) {
@@ -54,7 +54,7 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
       setCategories(from === "add-expense" ? [] : [defaultCategory]);
     } finally {
       setIsBudgetLoading(false);
-      console.log("✅ Finished loading budget categories");
+      // console.log("✅ Finished loading budget categories");
     }
   }, [month, year, from]);
 

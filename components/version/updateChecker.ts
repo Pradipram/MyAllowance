@@ -36,10 +36,12 @@ export const checkForUpdates = async (isManualCheck = false) => {
     }
 
     // 4. Compare Versions
+    // console.log("Current Version:", currentVersion);
+    // console.log("Latest Version:", latestVersion);
     if (isNewerVersion(currentVersion, latestVersion)) {
       Alert.alert(
         "Update Available! 🚀",
-        `A new version (${latestVersion}) is available.\n\nChanges:\n${data.body}`,
+        `A new version (${latestVersion}) is available. Your current version is ${currentVersion}.\n\nChanges:\n${data.body}`,
         [
           { text: "Cancel", style: "cancel" },
           {
