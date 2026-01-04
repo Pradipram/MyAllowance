@@ -1,7 +1,7 @@
 {
   "name": "myallowance",
   "main": "expo-router/entry",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "scripts": {
     "start": "expo start",
     "start:clear": "expo start -c",
