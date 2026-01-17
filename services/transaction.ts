@@ -96,6 +96,7 @@ export const updateTransaction = async (transaction: Transaction) => {
     p_year: transaction.year,
     p_payment_mode: transaction.payment_mode,
     p_amount: transaction.amount,
+    p_type: transaction.type,
   });
 
   if (error) {

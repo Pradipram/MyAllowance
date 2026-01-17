@@ -227,6 +227,17 @@ export default function AddExpenseScreen() {
 
   const addTransaction = async () => {
     // console.log("Add transaction function called", transaction);
+
+    // Show coming soon message for income
+    if (activeTab === "income") {
+      Alert.alert(
+        "Coming Soon",
+        "Income tracking feature is under development and will be available soon!",
+        [{ text: "OK" }],
+      );
+      return;
+    }
+
     if (!validateTransaction()) {
       return;
     }
@@ -234,10 +245,7 @@ export default function AddExpenseScreen() {
     try {
       const res = await insertTransaction(transaction as Transaction);
       // console.log("Transaction added successfully:", res);
-      const message =
-        activeTab === "income"
-          ? "Income added successfully!"
-          : "Expense added successfully!";
+      const message = `${activeTab === "expense" ? "Expense" : "Income"} added successfully!`;
       Alert.alert("Success", message, [
         { text: "OK", onPress: () => router.replace("/") },
       ]);
