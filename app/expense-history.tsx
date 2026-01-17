@@ -129,7 +129,7 @@ export default function ExpenseHistoryScreen() {
   const handleEditTransaction = (item: Transaction) => {
     // Navigate to add-expense with transaction data
     router.push({
-      pathname: "/add-expense",
+      pathname: "/add-transaction",
       params: {
         isEditing: "true",
         transactionId: item.id,

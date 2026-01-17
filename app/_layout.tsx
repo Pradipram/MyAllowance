@@ -2,18 +2,6 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 export default function RootLayout() {
-  // useEffect(() => {
-  //   const handleDeepLink = async (event: any) => {
-  //     const url = event.url;
-  //     // const { data, error } = await supabase.auth.getSessionFromUrl({ url });
-  //     // if (error) console.error("Supabase Session Error:", error);
-  //     console.log("url", url);
-  //   };
-
-  //   const subscription = Linking.addEventListener("url", handleDeepLink);
-
-  //   return () => subscription.remove();
-  // }, []);
   return (
     <>
       <StatusBar style="auto" />
@@ -63,9 +51,9 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
-          name="add-expense"
+          name="add-transaction"
           options={{
-            title: "Add Expense",
+            title: "Add Transaction",
             headerShown: true,
           }}
         />

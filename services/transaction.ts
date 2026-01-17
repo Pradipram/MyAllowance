@@ -2,11 +2,13 @@ import { Transaction } from "@/types/budget";
 import { supabase } from "@/utils/supabase";
 
 export const insertTransaction = async (transaction: Transaction) => {
-  // console.log("🔔 Inserting transaction:", transaction);
+  console.log("🔔 Inserting transaction:", transaction);
 
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user.id;
   if (!userId) throw new Error("User not authenticated");
+
+  console.log("Inserting transaction", transaction);
 
   const { data, error } = await supabase.rpc("insert_full_transaction", {
     p_user_id: userId,
@@ -16,7 +18,7 @@ export const insertTransaction = async (transaction: Transaction) => {
     p_date: transaction.date,
     p_month: transaction.month,
     p_year: transaction.year,
-    p_type: transaction.type || "expense",
+    p_type: transaction.type,
     p_payment_mode: transaction.payment_mode,
     p_amount: transaction.amount,
   });

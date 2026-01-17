@@ -248,21 +248,32 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
     textAlign: "center",
   },
-  fab: {
+  fabContainer: {
     position: "absolute",
     bottom: 30,
     right: 20,
+    flexDirection: "column",
+    gap: 12,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#007AFF",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#007AFF",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  fabExpense: {
+    backgroundColor: "#FF3B30",
+    shadowColor: "#FF3B30",
+  },
+  fabIncome: {
+    backgroundColor: "#34C759",
+    shadowColor: "#34C759",
   },
   content: {
     flex: 1,

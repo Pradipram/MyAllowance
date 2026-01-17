@@ -43,7 +43,7 @@ export default function Index() {
           setUser(null);
         }
         setIsLoadingUser(false);
-      }
+      },
     );
 
     return () => {
@@ -63,7 +63,7 @@ export default function Index() {
       if (user) {
         loadMonthData();
       }
-    }, [user, selectedDate])
+    }, [user, selectedDate]),
   );
 
   const loadMonthData = async () => {
@@ -71,7 +71,7 @@ export default function Index() {
       setIsBudgetLoading(true);
       const res = await await getMonthBudget(
         selectedDate.getMonth() + 1,
-        selectedDate.getFullYear()
+        selectedDate.getFullYear(),
       );
       // console.log("Loaded month budget:", res);
       setMonthBudget(res);
@@ -118,7 +118,6 @@ export default function Index() {
     );
   }
 
-  // if (isSetupComplete || 1) {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -179,7 +178,7 @@ export default function Index() {
                   router.push(
                     `./expense-history?month=${(
                       selectedDate.getMonth() + 1
-                    ).toString()}&year=${selectedDate.getFullYear()}`
+                    ).toString()}&year=${selectedDate.getFullYear()}`,
                   );
                 }}
               >
@@ -196,7 +195,7 @@ export default function Index() {
                 const spent = category.spent || 0;
                 const percentage = getProgressPercentage(
                   spent,
-                  category.amount
+                  category.amount,
                 );
                 const progressColor = getProgressColor(percentage);
 
@@ -209,7 +208,7 @@ export default function Index() {
                       const month = (selectedDate.getMonth() + 1).toString();
                       const year = selectedDate.getFullYear().toString();
                       router.push(
-                        `/expense-history?month=${month}&year=${year}&categoryId=${category.id}`
+                        `/expense-history?month=${month}&year=${year}&categoryId=${category.id}`,
                       );
                     }}
                   >
@@ -246,7 +245,7 @@ export default function Index() {
                 style={styles.editBudgetButton}
                 onPress={() => {
                   router.push(
-                    `/set-budget?selected_date=${selectedDate.toISOString()}`
+                    `/set-budget?selected_date=${selectedDate.toISOString()}`,
                   );
                 }}
               >
@@ -259,19 +258,32 @@ export default function Index() {
       </ScrollView>
 
       {isCurrentMonth() && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => {
-            const month = (selectedDate.getMonth() + 1).toString();
-            const year = selectedDate.getFullYear().toString();
-            router.push(`/add-expense?month=${month}&year=${year}`);
-            // router.push(
-            //   `/set-budget?selectedDate=${selectedDate.toISOString()}`
-            // );
-          }}
-        >
-          <Ionicons name="add" size={32} color="#ffffff" />
-        </TouchableOpacity>
+        <View style={styles.fabContainer}>
+          <TouchableOpacity
+            style={[styles.fab, styles.fabExpense]}
+            onPress={() => {
+              const month = (selectedDate.getMonth() + 1).toString();
+              const year = selectedDate.getFullYear().toString();
+              router.push(
+                `/add-transaction?month=${month}&year=${year}&type=expense`,
+              );
+            }}
+          >
+            <Ionicons name="remove" size={32} color="#ffffff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.fab, styles.fabIncome]}
+            onPress={() => {
+              const month = (selectedDate.getMonth() + 1).toString();
+              const year = selectedDate.getFullYear().toString();
+              router.push(
+                `/add-transaction?month=${month}&year=${year}&type=income`,
+              );
+            }}
+          >
+            <Ionicons name="add" size={32} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Profile Modal */}

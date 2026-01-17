@@ -26,15 +26,19 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 ### 💳 Advanced Expense Management
 
 - **Quick Expense Entry**: Streamlined form for fast expense logging
+- **Dual-Mode Entry**: Separate icons for adding income (+) and expenses (-) from dashboard
 - **Category Selection**: Choose from predefined budget categories with visual indicators
+- **Income Categories**: Salary, Gift, Investment, Refund, Freelance, and Other with custom icons
+- **Seamless Mode Switching**: Smooth animated transitions between Income and Expense modes with header toggle
 - **Payment Mode Tracking**: Cash, Card, UPI, Net Banking, and Other options with icons
 - **Date Selection**: Smart date picker with "Today"/"Yesterday" shortcuts
-- **Description Support**: Optional detailed descriptions for expenses
+- **Description Support**: Optional detailed descriptions for expenses and income
 - **Screenshot Attachments**: Upload receipt photos for expense verification
 - **Transaction Storage**: Automatic transaction recording in Supabase with ACID compliance
-- **Edit Transactions**: Modify existing expense details (amount, category, date, payment mode)
+- **Type-Based Processing**: Intelligent RPC functions handle Income vs Expense logic separately
+- **Edit Transactions**: Modify existing transaction details (amount, category, date, payment mode)
 - **Delete Transactions**: Remove transactions with confirmation dialog and automatic budget recalculation
-- **Real-Time Budget Updates**: Automatic adjustment of spent amounts when editing or deleting
+- **Real-Time Updates**: Automatic adjustment of spent amounts and income when editing or deleting
 
 ### 📊 Expense History & Analytics
 
@@ -102,8 +106,19 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 
    Run the SQL migration files in your Supabase SQL Editor:
 
-   - `database/insert_transaction_atomic.sql`
-   - `database/delete_monthly_budget.sql`
+   - `database/insert_transaction_atomic.sql` - Handles both income and expense transactions
+   - `database/update_transaction.sql` - Updates transactions with type-based logic
+   - `database/delete_monthly_budget.sql` - Manages budget and income deletion
+
+   **Database Schema:**
+   - `monthly_budgets` table: Stores expense budgets with categories
+   - `monthly_incomes` table: Stores monthly income data separately (UUID primary key, RLS policies)
+   - `transactions` table: Records all income and expense transactions with type field
+   
+   **RPC Functions:**
+   - `insert_full_transaction`: Processes income/expense based on type parameter
+   - `update_full_transaction`: Updates transactions and recalculates budgets/income accordingly
+   - `delete_full_transaction`: Removes transactions and adjusts monthly totals by type
 
 5. **Configure Google OAuth (Optional)**
 
@@ -144,9 +159,9 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **💡 AI-Powered Insights**: Machine learning-based budget recommendations and spending analysis
 - **📱 Home Screen Widgets**: Quick budget overview and expense entry widgets
 - **🏷️ Advanced Categorization**: Custom tags, subcategories, and smart auto-categorization
-- **💰 Income & Revenue Tracking**: Complete financial picture with income management
 - **🎯 Goal Setting**: Savings goals, budget targets, and achievement tracking
 - **📤 Export & Reporting**: PDF reports, CSV exports, and financial summaries
+- **💵 Advanced Income Analytics**: Income tracking with source breakdown and trends
 
 ### Technical Roadmap
 
@@ -209,13 +224,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Development Stats
 
-- **Backend**: Supabase PostgreSQL with 3 main tables + Auth
-- **Lines of Code**: 3,500+ lines of TypeScript/TSX
-- **Screens**: 7 fully-featured screens with authentication
-- **Components**: 25+ reusable UI components
-- **Database Functions**: 2 PostgreSQL RPC functions
-- **Features**: 30+ major features implemented
+- **Backend**: Supabase PostgreSQL with 4 main tables (budgets, incomes, transactions, auth)
+- **Lines of Code**: 4,000+ lines of TypeScript/TSX
+- **Screens**: 8 fully-featured screens with authentication
+- **Components**: 28+ reusable UI components
+- **Database Functions**: 3 PostgreSQL RPC functions with type-based logic
+- **Features**: 35+ major features implemented
 - **Authentication**: Email/password + Google OAuth
+- **Income Management**: Full income tracking with 6 predefined categories
 
 ## 🙏 Acknowledgments
 
