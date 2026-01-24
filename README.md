@@ -106,19 +106,21 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 
    Run the SQL migration files in your Supabase SQL Editor:
 
-   - `database/insert_transaction_atomic.sql` - Handles both income and expense transactions
-   - `database/update_transaction.sql` - Updates transactions with type-based logic
+   - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
+   - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
+   - `database/update_transaction.sql` - Updates transactions with type-based logic and income source support
    - `database/delete_monthly_budget.sql` - Manages budget and income deletion
 
    **Database Schema:**
    - `monthly_budgets` table: Stores expense budgets with categories
    - `monthly_incomes` table: Stores monthly income data separately (UUID primary key, RLS policies)
-   - `transactions` table: Records all income and expense transactions with type field
+   - `income_sources` table: Tracks individual income sources with amounts
+   - `transactions` table: Records all income and expense transactions with type and source fields
    
    **RPC Functions:**
-   - `insert_full_transaction`: Processes income/expense based on type parameter
-   - `update_full_transaction`: Updates transactions and recalculates budgets/income accordingly
-   - `delete_full_transaction`: Removes transactions and adjusts monthly totals by type
+   - `insert_full_transaction_v2`: Processes income/expense with income source tracking and validation
+   - `update_full_transaction`: Updates transactions with revert-and-apply logic for accurate recalculation
+   - `delete_full_transaction`: Removes transactions and reverses income source and monthly total adjustments
 
 5. **Configure Google OAuth (Optional)**
 
@@ -224,14 +226,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Development Stats
 
-- **Backend**: Supabase PostgreSQL with 4 main tables (budgets, incomes, transactions, auth)
+- **Backend**: Supabase PostgreSQL with 5 main tables (budgets, incomes, income_sources, transactions, auth)
 - **Lines of Code**: 4,000+ lines of TypeScript/TSX
 - **Screens**: 8 fully-featured screens with authentication
 - **Components**: 28+ reusable UI components
-- **Database Functions**: 3 PostgreSQL RPC functions with type-based logic
+- **Database Functions**: 3 PostgreSQL RPC functions with enhanced income source validation and atomic operations
 - **Features**: 35+ major features implemented
 - **Authentication**: Email/password + Google OAuth
-- **Income Management**: Full income tracking with 6 predefined categories
+- **Income Management**: Full income tracking with 6 predefined categories and source-level tracking
 
 ## 🙏 Acknowledgments
 

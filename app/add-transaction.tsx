@@ -85,8 +85,6 @@ export default function AddExpenseScreen() {
         return;
       }
     }
-
-    // loadBudget();
   }, []);
 
   useEffect(() => {
@@ -228,6 +226,9 @@ export default function AddExpenseScreen() {
   const addTransaction = async () => {
     // console.log("Add transaction function called", transaction);
 
+    if (!validateTransaction()) {
+      return;
+    }
     // Show coming soon message for income
     if (activeTab === "income") {
       Alert.alert(
@@ -238,9 +239,6 @@ export default function AddExpenseScreen() {
       return;
     }
 
-    if (!validateTransaction()) {
-      return;
-    }
     setLoading(true);
     try {
       const res = await insertTransaction(transaction as Transaction);

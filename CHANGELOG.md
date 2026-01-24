@@ -15,7 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Smart UI Components**: Created modular `ShowIncomeCategory` component for standardized selection.
 - **Database Architecture**:
   - **New Table**: Created `monthly_incomes` table with Row Level Security (RLS) to safely store earnings.
-  - **Atomic Transactions**: Updated RPC functions (`insert`, `update`, `delete`) to intelligently route data based on transaction type.
+  - **Enhanced RPC Functions**: Comprehensive transaction management with:
+    - `insert_full_transaction_v2`: Income source ID tracking with mandatory validation, separate update paths for income sources and monthly totals
+    - `update_full_transaction`: Revert-and-apply algorithm that undoes old transaction effects before applying new values, ensuring accurate budget and income recalculation
+    - `delete_full_transaction`: Intelligent reversal logic that automatically adjusts income sources and monthly totals when removing transactions
+  - **Income Source Tracking**: Individual income sources now maintain running totals that update atomically with transactions
+  - **Atomic Transactions**: All RPC functions use consistent logic to route data based on transaction type (income vs expense)
 - **Enhanced UI/UX**:
   - **Smart Header**: Added toggle icon in the header to seamlessly switch between transaction modes.
   - **Directional Animations**: Implemented slide animations (Up for Expense, Down for Income) to give users spatial context.
@@ -36,6 +41,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Animation Engine**: Integrated React Native `Animated` API for performant, native-driver transitions.
 - **Code Modularity**: Extracted category selection logic into reusable components to reduce code duplication.
 - **State Management**: Refactored transaction processing to use unified state for both Income and Expense types.
+- **RLS**: Row Level Security added for table transaction.
+- **Database Improvements**:
+  - Migrated to `insert_full_transaction_v2` RPC for better income source tracking
+  - Enhanced `update_full_transaction` with revert-and-apply pattern for accurate recalculation
+  - Improved `delete_full_transaction` to handle income source reversals automatically
+  - Added parameter validation to prevent data integrity issues
+  - Enhanced income source updates with amount tracking at source level
+  - Improved error messages for debugging and user feedback
+  - NULL-safe SQL operations to prevent crashes when IDs are missing
 
 ---
 
