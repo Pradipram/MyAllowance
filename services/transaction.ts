@@ -8,11 +8,24 @@ export const insertTransaction = async (transaction: Transaction) => {
   const userId = session.data.session?.user.id;
   if (!userId) throw new Error("User not authenticated");
 
-  console.log("Inserting transaction", transaction);
+  // Validation: Ensure Income transactions have income_source_id
+  if (transaction.type === "income" && !transaction.income_source_id) {
+    throw new Error("Income Source ID is required for income transactions");
+  }
 
-  const { data, error } = await supabase.rpc("insert_full_transaction", {
+  // Validation: Ensure Expense transactions have category_id
+  if (transaction.type === "expense" && !transaction.category_id) {
+    throw new Error("Category ID is required for expense transactions");
+  }
+
+  // console.log("Inserting transaction", transaction);
+
+  const { data, error } = await supabase.rpc("insert_full_transaction_v2", {
     p_user_id: userId,
-    p_category_id: transaction.category_id,
+    p_category_id:
+      transaction.type === "expense" ? transaction.category_id : null,
+    p_income_source_id:
+      transaction.type === "income" ? transaction.income_source_id : null,
     p_category_name: transaction.category_name,
     p_description: transaction.description || "",
     p_date: transaction.date,
@@ -85,18 +98,31 @@ export const updateTransaction = async (transaction: Transaction) => {
 
   if (!transaction.id) throw new Error("Transaction ID is required for update");
 
-  const { data, error } = await supabase.rpc("update_full_transaction", {
+  // Validation: Ensure Income transactions have income_source_id
+  if (transaction.type === "income" && !transaction.income_source_id) {
+    throw new Error("Income Source ID is required for income transactions");
+  }
+
+  // Validation: Ensure Expense transactions have category_id
+  if (transaction.type === "expense" && !transaction.category_id) {
+    throw new Error("Category ID is required for expense transactions");
+  }
+
+  const { data, error } = await supabase.rpc("update_full_transaction_v2", {
     p_transaction_id: transaction.id,
     p_user_id: userId,
-    p_category_id: transaction.category_id,
+    p_category_id:
+      transaction.type === "expense" ? transaction.category_id : null,
+    p_income_source_id:
+      transaction.type === "income" ? transaction.income_source_id : null,
     p_category_name: transaction.category_name,
     p_description: transaction.description || "",
     p_date: transaction.date,
     p_month: transaction.month,
     p_year: transaction.year,
+    p_type: transaction.type,
     p_payment_mode: transaction.payment_mode,
     p_amount: transaction.amount,
-    p_type: transaction.type,
   });
 
   if (error) {

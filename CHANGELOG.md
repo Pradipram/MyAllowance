@@ -47,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created `IncomeSource` interface for type-safe income source management
   - Enhanced `Transaction` type with `income_source_id` field for income tracking
   - Maintained type safety across all transaction types with union type `'income' | 'expense'`
+- **Service Layer Enhancements**:
+  - Added client-side validation in `insertTransaction` and `updateTransaction` services
+  - Validate income transactions require `income_source_id` before RPC call
+  - Validate expense transactions require `category_id` before RPC call
+  - Conditional ID passing based on transaction type (null for unused IDs)
 - **Database Improvements**:
   - Migrated to `insert_full_transaction_v2` RPC for better income source tracking
   - Upgraded to `update_full_transaction_v2` with income source ID parameter and smart column management
