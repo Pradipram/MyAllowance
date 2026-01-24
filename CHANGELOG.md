@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code Modularity**: Extracted category selection logic into reusable components to reduce code duplication.
 - **State Management**: Refactored transaction processing to use unified state for both Income and Expense types.
 - **RLS**: Row Level Security added for table transaction.
+- **TypeScript Improvements**:
+  - Created `IncomeSource` interface for type-safe income source management
+  - Enhanced `Transaction` type with `income_source_id` field for income tracking
+  - Maintained type safety across all transaction types with union type `'income' | 'expense'`
 - **Database Improvements**:
   - Migrated to `insert_full_transaction_v2` RPC for better income source tracking
   - Upgraded to `update_full_transaction_v2` with income source ID parameter and smart column management

@@ -24,7 +24,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Transaction } from "../types/budget";
+import { Transaction } from "../types/types";
 
 const defaultTransaction: Transaction = {
   // id: "",

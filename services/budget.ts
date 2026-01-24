@@ -1,9 +1,9 @@
-import { MonthlyBudget } from "@/types/budget";
+import { MonthlyBudget } from "@/types/types";
 import { supabase } from "@/utils/supabase";
 
 const upsertBudgetCategories = async (
   budget: MonthlyBudget,
-  budgetId: string
+  budgetId: string,
 ) => {
   // Get existing categories for this budget
   const { data: existingCategories } = await supabase
@@ -12,7 +12,7 @@ const upsertBudgetCategories = async (
     .eq("monthly_budget_id", budgetId);
 
   const existingCategoryMap = new Map(
-    existingCategories?.map((cat) => [cat.name, cat.id]) || []
+    existingCategories?.map((cat) => [cat.name, cat.id]) || [],
   );
 
   // Separate categories into update and insert
@@ -65,7 +65,7 @@ const upsertBudgetCategories = async (
   // Delete categories that were removed (exist in DB but not in new budget)
   const newCategoryNames = budget.categories.map((cat) => cat.name);
   const categoriesToDelete = existingCategories?.filter(
-    (cat) => !newCategoryNames.includes(cat.name)
+    (cat) => !newCategoryNames.includes(cat.name),
   );
 
   if (categoriesToDelete && categoriesToDelete.length > 0) {

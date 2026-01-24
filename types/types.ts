@@ -10,7 +10,8 @@ export interface Transaction {
   id?: string;
   user_id: string;
 
-  category_id: string;
+  category_id?: string;
+  income_source_id?: string;
   category_name: string;
 
   amount: number;
@@ -39,4 +40,12 @@ export interface MonthlyBudget {
   categories: BudgetCategory[];
   totalBudget: number;
   totalSpent: number;
+}
+
+export interface IncomeSource {
+  id: string;
+  user_id: string;
+  name: string; // e.g. "Salary", "Dividends"
+  type: "active" | "passive";
+  amount: number; // Total accumulated for this month
 }

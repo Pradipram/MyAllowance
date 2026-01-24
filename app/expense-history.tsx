@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Transaction } from "../types/budget";
+import { Transaction } from "../types/types";
 
 export default function ExpenseHistoryScreen() {
   const { month, year, categoryId } = useLocalSearchParams<{
@@ -40,7 +40,7 @@ export default function ExpenseHistoryScreen() {
     useCallback(() => {
       // loadData();
       loadMonthTransactions();
-    }, [])
+    }, []),
   );
 
   const loadMonthTransactions = async () => {
@@ -48,7 +48,7 @@ export default function ExpenseHistoryScreen() {
     try {
       const transactionsResponse = await getTransactions(
         parseInt(month!),
-        parseInt(year!)
+        parseInt(year!),
       );
       // console.log("Loaded month transactions:", transactionsResponse);
       setTransactions(transactionsResponse || []);
@@ -115,14 +115,14 @@ export default function ExpenseHistoryScreen() {
       return transactions;
     }
     return transactions.filter(
-      (expense) => expense.category_id === selectedCategoryId
+      (expense) => expense.category_id === selectedCategoryId,
     );
   };
 
   const getTotalExpenses = (): number => {
     return getFilteredExpenses().reduce(
       (sum, expense) => sum + expense.amount,
-      0
+      0,
     );
   };
 
@@ -164,7 +164,7 @@ export default function ExpenseHistoryScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -255,7 +255,7 @@ export default function ExpenseHistoryScreen() {
       <Header
         heading={`Expense History - ${getMonthYearStringFromNumbers(
           parseInt(month as string),
-          parseInt(year as string)
+          parseInt(year as string),
         )}`}
       />
 
@@ -293,7 +293,7 @@ export default function ExpenseHistoryScreen() {
       {filteredExpenses.length > 0 ? (
         <FlatList
           data={filteredExpenses.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           )}
           renderItem={renderExpenseItem}
           keyExtractor={(item) => item.id as string}

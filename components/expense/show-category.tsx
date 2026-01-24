@@ -1,6 +1,6 @@
 import { styles } from "@/assets/styles/add-expense.style";
 import { getMonthBudget } from "@/services/budget";
-import { BudgetCategory } from "@/types/budget";
+import { BudgetCategory } from "@/types/types";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -30,7 +30,7 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
   from = "expense-history", // Default to expense-history to maintain existing behavior
 }) => {
   const [categories, setCategories] = useState<BudgetCategory[]>(
-    from === "add-expense" ? [] : [defaultCategory]
+    from === "add-expense" ? [] : [defaultCategory],
   );
   const [isBudgetLoading, setIsBudgetLoading] = useState(false);
 
@@ -61,7 +61,7 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
   useFocusEffect(
     useCallback(() => {
       loadBudget();
-    }, [loadBudget])
+    }, [loadBudget]),
   );
 
   if (isBudgetLoading) {

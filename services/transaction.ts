@@ -1,4 +1,4 @@
-import { Transaction } from "@/types/budget";
+import { Transaction } from "@/types/types";
 import { supabase } from "@/utils/supabase";
 
 export const insertTransaction = async (transaction: Transaction) => {

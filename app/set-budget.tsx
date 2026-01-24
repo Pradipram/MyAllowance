@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BudgetCategory, MonthlyBudget } from "../types/budget";
+import { BudgetCategory, MonthlyBudget } from "../types/types";
 
 export default function OnboardingScreen() {
   const params = useLocalSearchParams();
@@ -49,7 +49,7 @@ export default function OnboardingScreen() {
       setIsBudgetLoading(true);
       const res = await getMonthBudget(
         selectedMonthDate.getMonth() + 1,
-        selectedMonthDate.getFullYear()
+        selectedMonthDate.getFullYear(),
       );
 
       if (res) {
@@ -104,13 +104,13 @@ export default function OnboardingScreen() {
   const updateCategory = (
     index: number,
     field: "name" | "amount",
-    value: string
+    value: string,
   ) => {
     const categories = budget?.categories || [];
     setBudget({
       ...budget!,
       categories: categories.map((cat, i) =>
-        i === index ? { ...cat, [field]: value } : cat
+        i === index ? { ...cat, [field]: value } : cat,
       ),
     });
   };
@@ -121,13 +121,13 @@ export default function OnboardingScreen() {
         cat.name.trim() !== "" &&
         cat.amount !== 0 &&
         !isNaN(Number(cat.amount)) &&
-        Number(cat.amount) > 0
+        Number(cat.amount) > 0,
     );
 
     if (validCategories?.length === 0) {
       Alert.alert(
         "Error",
-        "Please add at least one valid category with a name and budget amount."
+        "Please add at least one valid category with a name and budget amount.",
       );
       return;
     }
@@ -147,12 +147,12 @@ export default function OnboardingScreen() {
           amount: Number(cat.amount),
           spent: cat.spent || 0,
           index: cat.index,
-        })
+        }),
       );
 
       const totalBudget = budgetCategories.reduce(
         (sum, cat) => sum + cat.amount,
-        0
+        0,
       );
 
       const monthlyBudget: MonthlyBudget = {
@@ -170,9 +170,9 @@ export default function OnboardingScreen() {
       Alert.alert(
         "Success",
         `Your budget for ${getMonthYearString(
-          selectedMonthDate
+          selectedMonthDate,
         )} has been updated successfully!`,
-        [{ text: "OK", onPress: () => router.replace("/") }]
+        [{ text: "OK", onPress: () => router.replace("/") }],
       );
     } catch (error) {
       Alert.alert("Error", "Failed to save budget. Please try again.");
@@ -205,7 +205,7 @@ export default function OnboardingScreen() {
           style: "destructive",
           onPress: confirmDeleteBudget,
         },
-      ]
+      ],
     );
   };
 
@@ -225,7 +225,7 @@ export default function OnboardingScreen() {
               router.replace("/");
             },
           },
-        ]
+        ],
       );
     } catch (error) {
       Alert.alert("Error", "Failed to delete budget. Please try again.");
@@ -247,7 +247,7 @@ export default function OnboardingScreen() {
           >
             <Header
               heading={`set budget for ${getMonthYearString(
-                selectedMonthDate
+                selectedMonthDate,
               )}`}
             />
 

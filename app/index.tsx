@@ -18,7 +18,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MonthlyBudget } from "../types/budget";
+import { MonthlyBudget } from "../types/types";
 
 export default function Index() {
   const [isBudgetLoading, setIsBudgetLoading] = useState(false);
