@@ -107,8 +107,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    Run the SQL migration files in your Supabase SQL Editor:
 
    - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
+   - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with income source tracking
    - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
-   - `database/update_transaction.sql` - Updates transactions with type-based logic and income source support
    - `database/delete_monthly_budget.sql` - Manages budget and income deletion
 
    **Database Schema:**
@@ -119,7 +119,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    
    **RPC Functions:**
    - `insert_full_transaction_v2`: Processes income/expense with income source tracking and validation
-   - `update_full_transaction`: Updates transactions with revert-and-apply logic for accurate recalculation
+   - `update_full_transaction_v2`: Updates transactions with revert-and-apply logic and income source switching
    - `delete_full_transaction`: Removes transactions and reverses income source and monthly total adjustments
 
 5. **Configure Google OAuth (Optional)**

@@ -17,9 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **New Table**: Created `monthly_incomes` table with Row Level Security (RLS) to safely store earnings.
   - **Enhanced RPC Functions**: Comprehensive transaction management with:
     - `insert_full_transaction_v2`: Income source ID tracking with mandatory validation, separate update paths for income sources and monthly totals
-    - `update_full_transaction`: Revert-and-apply algorithm that undoes old transaction effects before applying new values, ensuring accurate budget and income recalculation
+    - `update_full_transaction_v2`: Revert-and-apply algorithm with income source switching capability, ensuring accurate budget and income recalculation across category/source changes
     - `delete_full_transaction`: Intelligent reversal logic that automatically adjusts income sources and monthly totals when removing transactions
   - **Income Source Tracking**: Individual income sources now maintain running totals that update atomically with transactions
+  - **Smart Column Switching**: Update function correctly manages category_id and income_source_id columns based on transaction type
   - **Atomic Transactions**: All RPC functions use consistent logic to route data based on transaction type (income vs expense)
 - **Enhanced UI/UX**:
   - **Smart Header**: Added toggle icon in the header to seamlessly switch between transaction modes.
@@ -44,12 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **RLS**: Row Level Security added for table transaction.
 - **Database Improvements**:
   - Migrated to `insert_full_transaction_v2` RPC for better income source tracking
-  - Enhanced `update_full_transaction` with revert-and-apply pattern for accurate recalculation
+  - Upgraded to `update_full_transaction_v2` with income source ID parameter and smart column management
+  - Enhanced revert-and-apply pattern to handle income source switching when changing transaction type
   - Improved `delete_full_transaction` to handle income source reversals automatically
-  - Added parameter validation to prevent data integrity issues
+  - Added parameter validation in all RPC functions to prevent data integrity issues
   - Enhanced income source updates with amount tracking at source level
   - Improved error messages for debugging and user feedback
   - NULL-safe SQL operations to prevent crashes when IDs are missing
+  - Upsert logic for monthly income totals to handle edge cases gracefully
 
 ---
 
