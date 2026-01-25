@@ -27,6 +27,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 
 - **Quick Expense Entry**: Streamlined form for fast expense logging
 - **Dual-Mode Entry**: Separate icons for adding income (+) and expenses (-) from dashboard
+- **Dual Setup Flow**: Separate "Set Up Budget" and "Setup Income Source" buttons for first-time configuration
 - **Category Selection**: Choose from predefined budget categories with visual indicators
 - **Income Categories**: Salary, Gift, Investment, Refund, Freelance, and Other with custom icons
 - **Seamless Mode Switching**: Smooth animated transitions between Income and Expense modes with header toggle
@@ -105,15 +106,17 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 4. **Set up database**
 
    Run the SQL migration files in your Supabase SQL Editor:
+   - `database/monthly_record/create_table.sql` - Creates the central monthly_records table and links budget categories and income sources
+   - `database/monthly_record/monthly_record_rls.sql` - Applies Row Level Security policies for monthly records
    - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
    - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with income source tracking
    - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
    - `database/delete_monthly_budget.sql` - Manages budget and income deletion
 
    **Database Schema:**
-   - `monthly_budgets` table: Stores expense budgets with categories
-   - `monthly_incomes` table: Stores monthly income data separately (UUID primary key, RLS policies)
-   - `income_sources` table: Tracks individual income sources with amounts
+   - `monthly_records` table: Central table storing monthly financial summaries with total income, budget, and spent aggregates (One record per user per month)
+   - `budget_categories` table: Stores expense budget categories with references to monthly_records
+   - `income_sources` table: Tracks individual income sources with amounts, linked to monthly_records
    - `transactions` table: Records all income and expense transactions with type and source fields
 
    **RPC Functions:**
@@ -224,7 +227,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Development Stats
 
-- **Backend**: Supabase PostgreSQL with 5 main tables (budgets, incomes, income_sources, transactions, auth)
+- **Backend**: Supabase PostgreSQL with 6 main tables (monthly_records, budget_categories, income_sources, transactions, auth, and related tables)
 - **Lines of Code**: 4,000+ lines of TypeScript/TSX
 - **Screens**: 8 fully-featured screens with authentication
 - **Components**: 28+ reusable UI components
@@ -232,6 +235,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Features**: 35+ major features implemented
 - **Authentication**: Email/password + Google OAuth
 - **Income Management**: Full income tracking with 6 predefined categories and source-level tracking
+- **Unified Data Model**: Centralized monthly_records table linking budgets, income sources, and transactions
 
 ## 🙏 Acknowledgments
 

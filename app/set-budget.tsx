@@ -34,6 +34,9 @@ export default function OnboardingScreen() {
     return new Date();
   });
 
+  const activeUIFor =
+    params.for && typeof params.for === "string" ? params.for : "budget";
+
   const [showMonthSelector, setShowMonthSelector] = useState(false);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
 

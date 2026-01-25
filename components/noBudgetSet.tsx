@@ -39,11 +39,11 @@ const NoBudgetSet: React.FC<NoBudgetSetProps> = ({ selectedDate }) => {
               return "No budget set for this month. Tap 'Set Budget' to get started with your budget planning.";
             } else if (isPastMonth) {
               return `No budget was set for ${getMonthYearString(
-                selectedDate
+                selectedDate,
               )}. Past months without budget setup show zero spending limits.`;
             } else {
               return `No budget set for ${getMonthYearString(
-                selectedDate
+                selectedDate,
               )} yet. You can set up a budget for future months.`;
             }
           })()}
@@ -53,14 +53,47 @@ const NoBudgetSet: React.FC<NoBudgetSetProps> = ({ selectedDate }) => {
         <View style={styles.content}>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[
+                styles.primaryButton,
+                { flexDirection: "row", justifyContent: "center" },
+              ]}
               onPress={() => {
                 router.push(
-                  `/set-budget?selected_date=${selectedDate.toISOString()}`
+                  `/set-budget?selected_date=${selectedDate.toISOString()}&for=budget`,
                 );
               }}
             >
+              <Ionicons
+                name="wallet-outline"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.primaryButtonText}>Set Up Budget</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                {
+                  backgroundColor: "#34C759",
+                  shadowColor: "#34C759",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                },
+              ]}
+              onPress={() => {
+                router.push(
+                  `/set-budget?selected_date=${selectedDate.toISOString()}&for=income`,
+                );
+              }}
+            >
+              <Ionicons
+                name="cash-outline"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.primaryButtonText}>Setup Income Source</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.secondaryButton}

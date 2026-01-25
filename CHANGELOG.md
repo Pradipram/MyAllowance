@@ -11,10 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Income Management System**: Complete separation of Income vs. Expense tracking.
   - **Dual Dashboard Actions**: Added separate Floating Action Buttons (FAB) for "Add Income" (+) and "Add Expense" (-).
+  - **Dual Setup Flow**: Added separate "Set Up Budget" and "Setup Income Source" buttons in the no-budget state with distinct styling and icons.
   - **Income Categories**: Added 6 standard income sources (Salary, Gift, Investment, Refund, Freelance, Other) with custom icons.
   - **Smart UI Components**: Created modular `ShowIncomeCategory` component for standardized selection.
 - **Database Architecture**:
-  - **New Table**: Created `monthly_incomes` table with Row Level Security (RLS) to safely store earnings.
+  - **New Unified Table**: Created `monthly_records` table as the central hub for monthly financial data (Jan 25, 2026).
+    - Single record per user per month with aggregated totals (total_income, total_budget, total_spent)
+    - Foreign key relationships from budget_categories and income_sources to monthly_records
+    - Performance-optimized with indexes on monthly_record_id columns
+    - Row Level Security (RLS) policies for user data isolation
   - **Enhanced RPC Functions**: Comprehensive transaction management with:
     - `insert_full_transaction_v2`: Income source ID tracking with mandatory validation, separate update paths for income sources and monthly totals
     - `update_full_transaction_v2`: Revert-and-apply algorithm with income source switching capability, ensuring accurate budget and income recalculation across category/source changes
@@ -30,8 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Transaction Flow**: The Add Transaction screen now accepts a `type` parameter to pre-launch in the correct mode.
+- **Budget Setup Flow**: The set-budget screen now accepts a `for` parameter to distinguish between budget and income source setup modes.
 - **Navigation**: Hidden bottom tabs when entering "Add Transaction" via Dashboard FABs for a focused experience.
 - **Header Logic**: Toggle icon is now context-aware (hidden during "Edit Mode" to prevent data conflicts).
+- **No Budget UI**: Enhanced the no-budget state with dual action buttons for setting up budgets or income sources, including visual styling with icons.
 
 ### Fixed
 
@@ -45,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **RLS**: Row Level Security added for table transaction.
 - **TypeScript Improvements**:
   - Created `IncomeSource` interface for type-safe income source management
+  - Added `MonthlyIncome` interface for monthly income aggregation
+  - Added `MonthlyRecord` interface representing the unified monthly financial data structure
   - Enhanced `Transaction` type with `income_source_id` field for income tracking
   - Maintained type safety across all transaction types with union type `'income' | 'expense'`
 - **Service Layer Enhancements**:

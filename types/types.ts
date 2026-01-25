@@ -49,3 +49,31 @@ export interface IncomeSource {
   type: "active" | "passive";
   amount: number; // Total accumulated for this month
 }
+
+export interface MonthlyIncome {
+  id?: string;
+  month: number;
+  year: number;
+  incomeSources: IncomeSource[];
+  totalIncome: number;
+}
+
+export interface MonthlyRecord {
+  id: string; // The single ID for "Feb 2026"
+  user_id: string;
+  month: number;
+  year: number;
+
+  // 💰 The "Money In" Section
+  total_income: number;
+  income_sources: IncomeSource[]; // The array of Salary, Dividends, etc.
+
+  // 💸 The "Money Out" Section
+  total_budget: number;
+  total_spent: number;
+  budget_categories: BudgetCategory[]; // The array of Food, Rent, etc.
+
+  // ⚙️ Metadata
+  created_at?: string;
+  updated_at?: string;
+}
