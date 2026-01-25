@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Foreign key relationships from budget_categories and income_sources to monthly_records
     - Performance-optimized with indexes on monthly_record_id columns
     - Row Level Security (RLS) policies for user data isolation
+    - Migration script provided for existing users to preserve historical data from old monthly_budgets table
   - **Enhanced RPC Functions**: Comprehensive transaction management with:
     - `insert_full_transaction_v2`: Income source ID tracking with mandatory validation, separate update paths for income sources and monthly totals
     - `update_full_transaction_v2`: Revert-and-apply algorithm with income source switching capability, ensuring accurate budget and income recalculation across category/source changes
