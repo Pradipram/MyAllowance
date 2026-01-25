@@ -109,6 +109,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    - `database/monthly_record/create_table.sql` - Creates the central monthly_records table and links budget categories and income sources
    - `database/monthly_record/monthly_record_rls.sql` - Applies Row Level Security policies for monthly records
    - `database/monthly_record/data_migration_from_old.sql` - **[Existing Users Only]** Migrates data from old monthly_budgets table to new monthly_records structure
+   - `database/rpc/get_monthly_records.sql` - Retrieves complete monthly financial data with nested budget categories and income sources
    - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
    - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with income source tracking
    - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
@@ -121,6 +122,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    - `transactions` table: Records all income and expense transactions with type and source fields
 
    **RPC Functions:**
+   - `get_monthly_record`: Retrieves complete monthly financial data with nested budget categories and income sources in a single query
    - `insert_full_transaction_v2`: Processes income/expense with income source tracking and validation
    - `update_full_transaction_v2`: Updates transactions with revert-and-apply logic and income source switching
    - `delete_full_transaction`: Removes transactions and reverses income source and monthly total adjustments
@@ -239,7 +241,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Lines of Code**: 4,000+ lines of TypeScript/TSX
 - **Screens**: 8 fully-featured screens with authentication
 - **Components**: 28+ reusable UI components
-- **Database Functions**: 3 PostgreSQL RPC functions with enhanced income source validation and atomic operations
+- **Database Functions**: 4 PostgreSQL RPC functions (get_monthly_record, insert/update/delete transactions) with enhanced validation and atomic operations
 - **Features**: 35+ major features implemented
 - **Authentication**: Email/password + Google OAuth
 - **Income Management**: Full income tracking with 6 predefined categories and source-level tracking
