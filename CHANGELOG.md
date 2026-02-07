@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Migration script provided for existing users to preserve historical data from old monthly_budgets table
   - **Enhanced RPC Functions**: Comprehensive transaction management with:
     - `get_monthly_record`: Efficient retrieval of complete monthly financial data with nested arrays for budget categories and income sources in a single database call
+    - `upsert_monthly_record`: Creates or updates monthly records with budget categories and income sources using improved column naming
+    - `delete_monthly_record`: Cascading deletion of monthly records including all associated budget categories, income sources, and transactions (Feb 7, 2026)
     - `insert_full_transaction_v2`: Income source ID tracking with mandatory validation, separate update paths for income sources and monthly totals
     - `update_full_transaction_v2`: Revert-and-apply algorithm with income source switching capability, ensuring accurate budget and income recalculation across category/source changes
     - `delete_full_transaction`: Intelligent reversal logic that automatically adjusts income sources and monthly totals when removing transactions

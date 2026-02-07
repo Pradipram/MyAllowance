@@ -113,6 +113,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    - `database/income_source/sql_scripts.sql` - **[Schema Update]** Renames `amount` to `earned` in income_sources table (Feb 7, 2026)
    - `database/rpc/get_monthly_records.sql` - Retrieves complete monthly financial data with nested budget categories and income sources
    - `database/rpc/monthly_record/upsert_monthly_record.sql` - Creates/updates monthly records with improved column naming
+   - `database/rpc/monthly_record/delete_monthly_record.sql` - Deletes monthly records with cascading removal of all associated data
    - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
    - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with income source tracking
    - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
@@ -127,6 +128,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    **RPC Functions:**
    - `get_monthly_record`: Retrieves complete monthly financial data with nested budget categories and income sources in a single query
    - `upsert_monthly_record`: Creates or updates monthly records with budget categories and income sources using improved column naming (`budget` and `earned`)
+   - `delete_monthly_record`: Deletes monthly records with automatic cascading removal of all budget categories, income sources, and associated transactions
    - `insert_full_transaction_v2`: Processes income/expense with income source tracking and validation
    - `update_full_transaction_v2`: Updates transactions with revert-and-apply logic and income source switching
    - `delete_full_transaction`: Removes transactions and reverses income source and monthly total adjustments
