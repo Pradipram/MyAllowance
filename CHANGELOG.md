@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Income Source Tracking**: Individual income sources now maintain running totals that update atomically with transactions
   - **Smart Column Switching**: Update function correctly manages category_id and income_source_id columns based on transaction type
   - **Atomic Transactions**: All RPC functions use consistent logic to route data based on transaction type (income vs expense)
+  - **Database Schema Refinements**: Improved clarity and consistency in database column naming (Feb 7, 2026):
+    - Renamed `amount` to `budget` in `budget_categories` table for better semantic clarity
+    - Renamed `amount` to `earned` in `income_sources` table to distinguish from budget amounts
+    - Updated `upsert_monthly_record` RPC function to use new column names
+    - SQL migration scripts provided for seamless schema updates
 - **Enhanced UI/UX**:
   - **Smart Header**: Added toggle icon in the header to seamlessly switch between transaction modes.
   - **Directional Animations**: Implemented slide animations (Up for Expense, Down for Income) to give users spatial context.

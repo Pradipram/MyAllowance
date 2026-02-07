@@ -109,7 +109,10 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    - `database/monthly_record/create_table.sql` - Creates the central monthly_records table and links budget categories and income sources
    - `database/monthly_record/monthly_record_rls.sql` - Applies Row Level Security policies for monthly records
    - `database/monthly_record/data_migration_from_old.sql` - **[Existing Users Only]** Migrates data from old monthly_budgets table to new monthly_records structure
+   - `database/budget_categories/sql_scripts.sql` - **[Schema Update]** Adds `budget` column to budget_categories table (Feb 7, 2026)
+   - `database/income_source/sql_scripts.sql` - **[Schema Update]** Renames `amount` to `earned` in income_sources table (Feb 7, 2026)
    - `database/rpc/get_monthly_records.sql` - Retrieves complete monthly financial data with nested budget categories and income sources
+   - `database/rpc/monthly_record/upsert_monthly_record.sql` - Creates/updates monthly records with improved column naming
    - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
    - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with income source tracking
    - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
@@ -117,12 +120,13 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 
    **Database Schema:**
    - `monthly_records` table: Central table storing monthly financial summaries with total income, budget, and spent aggregates (One record per user per month)
-   - `budget_categories` table: Stores expense budget categories with references to monthly_records
-   - `income_sources` table: Tracks individual income sources with amounts, linked to monthly_records
+   - `budget_categories` table: Stores expense budget categories with `budget` column (renamed from `amount` for clarity) and references to monthly_records
+   - `income_sources` table: Tracks individual income sources with `earned` column (renamed from `amount` for semantic accuracy), linked to monthly_records
    - `transactions` table: Records all income and expense transactions with type and source fields
 
    **RPC Functions:**
    - `get_monthly_record`: Retrieves complete monthly financial data with nested budget categories and income sources in a single query
+   - `upsert_monthly_record`: Creates or updates monthly records with budget categories and income sources using improved column naming (`budget` and `earned`)
    - `insert_full_transaction_v2`: Processes income/expense with income source tracking and validation
    - `update_full_transaction_v2`: Updates transactions with revert-and-apply logic and income source switching
    - `delete_full_transaction`: Removes transactions and reverses income source and monthly total adjustments
