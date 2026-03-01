@@ -23,8 +23,9 @@ import { BudgetCategory, MonthlyBudget } from "../types/types";
 
 export default function OnboardingScreen() {
   const params = useLocalSearchParams();
-  const [budget, setBudget] = useState<MonthlyBudget | null>(null);
-  const [isBudgetLoading, setIsBudgetLoading] = useState(false);
+  // const [budget, setBudget] = useState<MonthlyBudget | null>(null);
+  const [record, setRecord] = useState<MonthlyBudget | null>(null);
+  const [isMonthlyRecordLoading, setIsMonthlyRecordLoading] = useState(false);
 
   const [selectedMonthDate, setSelectedMonthDate] = useState<Date>(() => {
     if (params.selected_date && typeof params.selected_date === "string") {
@@ -40,6 +41,10 @@ export default function OnboardingScreen() {
   const [showMonthSelector, setShowMonthSelector] = useState(false);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
 
+  // useEffect(() => {
+  //   console.log("activeUIFor: [", activeUIFor, "]");
+  // }, [activeUIFor]);
+
   useEffect(() => {
     if (!isNaN(selectedMonthDate.getTime())) {
       loadMonthData();
@@ -49,7 +54,7 @@ export default function OnboardingScreen() {
 
   const loadMonthData = async () => {
     try {
-      setIsBudgetLoading(true);
+      setIsMonthlyRecordLoading(true);
       const res = await getMonthBudget(
         selectedMonthDate.getMonth() + 1,
         selectedMonthDate.getFullYear(),
@@ -72,7 +77,7 @@ export default function OnboardingScreen() {
     } catch (error) {
       console.error("Error loading month budget:", error);
     } finally {
-      setIsBudgetLoading(false);
+      setIsMonthlyRecordLoading(false);
     }
   };
 
@@ -238,7 +243,7 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {isBudgetLoading ? (
+      {isMonthlyRecordLoading ? (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading your budget...</Text>
         </View>
