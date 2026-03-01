@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Income Management System**: Complete separation of Income vs. Expense tracking.
-  - **Dual Dashboard Actions**: Added separate Floating Action Buttons (FAB) for "Add Income" (+) and "Add Expense" (-).
+  - **Dual Dashboard Actions**: Added separate Floating Action Buttons (FAB) for "Add Income" (+) and "Add Expense" (-). Income FAB now navigates to the Add Transaction screen in income mode (previously showed a "Coming Soon" alert).
   - **Dual Setup Flow**: Added separate "Set Up Budget" and "Setup Income Source" buttons in the no-budget state with distinct styling and icons.
   - **Income Categories**: Added 6 standard income sources (Salary, Gift, Investment, Refund, Freelance, Other) with custom icons.
   - **Smart UI Components**: Created modular `ShowIncomeCategory` component for standardized selection.
@@ -24,10 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Enhanced RPC Functions**: Comprehensive transaction management with:
     - `get_monthly_record`: Efficient retrieval of complete monthly financial data with nested arrays for budget categories and income sources in a single database call
     - `upsert_monthly_record`: Creates or updates monthly records with budget categories and income sources using improved column naming
-    - `delete_monthly_record`: Cascading deletion of monthly records including all associated budget categories, income sources, and transactions (Feb 7, 2026)
-    - `insert_full_transaction_v2` _(revised Mar 1, 2026)_: Simplified parameter set (`p_user_id`, `p_description`, `p_amount`, `p_date`, `p_type`, `p_month`, `p_year`, optional `p_category_id`/`p_income_source_id`); strict existence check raises `MONTHLY_RECORD_NOT_FOUND` exception instead of auto-creating the monthly record; atomic total sync directly against the unified `monthly_records` table (parent) and `budget_categories`/`income_sources` (child); uses `earned` column on `income_sources`; returns structured `{ status, transaction_id, record_id }` JSON
-    - `update_full_transaction_v2` _(revised Mar 1, 2026)_: Simplified parameter set (`p_transaction_id`, `p_user_id`, `p_description`, `p_amount`, `p_date`, `p_type`, `p_month`, `p_year`, optional `p_category_id`/`p_income_source_id`); strict guards raise `TRANSACTION_NOT_FOUND`, `MONTH_CHANGE_NOT_ALLOWED` (cross-month moves blocked), and `MONTHLY_RECORD_NOT_FOUND` exceptions; revert-and-apply pattern operates directly on the unified `monthly_records` table and `budget_categories`/`income_sources` (using `earned` column); returns structured `{ status, transaction_id, record_id }` JSON
-    - `delete_full_transaction` _(revised Mar 1, 2026)_: Streamlined to `p_transaction_id` + `p_user_id` only; fetches and row-locks the transaction with a combined ownership security check (raises `TRANSACTION_NOT_FOUND` if missing or unauthorized); derives month/year from the transaction's `date` column; reverses amounts against the unified `monthly_records` table (parent) and `budget_categories`/`income_sources` using `earned` column (child); returns structured `{ status, deleted_transaction_id }` JSON
+    - `delete_monthly_record` _(revised Mar 1, 2026)_: Now explicitly deletes child rows (`transactions`, `budget_categories`, `income_sources`) before deleting the parent `monthly_records` row, handling cases where `ON DELETE CASCADE` is not active on FK constraints
+    - `insert_full_transaction_v2` _(revised Mar 1, 2026)_: Consolidated to a single 11-param overload (`p_user_id`, `p_category_id`, `p_income_source_id`, `p_category_name`, `p_description`, `p_date`, `p_month`, `p_year`, `p_type`, `p_payment_mode`, `p_amount`). All total syncs now target `monthly_records` exclusively — expense path updates `total_spent`, income path updates `total_income`. Old 9-param overload (without `p_category_name`/`p_payment_mode`) dropped via migration.
+    - `update_full_transaction_v2` _(revised Mar 1, 2026)_: Consolidated to a single 12-param overload. Revert and apply steps now operate on `monthly_records` — removed all references to legacy `monthly_budgets` and `monthly_incomes` tables.
+    - `delete_full_transaction` _(revised Mar 1, 2026)_: Consolidated to a single 2-param overload. Reversal of amounts now targets `monthly_records` — removed all references to legacy `monthly_budgets` and `monthly_incomes` tables.
   - **Income Source Tracking**: Individual income sources now maintain running totals that update atomically with transactions
   - **Smart Column Switching**: Update function correctly manages category_id and income_source_id columns based on transaction type
   - **Atomic Transactions**: All RPC functions use consistent logic to route data based on transaction type (income vs expense)
@@ -48,10 +48,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Navigation**: Hidden bottom tabs when entering "Add Transaction" via Dashboard FABs for a focused experience.
 - **Header Logic**: Toggle icon is now context-aware (hidden during "Edit Mode" to prevent data conflicts).
 - **No Budget UI**: Enhanced the no-budget state with dual action buttons for setting up budgets or income sources, including visual styling with icons.
+- **`deleteMonthlyBudget` service** (`services/budget.ts`): Signature changed from `deleteMonthlyBudget(budgetId: string)` to `deleteMonthlyBudget(month: number, year: number)`. Now calls the `delete_monthly_record` RPC instead of the legacy `delete_monthly_budget` RPC.
+- **`confirmDeleteBudget`** (`set-budget.tsx`): Updated call site to pass `record.month` and `record.year` to match the new `deleteMonthlyBudget` signature.
 
 ### Fixed
 
 - **Category Bug**: Resolved "invalid input syntax for UUID" error by standardizing default Income Categories in the database.
+- **Delete Budget Error** (`P0001` — "Budget not found or does not belong to user"): `deleteMonthlyBudget` was calling the old `delete_monthly_budget` RPC which checked the `monthly_budgets` table. Fixed by migrating to `delete_monthly_record`.
+- **Delete Budget FK Violation** (`23503` — FK violation on `budget_categories_monthly_record_id_fkey`): `delete_monthly_record` RPC assumed `ON DELETE CASCADE` was active. Fixed by explicitly deleting child rows in order before the parent.
+- **Total Spent Not Updating on Dashboard**: All three transaction RPCs (`insert`, `update`, `delete`) had a second overload that still wrote to the legacy `monthly_budgets`/`monthly_incomes` tables. Fixed by consolidating to a single overload per function targeting `monthly_records` exclusively.
+- **Schema Cache Error** (`PGRST202` — function not found): The live Supabase `insert_full_transaction_v2` was missing `p_category_name` and `p_payment_mode`. Fixed via migration that drops the old 9-param overload and re-creates the correct 11-param version.
+- **Missing Column Error** (`42703` — `income_source_id` does not exist): `transactions` table was created without `income_source_id` and with `category_id NOT NULL`. Fixed via migration that adds the column and drops the `NOT NULL` constraint.
 
 ### Technical
 
@@ -72,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Validate expense transactions require `category_id` before RPC call
   - Conditional ID passing based on transaction type (null for unused IDs)
 - **Database Improvements**:
+  - Consolidated all three transaction RPCs to single overloads targeting `monthly_records` exclusively (removed legacy `monthly_budgets`/`monthly_incomes` writes)
   - Migrated to `insert_full_transaction_v2` RPC for better income source tracking
   - Upgraded to `update_full_transaction_v2` with income source ID parameter and smart column management
   - Enhanced revert-and-apply pattern to handle income source switching when changing transaction type
@@ -80,13 +88,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced income source updates with amount tracking at source level
   - Improved error messages for debugging and user feedback
   - NULL-safe SQL operations to prevent crashes when IDs are missing
-  - Upsert logic for monthly income totals to handle edge cases gracefully
+- **Database Migrations Added** (Mar 1, 2026):
+  - `migration_add_income_source_to_transactions.sql`: Adds `income_source_id` column to `transactions`; drops `NOT NULL` from `category_id`
+  - `migration_drop_old_insert_overload.sql`: Drops old 9-param `insert_full_transaction_v2` overload and deploys the correct 11-param version
+  - `migration_fk_cascade.sql`: Fixes FK constraints on `budget_categories` and `income_sources` to use `ON DELETE CASCADE`
 - **Code Refactoring** (`set-budget.tsx`): Migrated screen to use the unified `MonthlyRecord` interface
   - State type changed from `MonthlyBudget | null` to `MonthlyRecord | null`
   - `loadMonthData` now calls `getMonthlyRecords` service (via `get_monthly_record` RPC) instead of the legacy `getMonthBudget`; empty-state initialization uses `MonthlyRecord` shape with `budget_categories`, `income_sources`, `total_budget`, `total_income`, `total_spent`
   - All category operations (`removeCategory`, `addCategory`, `updateCategory`, `validateAndSave`, `getTotalBudget`, JSX render) updated to use `record.budget_categories` and the renamed `budget` field (was `amount`)
-  - `confirmDeleteBudget` and save flow read `record.id` / `record.total_spent` instead of legacy `budget` properties
-  - Removed stray template-literal artefact (`` ``; ``) and dead commented-out `useEffect` block
+  - `confirmDeleteBudget` updated to pass `record.month` / `record.year` to the new `deleteMonthlyBudget(month, year)` signature
+  - Removed stray template-literal artefact and dead commented-out `useEffect` block
 
 ---
 

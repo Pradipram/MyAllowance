@@ -109,15 +109,17 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
    - `database/monthly_record/create_table.sql` - Creates the central monthly_records table and links budget categories and income sources
    - `database/monthly_record/monthly_record_rls.sql` - Applies Row Level Security policies for monthly records
    - `database/monthly_record/data_migration_from_old.sql` - **[Existing Users Only]** Migrates data from old monthly_budgets table to new monthly_records structure
+   - `database/monthly_record/migration_fk_cascade.sql` - **[Mar 1, 2026]** Fixes FK constraints on `budget_categories` and `income_sources` to use `ON DELETE CASCADE`
    - `database/budget_categories/sql_scripts.sql` - **[Schema Update]** Adds `budget` column to budget_categories table (Feb 7, 2026)
    - `database/income_source/sql_scripts.sql` - **[Schema Update]** Renames `amount` to `earned` in income_sources table (Feb 7, 2026)
    - `database/rpc/get_monthly_records.sql` - Retrieves complete monthly financial data with nested budget categories and income sources
    - `database/rpc/monthly_record/upsert_monthly_record.sql` - Creates/updates monthly records with improved column naming
-   - `database/rpc/monthly_record/delete_monthly_record.sql` - Deletes monthly records with cascading removal of all associated data
-   - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions with enhanced validation
-   - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with income source tracking
-   - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions with income source reversal
-   - `database/delete_monthly_budget.sql` - Manages budget and income deletion
+   - `database/rpc/monthly_record/delete_monthly_record.sql` - Deletes monthly records with explicit child-row cleanup (transactions → budget_categories → income_sources) before parent deletion
+   - `database/rpc/transaction/insert/migration_add_income_source_to_transactions.sql` - **[Mar 1, 2026]** Adds `income_source_id` column and makes `category_id` nullable on the `transactions` table
+   - `database/rpc/transaction/insert/migration_drop_old_insert_overload.sql` - **[Mar 1, 2026]** Drops the old 9-param `insert_full_transaction_v2` overload and deploys the correct 11-param version
+   - `database/rpc/transaction/insert/insert_full_transaction_v2.sql` - Handles income and expense transactions; writes totals exclusively to `monthly_records`
+   - `database/rpc/transaction/update/update_full_transactin_v2.sql` - Updates transactions with revert-and-apply logic against `monthly_records`
+   - `database/rpc/transaction/delete/delete_full_transaction.sql` - Deletes transactions and reverses totals in `monthly_records`
 
    **Database Schema:**
    - `monthly_records` table: Central table storing monthly financial summaries with total income, budget, and spent aggregates (One record per user per month)
