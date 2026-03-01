@@ -196,14 +196,10 @@ export const getMonthBudget = async (month: number, year: number) => {
 };
 
 /**
- * Delete a monthly budget and all its associated categories using atomic RPC
+ * Delete a monthly record and all its associated data using atomic RPC
  */
-export const deleteMonthlyBudget = async (budgetId: string) => {
+export const deleteMonthlyBudget = async (month: number, year: number) => {
   try {
-    if (budgetId === undefined) {
-      throw new Error("Budget ID is required for deletion");
-    }
-
     const session = await supabase.auth.getSession();
     const user_id = session.data.session?.user.id;
 
@@ -211,17 +207,18 @@ export const deleteMonthlyBudget = async (budgetId: string) => {
       throw new Error("User not authenticated");
     }
 
-    const { data, error } = await supabase.rpc("delete_monthly_budget", {
-      p_budget_id: budgetId,
+    const { data, error } = await supabase.rpc("delete_monthly_record", {
       p_user_id: user_id,
+      p_month: month,
+      p_year: year,
     });
 
     if (error) {
-      console.error("❌ Error deleting budget:", error);
+      console.error("❌ Error deleting monthly record:", error);
       throw error;
     }
 
-    console.log("✅ Budget deleted successfully:", data);
+    console.log("✅ Monthly record deleted successfully");
     return data;
   } catch (error) {
     console.error("❌ Error in deleteMonthlyBudget:", error);

@@ -141,21 +141,21 @@ begin
       set spent = coalesce(spent, 0) - old_tx.amount
       where id = old_tx.category_id;
 
-      -- Give money BACK to the old Monthly Budget
-      update monthly_budgets
-      set total_spent = coalesce(total_spent, 0) - old_tx.amount
+      -- Give money BACK to monthly_records total_spent
+      update monthly_records
+      set total_spent = coalesce(total_spent, 0) - old_tx.amount,
+          updated_at = now()
       where user_id = p_user_id and month = old_tx.month and year = old_tx.year;
 
   elsif old_tx.type = 'income' then
       -- Revert Income Source
-      -- If income_source_id is NULL, this updates 0 rows. Safe.
       update income_sources
       set amount = coalesce(amount, 0) - old_tx.amount,
           updated_at = now()
       where id = old_tx.income_source_id;
 
-      -- Revert Monthly Total
-      update monthly_incomes
+      -- Revert monthly_records total_income
+      update monthly_records
       set total_income = coalesce(total_income, 0) - old_tx.amount,
           updated_at = now()
       where user_id = p_user_id and month = old_tx.month and year = old_tx.year;
@@ -173,9 +173,10 @@ begin
       set spent = coalesce(spent, 0) + p_amount
       where id = p_category_id;
 
-      -- Add cost to NEW Monthly Budget
-      update monthly_budgets
-      set total_spent = coalesce(total_spent, 0) + p_amount
+      -- Add cost to monthly_records total_spent
+      update monthly_records
+      set total_spent = coalesce(total_spent, 0) + p_amount,
+          updated_at = now()
       where user_id = p_user_id and month = p_month and year = p_year;
 
       -- Prepare IDs for update
@@ -192,14 +193,11 @@ begin
           updated_at = now()
       where id = p_income_source_id;
 
-      -- Add money to NEW Monthly Total
-      -- (Using Upsert to be safe, though month likely exists if we are updating)
-      insert into monthly_incomes (user_id, month, year, total_income)
-      values (p_user_id, p_month, p_year, p_amount)
-      on conflict (user_id, month, year)
-      do update set 
-        total_income = monthly_incomes.total_income + p_amount,
-        updated_at = now();
+      -- Add money to monthly_records total_income
+      update monthly_records
+      set total_income = coalesce(total_income, 0) + p_amount,
+          updated_at = now()
+      where user_id = p_user_id and month = p_month and year = p_year;
 
       -- Prepare IDs for update
       v_final_category_id := null;

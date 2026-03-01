@@ -3,7 +3,7 @@ import { getMonthYearString } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 
 interface NoBudgetSetProps {
   selectedDate: Date;
@@ -82,8 +82,10 @@ const NoBudgetSet: React.FC<NoBudgetSetProps> = ({ selectedDate }) => {
                 },
               ]}
               onPress={() => {
-                router.push(
-                  `/set-budget?selected_date=${selectedDate.toISOString()}&for=income`,
+                Alert.alert(
+                  "Coming Soon 🚀",
+                  "Income Source management is under development and will be available in a future update. Stay tuned!",
+                  [{ text: "Got it" }],
                 );
               }}
             >

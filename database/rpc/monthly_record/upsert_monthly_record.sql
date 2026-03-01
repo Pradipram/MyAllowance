@@ -13,7 +13,8 @@ as $$
 declare
   v_record_id uuid;
   v_item jsonb;
-  v_keep_ids uuid[]; 
+  v_keep_ids uuid[];
+  v_new_id uuid;
 begin
   -- 1. PARENT UPSERT
   insert into monthly_records (user_id, month, year, total_budget, total_income)
@@ -47,16 +48,19 @@ begin
         
         v_keep_ids := array_append(v_keep_ids, (v_item->>'id')::uuid);
       else
-        -- INSERT NEW
+        -- INSERT NEW (capture id so prune step doesn't delete it)
         insert into budget_categories (
           monthly_record_id, name, budget, index, spent
         ) values (
           v_record_id, 
           v_item->>'name', 
-          (v_item->>'budget')::numeric, -- ✅ Direct match
+          (v_item->>'budget')::numeric,
           (v_item->>'index')::numeric, 
           0
-        );
+        )
+        returning id into v_new_id;
+
+        v_keep_ids := array_append(v_keep_ids, v_new_id);
       end if;
     end loop;
 
@@ -82,7 +86,7 @@ begin
 
         v_keep_ids := array_append(v_keep_ids, (v_item->>'id')::uuid);
       else
-        -- INSERT NEW
+        -- INSERT NEW (capture id so prune step doesn't delete it)
         insert into income_sources (
           monthly_record_id, user_id, name, income_type, earned
         ) values (
@@ -90,8 +94,11 @@ begin
           p_user_id,
           v_item->>'name', 
           v_item->>'type', 
-          0 -- ✅ Initialize 'earned' to 0
-        );
+          0
+        )
+        returning id into v_new_id;
+
+        v_keep_ids := array_append(v_keep_ids, v_new_id);
       end if;
     end loop;
 

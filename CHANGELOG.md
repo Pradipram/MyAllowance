@@ -81,7 +81,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved error messages for debugging and user feedback
   - NULL-safe SQL operations to prevent crashes when IDs are missing
   - Upsert logic for monthly income totals to handle edge cases gracefully
-- **Code Refactoring** (`set-budget.tsx`): Renamed state variable `isBudgetLoading` → `isMonthlyRecordLoading` and `budget`/`setBudget` → `record`/`setRecord` to align with the unified `monthly_records` data model
+- **Code Refactoring** (`set-budget.tsx`): Migrated screen to use the unified `MonthlyRecord` interface
+  - State type changed from `MonthlyBudget | null` to `MonthlyRecord | null`
+  - `loadMonthData` now calls `getMonthlyRecords` service (via `get_monthly_record` RPC) instead of the legacy `getMonthBudget`; empty-state initialization uses `MonthlyRecord` shape with `budget_categories`, `income_sources`, `total_budget`, `total_income`, `total_spent`
+  - All category operations (`removeCategory`, `addCategory`, `updateCategory`, `validateAndSave`, `getTotalBudget`, JSX render) updated to use `record.budget_categories` and the renamed `budget` field (was `amount`)
+  - `confirmDeleteBudget` and save flow read `record.id` / `record.total_spent` instead of legacy `budget` properties
+  - Removed stray template-literal artefact (`` ``; ``) and dead commented-out `useEffect` block
 
 ---
 

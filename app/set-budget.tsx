@@ -1,11 +1,11 @@
 import { styles } from "@/assets/styles/set-budget.style";
 import Header from "@/components/header/header";
 import MonthSelector from "@/components/modal/month-selector";
+import { deleteMonthlyBudget } from "@/services/budget";
 import {
-  deleteMonthlyBudget,
-  getMonthBudget,
-  saveOrUpdateMonthlyBudget,
-} from "@/services/budget";
+  getMonthlyRecords,
+  saveMonthlyRecord,
+} from "@/services/monthly_records";
 import { getMonthYearString } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -19,12 +19,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BudgetCategory, MonthlyBudget } from "../types/types";
+import { MonthlyRecord } from "../types/types";
 
 export default function OnboardingScreen() {
   const params = useLocalSearchParams();
-  // const [budget, setBudget] = useState<MonthlyBudget | null>(null);
-  const [record, setRecord] = useState<MonthlyBudget | null>(null);
+  const [record, setRecord] = useState<MonthlyRecord | null>(null);
   const [isMonthlyRecordLoading, setIsMonthlyRecordLoading] = useState(false);
 
   const [selectedMonthDate, setSelectedMonthDate] = useState<Date>(() => {
@@ -41,10 +40,6 @@ export default function OnboardingScreen() {
   const [showMonthSelector, setShowMonthSelector] = useState(false);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
 
-  // useEffect(() => {
-  //   console.log("activeUIFor: [", activeUIFor, "]");
-  // }, [activeUIFor]);
-
   useEffect(() => {
     if (!isNaN(selectedMonthDate.getTime())) {
       loadMonthData();
@@ -55,23 +50,38 @@ export default function OnboardingScreen() {
   const loadMonthData = async () => {
     try {
       setIsMonthlyRecordLoading(true);
-      const res = await getMonthBudget(
+      // const res = await getMonthBudget(
+      //   selectedMonthDate.getMonth() + 1,
+      //   selectedMonthDate.getFullYear(),
+      // );
+      const res = await getMonthlyRecords(
         selectedMonthDate.getMonth() + 1,
         selectedMonthDate.getFullYear(),
       );
-
       if (res) {
-        // Existing budget loaded
-        setBudget(res);
-        // console.log("Loaded existing budget", res);
+        setRecord({
+          ...res,
+          // Guard: if the record exists but has no categories yet, seed one blank row
+          budget_categories:
+            res.budget_categories && res.budget_categories.length > 0
+              ? res.budget_categories.map((cat: any) => ({
+                  ...cat,
+                  // Fallback: old rows have 'amount' populated but 'budget' null
+                  budget: cat.budget ?? cat.amount ?? 0,
+                }))
+              : [{ name: "", budget: 0, spent: 0, index: 0 }],
+        });
       } else {
-        // No budget found - initialize with empty category
-        setBudget({
+        setRecord({
+          id: "",
+          user_id: "",
           month: selectedMonthDate.getMonth() + 1,
           year: selectedMonthDate.getFullYear(),
-          categories: [{ name: "", amount: 0, spent: 0, index: 0 }],
-          totalBudget: 0,
-          totalSpent: 0,
+          total_budget: 0,
+          total_income: 0,
+          total_spent: 0,
+          budget_categories: [{ name: "", budget: 0, spent: 0, index: 0 }],
+          income_sources: [],
         });
       }
     } catch (error) {
@@ -82,26 +92,25 @@ export default function OnboardingScreen() {
   };
 
   const removeCategory = (name: string) => {
-    const categories = budget?.categories || [];
+    const categories = record?.budget_categories || [];
     if (categories.length > 1) {
-      setBudget({
-        ...budget!,
-        categories: categories.filter((cat) => cat.name !== name),
+      setRecord({
+        ...record!,
+        budget_categories: categories.filter((cat) => cat.name !== name),
       });
     }
   };
-  ``;
 
   const addCategory = () => {
-    const categories = budget?.categories || [];
-    setBudget({
-      ...budget!,
-      categories: [
+    const categories = record?.budget_categories || [];
+    setRecord({
+      ...record!,
+      budget_categories: [
         ...categories,
         {
           id: undefined,
           name: "",
-          amount: 0,
+          budget: 0,
           spent: 0,
           index: categories.length,
         },
@@ -111,25 +120,25 @@ export default function OnboardingScreen() {
 
   const updateCategory = (
     index: number,
-    field: "name" | "amount",
+    field: "name" | "budget",
     value: string,
   ) => {
-    const categories = budget?.categories || [];
-    setBudget({
-      ...budget!,
-      categories: categories.map((cat, i) =>
+    const categories = record?.budget_categories || [];
+    setRecord({
+      ...record!,
+      budget_categories: categories.map((cat, i) =>
         i === index ? { ...cat, [field]: value } : cat,
       ),
     });
   };
 
   const validateAndSave = async () => {
-    const validCategories = budget?.categories.filter(
+    const validCategories = record?.budget_categories.filter(
       (cat) =>
         cat.name.trim() !== "" &&
-        cat.amount !== 0 &&
-        !isNaN(Number(cat.amount)) &&
-        Number(cat.amount) > 0,
+        cat.budget !== 0 &&
+        !isNaN(Number(cat.budget)) &&
+        Number(cat.budget) > 0,
     );
 
     if (validCategories?.length === 0) {
@@ -147,32 +156,25 @@ export default function OnboardingScreen() {
 
     try {
       setIsSavingBudget(true);
-      // Convert to proper BudgetCategory format
-      const budgetCategories: BudgetCategory[] = (validCategories || []).map(
-        (cat) => ({
-          id: cat.id,
-          name: cat.name.trim(),
-          amount: Number(cat.amount),
-          spent: cat.spent || 0,
-          index: cat.index,
-        }),
-      );
+
+      const budgetCategories = (validCategories || []).map((cat) => ({
+        id: cat.id,
+        name: cat.name.trim(),
+        budget: Number(cat.budget),
+        index: cat.index,
+      }));
 
       const totalBudget = budgetCategories.reduce(
-        (sum, cat) => sum + cat.amount,
+        (sum, cat) => sum + cat.budget,
         0,
       );
 
-      const monthlyBudget: MonthlyBudget = {
-        id: budget?.id,
-        month: selectedMonthDate.getMonth() + 1,
-        year: parseInt(selectedMonthDate.getFullYear().toString()),
-        categories: budgetCategories,
-        totalBudget: totalBudget,
-        totalSpent: budget?.totalSpent || 0,
-      };
-
-      const res = await saveOrUpdateMonthlyBudget(monthlyBudget);
+      await saveMonthlyRecord(
+        selectedMonthDate.getMonth() + 1,
+        selectedMonthDate.getFullYear(),
+        budgetCategories,
+        totalBudget,
+      );
 
       // console.log("Save Response:", res);
       Alert.alert(
@@ -192,8 +194,8 @@ export default function OnboardingScreen() {
 
   const getTotalBudget = () => {
     return (
-      budget?.categories.reduce((total, cat) => {
-        const amount = Number(cat.amount) || 0; // Convert to number!
+      record?.budget_categories.reduce((total, cat) => {
+        const amount = Number(cat.budget) || 0;
         return total + amount;
       }, 0) || 0
     );
@@ -228,7 +230,10 @@ export default function OnboardingScreen() {
           {
             text: "OK",
             onPress: async () => {
-              const res = await deleteMonthlyBudget(budget?.id!);
+              const res = await deleteMonthlyBudget(
+                record?.month!,
+                record?.year!,
+              );
               console.log("Delete Response:", res);
               router.replace("/");
             },
@@ -275,7 +280,7 @@ export default function OnboardingScreen() {
 
             {/* Categories */}
             <View style={styles.categoriesContainer}>
-              {budget?.categories.map((category, index) => (
+              {record?.budget_categories.map((category, index) => (
                 <View key={index} style={styles.categoryCard}>
                   <View style={styles.categoryHeader}>
                     <Text style={styles.categoryNumber}>#{index + 1}</Text>
@@ -307,9 +312,9 @@ export default function OnboardingScreen() {
                       <TextInput
                         style={styles.amountInput}
                         placeholder="5000"
-                        value={Number(category.amount).toString()}
+                        value={Number(category.budget).toString()}
                         onChangeText={(text) =>
-                          updateCategory(index, "amount", text)
+                          updateCategory(index, "budget", text)
                         }
                         keyboardType="numeric"
                         placeholderTextColor="#999"

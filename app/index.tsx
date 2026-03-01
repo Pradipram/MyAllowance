@@ -4,7 +4,7 @@ import IndexHeader from "@/components/header/index-header";
 import NoBudgetSet from "@/components/noBudgetSet";
 import ProfileModal from "@/components/profile/profile-modal";
 import { checkForUpdates } from "@/components/version/updateChecker";
-import { getMonthBudget } from "@/services/budget";
+import { getMonthlyRecords } from "@/services/monthly_records";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
@@ -18,11 +18,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MonthlyBudget } from "../types/types";
+import { MonthlyRecord } from "../types/types";
 
 export default function Index() {
   const [isBudgetLoading, setIsBudgetLoading] = useState(false);
-  const [monthBudget, setMonthBudget] = useState<MonthlyBudget | null>(null);
+  const [monthRecord, setMonthRecord] = useState<MonthlyRecord | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -69,12 +69,24 @@ export default function Index() {
   const loadMonthData = async () => {
     try {
       setIsBudgetLoading(true);
-      const res = await await getMonthBudget(
+      const res = await getMonthlyRecords(
         selectedDate.getMonth() + 1,
         selectedDate.getFullYear(),
       );
-      // console.log("Loaded month budget:", res);
-      setMonthBudget(res);
+      setMonthRecord(
+        res
+          ? {
+              ...res,
+              budget_categories:
+                res.budget_categories && res.budget_categories.length > 0
+                  ? res.budget_categories.map((cat: any) => ({
+                      ...cat,
+                      budget: cat.budget ?? cat.amount ?? 0,
+                    }))
+                  : [],
+            }
+          : null,
+      );
     } catch (error) {
       console.error("Error loading month budget:", error);
     } finally {
@@ -103,8 +115,8 @@ export default function Index() {
   };
 
   const getRemainingAmount = () => {
-    if (!monthBudget) return 0;
-    return monthBudget.totalBudget - monthBudget.totalSpent;
+    if (!monthRecord) return 0;
+    return monthRecord.total_budget - monthRecord.total_spent;
   };
 
   if (isBudgetLoading || isLoadingUser) {
@@ -133,7 +145,7 @@ export default function Index() {
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {!monthBudget || monthBudget?.categories.length === 0 ? (
+        {!monthRecord || monthRecord.budget_categories.length === 0 ? (
           <NoBudgetSet selectedDate={selectedDate} />
         ) : (
           <>
@@ -143,13 +155,13 @@ export default function Index() {
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Total Budget</Text>
                   <Text style={styles.summaryAmount}>
-                    ₹{monthBudget.totalBudget.toLocaleString()}
+                    ₹{monthRecord.total_budget.toLocaleString()}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Total Spent</Text>
                   <Text style={[styles.summaryAmount, styles.spentAmount]}>
-                    ₹{monthBudget.totalSpent.toLocaleString()}
+                    ₹{monthRecord.total_spent.toLocaleString()}
                   </Text>
                 </View>
               </View>
@@ -190,12 +202,11 @@ export default function Index() {
 
             <View style={styles.categoriesSection}>
               <Text style={styles.sectionTitle}>Budget Categories</Text>
-              {monthBudget?.categories.map((category) => {
-                // const spent = getCategorySpent(category.id as string);
+              {monthRecord.budget_categories.map((category) => {
                 const spent = category.spent || 0;
                 const percentage = getProgressPercentage(
                   spent,
-                  category.amount,
+                  category.budget,
                 );
                 const progressColor = getProgressColor(percentage);
 
@@ -216,7 +227,7 @@ export default function Index() {
                       <Text style={styles.categoryName}>{category.name}</Text>
                       <Text style={styles.categoryAmount}>
                         ₹{spent.toLocaleString()} / ₹
-                        {category.amount.toLocaleString()}
+                        {category.budget.toLocaleString()}
                       </Text>
                     </View>
                     <View style={styles.progressBarContainer}>

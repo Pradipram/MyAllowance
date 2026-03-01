@@ -98,8 +98,9 @@ begin
       set spent = coalesce(spent, 0) - old_tx.amount
       where id = old_tx.category_id;
 
-      update monthly_budgets
-      set total_spent = coalesce(total_spent, 0) - old_tx.amount
+      update monthly_records
+      set total_spent = coalesce(total_spent, 0) - old_tx.amount,
+          updated_at = now()
       where user_id = p_user_id 
         and month = old_tx.month 
         and year = old_tx.year;
@@ -108,13 +109,12 @@ begin
   -- 3. HANDLE INCOME DELETION
   -- ====================================================
   elsif old_tx.type = 'income' then
-      -- SQL handles NULL automatically here too.
       update income_sources
       set amount = coalesce(amount, 0) - old_tx.amount,
           updated_at = now()
       where id = old_tx.income_source_id;
 
-      update monthly_incomes
+      update monthly_records
       set total_income = coalesce(total_income, 0) - old_tx.amount,
           updated_at = now()
       where user_id = p_user_id 

@@ -324,7 +324,7 @@ export default function AddExpenseScreen() {
           {/* Category Selection */}
           {activeTab === "expense" ? (
             <ShowCategory
-              selectedCategoryId={transaction.category_id}
+              selectedCategoryId={transaction.category_id as string}
               onSelectCategory={(category_id, category_name) =>
                 setTransaction({ ...transaction, category_id, category_name })
               }
@@ -334,7 +334,7 @@ export default function AddExpenseScreen() {
             />
           ) : (
             <ShowIncomeCategory
-              selectedCategoryId={transaction.category_id}
+              selectedCategoryId={transaction.category_id as string}
               onSelectCategory={(category_id, category_name) =>
                 setTransaction({ ...transaction, category_id, category_name })
               }

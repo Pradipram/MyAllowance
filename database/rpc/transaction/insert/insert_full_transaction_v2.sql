@@ -108,21 +108,17 @@ begin
       end if;
 
       -- A. Update the specific Income Source (The "Bucket")
-      -- We add the money to this specific source (e.g. "Salary")
       update income_sources
       set amount = coalesce(amount, 0) + p_amount,
           updated_at = now()
       where id = p_income_source_id;
 
-      -- B. Update the Monthly Total (The "Summary")
-      -- We also need to increase the total for the whole month
-      insert into monthly_incomes (user_id, month, year, total_income)
-      values (p_user_id, p_month, p_year, p_amount)
-      on conflict (user_id, month, year)
-      do update set 
-        total_income = monthly_incomes.total_income + p_amount,
-        updated_at = now();
-        
+      -- B. Update monthly_records total_income
+      update monthly_records
+      set total_income = coalesce(total_income, 0) + p_amount,
+          updated_at = now()
+      where user_id = p_user_id and month = p_month and year = p_year;
+
       -- Set IDs for the final insert
       v_final_category_id := null;
       v_final_source_id := p_income_source_id;
@@ -141,9 +137,10 @@ begin
       set spent = coalesce(spent, 0) + p_amount
       where id = p_category_id;
 
-      -- B. Update Monthly Budget Total
-      update monthly_budgets
-      set total_spent = coalesce(total_spent, 0) + p_amount
+      -- B. Update monthly_records total_spent
+      update monthly_records
+      set total_spent = coalesce(total_spent, 0) + p_amount,
+          updated_at = now()
       where user_id = p_user_id and month = p_month and year = p_year;
 
       -- Set IDs for the final insert
