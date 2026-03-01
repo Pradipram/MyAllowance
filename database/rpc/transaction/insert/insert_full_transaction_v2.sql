@@ -1,3 +1,82 @@
+-- 01 March 2026
+create or replace function insert_full_transaction_v2(
+  p_user_id uuid,
+  p_description text,
+  p_amount numeric,
+  p_date timestamptz,
+  p_type text, -- 'income' or 'expense'
+  p_month numeric, 
+  p_year numeric,  
+  p_category_id uuid default null, 
+  p_income_source_id uuid default null
+)
+returns jsonb
+language plpgsql
+as $$
+declare
+  v_record_id uuid;
+  v_transaction_id uuid;
+begin
+  -- ====================================================
+  -- 1. STRICT EXISTENCE CHECK (No Auto-Create)
+  -- ====================================================
+  select id into v_record_id from monthly_records
+  where user_id = p_user_id and month = p_month and year = p_year;
+
+  -- Block execution if the month is not set up
+  if v_record_id is null then
+    raise exception 'MONTHLY_RECORD_NOT_FOUND: Please set up the budget for month % and year % before adding transactions.', p_month, p_year;
+  end if;
+
+  -- ====================================================
+  -- 2. INSERT TRANSACTION
+  -- ====================================================
+  insert into transactions (
+    user_id, description, amount, date, type, category_id, income_source_id
+  )
+  values (
+    p_user_id, p_description, p_amount, p_date, p_type, p_category_id, p_income_source_id
+  )
+  returning id into v_transaction_id;
+
+  -- ====================================================
+  -- 3. UPDATE TOTALS (Atomic Sync)
+  -- ====================================================
+  if p_type = 'expense' then
+      -- Parent
+      update monthly_records 
+      set total_spent = total_spent + p_amount 
+      where id = v_record_id;
+      
+      -- Child
+      if p_category_id is not null then
+          update budget_categories 
+          set spent = spent + p_amount 
+          where id = p_category_id;
+      end if;
+
+  elsif p_type = 'income' then
+      -- Parent
+      update monthly_records 
+      set total_income = total_income + p_amount 
+      where id = v_record_id;
+
+      -- Child (Using 'earned')
+      if p_income_source_id is not null then
+          update income_sources 
+          set earned = earned + p_amount 
+          where id = p_income_source_id;
+      end if;
+  end if;
+
+  return jsonb_build_object(
+    'status', 'success', 
+    'transaction_id', v_transaction_id, 
+    'record_id', v_record_id
+  );
+end;
+$$;
+
 create or replace function insert_full_transaction_v2(
   p_user_id uuid,
   p_category_id uuid,       -- For Expenses (nullable)

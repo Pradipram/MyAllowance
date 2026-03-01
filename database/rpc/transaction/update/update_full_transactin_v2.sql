@@ -1,3 +1,105 @@
+-- 01 March 2026
+create or replace function update_full_transaction_v2(
+  p_transaction_id uuid,
+  p_user_id uuid,
+  p_description text,
+  p_amount numeric,
+  p_date timestamptz,
+  p_type text, -- 'income' or 'expense'
+  p_month numeric, 
+  p_year numeric,  
+  p_category_id uuid default null, 
+  p_income_source_id uuid default null
+)
+returns jsonb
+language plpgsql
+as $$
+declare
+  v_old_tx record;
+  v_old_month numeric;
+  v_old_year numeric;
+  v_record_id uuid;
+begin
+  -- ====================================================
+  -- 1. FETCH OLD TRANSACTION
+  -- ====================================================
+  select * into v_old_tx from transactions 
+  where id = p_transaction_id for update;
+
+  if v_old_tx is null then
+    raise exception 'TRANSACTION_NOT_FOUND: Transaction does not exist.';
+  end if;
+
+  v_old_month := extract(month from v_old_tx.date);
+  v_old_year := extract(year from v_old_tx.date);
+
+  -- ====================================================
+  -- 2. STRICT CHECK: BLOCK MONTH/YEAR CHANGES
+  -- ====================================================
+  if v_old_month != p_month or v_old_year != p_year then
+    raise exception 'MONTH_CHANGE_NOT_ALLOWED: You cannot move a transaction to a different month. Please delete this transaction and recreate it in the target month.';
+  end if;
+
+  -- ====================================================
+  -- 3. GET PARENT RECORD ID (Guaranteed to be the same month)
+  -- ====================================================
+  select id into v_record_id from monthly_records
+  where user_id = p_user_id and month = p_month and year = p_year;
+
+  if v_record_id is null then
+    raise exception 'MONTHLY_RECORD_NOT_FOUND: Monthly record missing or corrupted.';
+  end if;
+
+  -- ====================================================
+  -- 4. REVERSE THE OLD DATA
+  -- ====================================================
+  if v_old_tx.type = 'expense' then
+      update monthly_records set total_spent = total_spent - v_old_tx.amount where id = v_record_id;
+      if v_old_tx.category_id is not null then
+          update budget_categories set spent = spent - v_old_tx.amount where id = v_old_tx.category_id;
+      end if;
+  elsif v_old_tx.type = 'income' then
+      update monthly_records set total_income = total_income - v_old_tx.amount where id = v_record_id;
+      if v_old_tx.income_source_id is not null then
+          update income_sources set earned = earned - v_old_tx.amount where id = v_old_tx.income_source_id;
+      end if;
+  end if;
+
+  -- ====================================================
+  -- 5. APPLY THE NEW DATA
+  -- ====================================================
+  if p_type = 'expense' then
+      update monthly_records set total_spent = total_spent + p_amount where id = v_record_id;
+      if p_category_id is not null then
+          update budget_categories set spent = spent + p_amount where id = p_category_id;
+      end if;
+  elsif p_type = 'income' then
+      update monthly_records set total_income = total_income + p_amount where id = v_record_id;
+      if p_income_source_id is not null then
+          update income_sources set earned = earned + p_amount where id = p_income_source_id;
+      end if;
+  end if;
+
+  -- ====================================================
+  -- 6. UPDATE TRANSACTION ROW
+  -- ====================================================
+  update transactions set
+    description = p_description,
+    amount = p_amount,
+    date = p_date,
+    type = p_type,
+    category_id = p_category_id,
+    income_source_id = p_income_source_id
+  where id = p_transaction_id;
+
+  return jsonb_build_object(
+    'status', 'success', 
+    'transaction_id', p_transaction_id, 
+    'record_id', v_record_id
+  );
+end;
+$$;
+
 create or replace function update_full_transaction_v2(
   p_transaction_id uuid,
   p_user_id uuid,
