@@ -256,7 +256,7 @@ export default function Index() {
                 style={styles.editBudgetButton}
                 onPress={() => {
                   router.push(
-                    `/set-budget?selected_date=${selectedDate.toISOString()}`,
+                    `/monthly-setup?selected_date=${selectedDate.toISOString()}`,
                   );
                 }}
               >

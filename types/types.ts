@@ -33,31 +33,22 @@ export interface Transaction {
   deleted_at?: Date;
 }
 
-//To Do: MonthlyRecord will replace MonthlyBudget and MonthlyIncome. It will have both the "Money In" and "Money Out" sections, along with metadata like created_at and updated_at. This way, we can easily fetch all the data for a given month in one go, without needing to join multiple tables or make multiple API calls.
-export interface MonthlyBudget {
-  id?: string;
-  month: number;
-  year: number;
-  categories: BudgetCategory[];
-  totalBudget: number;
-  totalSpent: number;
+export enum IncomeSourceType {
+  ACTIVE = "active",
+  PASSIVE = "passive",
 }
 
 export interface IncomeSource {
   id: string;
   user_id: string;
   name: string; // e.g. "Salary", "Dividends"
-  type: "active" | "passive";
+  income_type: IncomeSourceType;
   earned: number; // Total accumulated for this month
 }
 
-//To Do: MonthlyRecord will replace MonthlyBudget and MonthlyIncome. It will have both the "Money In" and "Money Out" sections, along with metadata like created_at and updated_at. This way, we can easily fetch all the data for a given month in one go, without needing to join multiple tables or make multiple API calls.
-export interface MonthlyIncome {
-  id?: string;
-  month: number;
-  year: number;
-  incomeSources: IncomeSource[];
-  totalIncome: number;
+export enum IncomeSourceFields {
+  NAME = "name",
+  TYPE = "income_type",
 }
 
 export interface MonthlyRecord {

@@ -195,7 +195,7 @@ export const styles = StyleSheet.create({
     color: "#007AFF",
   },
   footer: {
-    paddingHorizontal: 20,
+    // paddingHorizontal: 10,
     paddingVertical: 20,
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
@@ -356,5 +356,16 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+  },
+  IncomeSourceTypeSelector: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
   },
 });

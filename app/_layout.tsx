@@ -28,9 +28,9 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
-          name="set-budget"
+          name="monthly-setup"
           options={{
-            title: "Set Budget",
+            title: "Monthly Setup",
             headerShown: false,
             // presentation: "modal",
           }}
