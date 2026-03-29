@@ -5,7 +5,38 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] - Unreleased
+## [3.1.0] - Unreleased
+
+### Added
+
+- **Income Source Selection Modal** (`components/modal/income-source-name-modal.tsx`):
+  - Predefined income source options: Salary, Freelance, Investment, Gift, Refund, Other
+  - Dynamic custom input field when "Other" is selected
+  - Integrated dropdown selector into Set Income Source flow
+- **Enhanced Dashboard UI**:
+  - Separate "Edit Income Source" button with green styling (#28a745)
+  - Color-differentiated action buttons: Blue (#007AFF) for Budget, Green (#28a745) for Income
+  - Improved visual hierarchy and button spacing
+- **Income Source Management**:
+  - Delete all income sources with confirmation dialog
+  - Loading modal feedback during deletion operations
+  - Atomic deletion capability via `saveMonthlyIncomeSources` with empty array
+
+### Changed
+
+- **Set Income Source Component** (`components/income/set-income-source.tsx`):
+  - Replaced `TextInput` with dropdown selector for income source name selection
+  - Integrated `IncomeSourceNameModal` for streamlined selection flow
+  - Implemented single modal instance pattern for improved state management
+  - Added comprehensive delete functionality with user confirmation
+- **Navigation**:
+  - Monthly setup route now accepts `view` parameter (`budget` or `income`) to distinguish editing context
+  - Dashboard buttons pass appropriate view parameter for targeted navigation
+- **Service Layer**:
+  - Removed legacy `services/budget.ts` (consolidated into `monthly_records.ts`)
+  - Migrated budget deletion to use unified `delete_monthly_record` RPC
+
+## [3.0.0] - 1 March 2026
 
 ### Added
 

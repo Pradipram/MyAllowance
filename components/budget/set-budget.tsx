@@ -1,5 +1,4 @@
 import { styles } from "@/assets/styles/set-budget.style";
-import { deleteMonthlyBudget } from "@/services/budget";
 import { saveMonthlyBudgetCategories } from "@/services/monthly_records";
 import { MonthlyRecord } from "@/types/types";
 import { getMonthYearString } from "@/utils/utility";
@@ -201,9 +200,11 @@ const SetBudget: FC<SetBudgetProps> = ({
           {
             text: "OK",
             onPress: async () => {
-              const res = await deleteMonthlyBudget(
+              const res = await saveMonthlyBudgetCategories(
                 record?.month!,
                 record?.year!,
+                [],
+                0,
               );
               console.log("Delete Response:", res);
               router.replace("/");

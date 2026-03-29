@@ -28,6 +28,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Quick Expense Entry**: Streamlined form for fast expense logging
 - **Dual-Mode Entry**: Separate icons for adding income (+) and expenses (-) from dashboard
 - **Dual Setup Flow**: Separate "Set Up Budget" and "Setup Income Source" buttons for first-time configuration
+- **Income Source Selection**: Modal with 6 predefined income sources (Salary, Freelance, Investment, Gift, Refund) and custom input for "Other"
 - **Category Selection**: Choose from predefined budget categories with visual indicators
 - **Income Categories**: Salary, Gift, Investment, Refund, Freelance, and Other with custom icons
 - **Seamless Mode Switching**: Smooth animated transitions between Income and Expense modes with header toggle
@@ -39,6 +40,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Type-Based Processing**: Intelligent RPC functions handle Income vs Expense logic separately
 - **Edit Transactions**: Modify existing transaction details (amount, category, date, payment mode)
 - **Delete Transactions**: Remove transactions with confirmation dialog and automatic budget recalculation
+- **Delete Income Sources**: Bulk delete all income sources for a month with confirmation
 - **Real-Time Updates**: Automatic adjustment of spent amounts and income when editing or deleting
 
 ### 📊 Expense History & Analytics
@@ -67,6 +69,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Monthly Overview**: Total budget, spent amount, and remaining balance
 - **Category Breakdown**: Individual category progress and spending details
 - **Current Month Indicator**: Clear visual indication of which month is current
+- **Dashboard Action Buttons**: Separate "Edit Budget" (Blue) and "Edit Income Source" (Green) buttons for streamlined access
+- **Quick Navigation**: Direct access to budget and income management from dashboard
 - **Real-Time Updates**: Live calculation from actual transaction data
 - **Consistent Totals**: Unified spending calculations across all screens
 

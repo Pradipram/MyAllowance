@@ -10,9 +10,11 @@ import { getMonthYearString } from "@/utils/utility";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { FC, useEffect, useState } from "react";
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import IncomeSourceNameModal from "../modal/income-source-name-modal";
 import IncomeSourceTypeModal from "../modal/income-source-type-modal";
+import LoaderModal from "../modal/loader-modal";
 
 interface SetIncomeSourceProps {
   record: MonthlyRecord | null;
@@ -27,8 +29,11 @@ const SetIncomeSource: FC<SetIncomeSourceProps> = ({
 }) => {
   const [showIncomeSourceTypeModal, setShowIncomeSourceTypeModal] =
     useState(false);
+  const [showIncomeSourceNameModal, setShowIncomeSourceNameModal] =
+    useState(false);
   const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0);
   const [isSavingIncomeSources, setIsSavingIncomeSources] = useState(false);
+  const [isDeletingIncomeSources, setIsDeletingIncomeSources] = useState(false);
 
   useEffect(() => {
     // console.log("record: ", record);
@@ -153,7 +158,49 @@ const SetIncomeSource: FC<SetIncomeSourceProps> = ({
     }
   };
 
-  const deleteIncomeSources = () => {};
+  const deleteIncomeSources = () => {
+    Alert.alert(
+      "Delete Income Sources",
+      "Are you sure you want to delete all income sources? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: confirmDeleteIncomeSources,
+        },
+      ],
+    );
+  };
+
+  const confirmDeleteIncomeSources = async () => {
+    try {
+      setIsDeletingIncomeSources(true);
+      await saveMonthlyIncomeSources(
+        selectedMonthDate.getMonth() + 1,
+        selectedMonthDate.getFullYear(),
+        [], // Save an empty array to clear income sources
+      );
+      Alert.alert(
+        "Success",
+        `All income sources for ${getMonthYearString(
+          selectedMonthDate,
+        )} have been deleted successfully!`,
+        [{ text: "OK", onPress: () => router.replace("/") }],
+      );
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "Failed to delete income sources. Please try again.",
+      );
+      console.error("Error deleting income sources:", error);
+    } finally {
+      setIsDeletingIncomeSources(false);
+    }
+  };
 
   return (
     <SafeAreaView>
@@ -171,15 +218,23 @@ const SetIncomeSource: FC<SetIncomeSourceProps> = ({
             </View>
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Income Source Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g., Salary, Dividends"
-                value={source.name}
-                onChangeText={(text) =>
-                  updateIncomeSource(index, IncomeSourceFields.NAME, text)
-                }
-                placeholderTextColor="#999"
-              />
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedSourceIndex(index);
+                  setShowIncomeSourceNameModal(true);
+                }}
+                style={styles.IncomeSourceTypeSelector}
+              >
+                <Text
+                  style={[
+                    styles.monthSelectorText,
+                    !source.name && { color: "#999" },
+                  ]}
+                >
+                  {source.name || "Select or add income source..."}
+                </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Income Source Type</Text>
@@ -199,8 +254,15 @@ const SetIncomeSource: FC<SetIncomeSourceProps> = ({
           </View>
         ))}
       </View>
-
       {/* Single modal instance outside the loop */}
+      <IncomeSourceNameModal
+        visible={showIncomeSourceNameModal}
+        onClose={() => setShowIncomeSourceNameModal(false)}
+        selectedName={record?.income_sources[selectedSourceIndex]?.name}
+        onSelectName={(name) =>
+          updateIncomeSource(selectedSourceIndex, IncomeSourceFields.NAME, name)
+        }
+      />
       <IncomeSourceTypeModal
         showIncomeSourceTypeModal={showIncomeSourceTypeModal}
         setShowIncomeSourceTypeModal={setShowIncomeSourceTypeModal}
@@ -209,12 +271,10 @@ const SetIncomeSource: FC<SetIncomeSourceProps> = ({
           updateIncomeSource(selectedSourceIndex, IncomeSourceFields.TYPE, type)
         }
       />
-
       <TouchableOpacity style={styles.addButton} onPress={addIncomeSource}>
         <Ionicons name="add-circle" size={24} color="#007AFF" />
         <Text style={styles.addButtonText}>Add Income Source</Text>
       </TouchableOpacity>
-
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.saveButton}
@@ -237,6 +297,11 @@ const SetIncomeSource: FC<SetIncomeSourceProps> = ({
           </Text>
         </TouchableOpacity>
       </View>
+      {/* Loading Modal */}
+      <LoaderModal
+        visible={isDeletingIncomeSources}
+        message="Deleting Income Sources"
+      />
     </SafeAreaView>
   );
 };

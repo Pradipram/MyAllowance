@@ -213,6 +213,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
   editBudgetButton: {
+    marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -220,7 +221,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     borderWidth: 2,
-    borderColor: "#007AFF",
+    // borderColor: "#007AFF",
     borderStyle: "dashed",
   },
   editBudgetText: {

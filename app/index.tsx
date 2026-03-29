@@ -253,15 +253,35 @@ export default function Index() {
 
             <View style={styles.quickActionsSection}>
               <TouchableOpacity
-                style={styles.editBudgetButton}
+                style={[
+                  styles.editBudgetButton,
+                  { borderLeftColor: "#007AFF", borderLeftWidth: 4 },
+                ]}
                 onPress={() => {
                   router.push(
-                    `/monthly-setup?selected_date=${selectedDate.toISOString()}`,
+                    `/monthly-setup?selected_date=${selectedDate.toISOString()}&view=budget`,
                   );
                 }}
               >
                 <Ionicons name="settings" size={20} color="#007AFF" />
                 <Text style={styles.editBudgetText}>Edit Budget</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.editBudgetButton,
+                  { borderLeftColor: "#28a745", borderLeftWidth: 4 },
+                ]}
+                onPress={() => {
+                  router.push(
+                    `/monthly-setup?selected_date=${selectedDate.toISOString()}&view=income`,
+                  );
+                }}
+              >
+                <Ionicons name="settings" size={20} color="#28a745" />
+                <Text style={[styles.editBudgetText, { color: "#28a745" }]}>
+                  Edit Income Source
+                </Text>
               </TouchableOpacity>
             </View>
           </>
