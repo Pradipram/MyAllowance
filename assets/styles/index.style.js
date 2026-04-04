@@ -150,6 +150,44 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
+  incomeAmount: {
+    color: "#1ac8a9",
+  },
+  summaryGrid: {
+    marginBottom: 16,
+  },
+  gridRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  gridItem: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 8,
+  },
+  incomeHeaderWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  cashflowSection: {
+    alignItems: "center",
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e9ecef",
+  },
+  cashflowLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+  },
+  cashflowAmount: {
+    fontSize: 28,
+    fontWeight: "bold",
+  },
   categoriesSection: {
     marginBottom: 100,
   },

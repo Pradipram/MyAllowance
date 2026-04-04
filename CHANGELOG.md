@@ -5,7 +5,28 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.0] - Unreleased
+## [3.2.0] - Unreleased
+
+### Changed
+
+- **Income Category Loading** (`components/income/show-income-category.tsx`):
+  - Replaced hardcoded income category chips with database-driven monthly income sources
+  - Added month/year-aware loading via `getMonthlyRecords` to keep selection aligned with selected transaction month
+  - Added empty-state helper text when no income sources are configured for the selected month
+- **Add Transaction Wiring** (`app/add-transaction.tsx`):
+  - Updated income selection flow to persist selected source in `income_source_id`
+  - Passed selected month/year into income source picker for consistent data fetch
+  - Added `income_source_id` reset when switching between income/expense tabs
+
+### Fixed
+
+- **Income Save Flow** (`app/add-transaction.tsx`):
+  - Removed temporary "Coming Soon" blocker for income in add transaction flow
+  - Income transactions now submit through the same save path as expenses
+- **Validation Rules** (`app/add-transaction.tsx`):
+  - Added type-aware validation: expense requires `category_id`, income requires `income_source_id`
+
+## [3.1.0] - 29 March 2026
 
 ### Added
 

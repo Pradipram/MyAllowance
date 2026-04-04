@@ -1,57 +1,94 @@
 import { styles } from "@/assets/styles/add-expense.style";
-import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { getMonthlyRecords } from "@/services/monthly_records";
+import { IncomeSource } from "@/types/types";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ShowIncomeCategoryProps {
   selectedCategoryId: string;
   onSelectCategory: (categoryId: string, categoryName: string) => void;
+  month: number;
+  year: number;
 }
-
-const incomeCategories = [
-  { id: "salary", name: "Salary", icon: "briefcase-outline" },
-  { id: "gift", name: "Gift", icon: "gift-outline" },
-  { id: "investment", name: "Investment", icon: "trending-up-outline" },
-  { id: "refund", name: "Refund", icon: "arrow-undo-outline" },
-  { id: "freelance", name: "Freelance", icon: "laptop-outline" },
-  { id: "other-income", name: "Other", icon: "cash-outline" },
-];
 
 const ShowIncomeCategory: React.FC<ShowIncomeCategoryProps> = ({
   selectedCategoryId,
   onSelectCategory,
+  month,
+  year,
 }) => {
+  const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadIncomeSources = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const res = await getMonthlyRecords(month, year);
+      if (res && res.income_sources && res.income_sources.length > 0) {
+        setIncomeSources(res.income_sources);
+      } else {
+        setIncomeSources([]);
+      }
+    } catch (error) {
+      console.error("Error loading income sources:", error);
+      setIncomeSources([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [month, year]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadIncomeSources();
+    }, [loadIncomeSources]),
+  );
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading income sources...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <View style={styles.formSection}>
       <Text style={styles.label}>Income Category *</Text>
-      <View style={styles.incomeCategoryGrid}>
-        {incomeCategories.map((category) => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScrollView}
+      >
+        {incomeSources.map((source) => (
           <TouchableOpacity
-            key={category.id}
+            key={source.id}
             style={[
-              styles.incomeCategoryCard,
-              selectedCategoryId === category.id &&
-                styles.incomeCategoryCardSelected,
+              styles.categoryChip,
+              selectedCategoryId === source.id && styles.categoryChipSelected,
             ]}
-            onPress={() => onSelectCategory(category.id, category.name)}
+            onPress={() => onSelectCategory(source.id, source.name)}
           >
-            <Ionicons
-              name={category.icon as any}
-              size={24}
-              color={selectedCategoryId === category.id ? "#ffffff" : "#34C759"}
-            />
             <Text
               style={[
-                styles.incomeCategoryText,
-                selectedCategoryId === category.id &&
-                  styles.incomeCategoryTextSelected,
+                styles.categoryChipText,
+                selectedCategoryId === source.id &&
+                  styles.categoryChipTextSelected,
               ]}
             >
-              {category.name}
+              {source.name}
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
+      {!isLoading && incomeSources.length === 0 && (
+        <Text style={styles.helperText}>
+          No income sources found for this month. Add them from Monthly Setup.
+        </Text>
+      )}
     </View>
   );
 };

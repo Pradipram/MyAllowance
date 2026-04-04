@@ -28,9 +28,9 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Quick Expense Entry**: Streamlined form for fast expense logging
 - **Dual-Mode Entry**: Separate icons for adding income (+) and expenses (-) from dashboard
 - **Dual Setup Flow**: Separate "Set Up Budget" and "Setup Income Source" buttons for first-time configuration
-- **Income Source Selection**: Modal with 6 predefined income sources (Salary, Freelance, Investment, Gift, Refund) and custom input for "Other"
+- **Income Source Selection**: Income sources are loaded from the current month's setup data in Supabase
 - **Category Selection**: Choose from predefined budget categories with visual indicators
-- **Income Categories**: Salary, Gift, Investment, Refund, Freelance, and Other with custom icons
+- **Income Categories**: Dynamic source list based on your configured monthly income sources
 - **Seamless Mode Switching**: Smooth animated transitions between Income and Expense modes with header toggle
 - **Payment Mode Tracking**: Cash, Card, UPI, Net Banking, and Other options with icons
 - **Date Selection**: Smart date picker with "Today"/"Yesterday" shortcuts
@@ -38,6 +38,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Screenshot Attachments**: Upload receipt photos for expense verification
 - **Transaction Storage**: Automatic transaction recording in Supabase with ACID compliance
 - **Type-Based Processing**: Intelligent RPC functions handle Income vs Expense logic separately
+- **Income Transaction Saving**: Income entries are now saved through the same add transaction flow as expenses
 - **Edit Transactions**: Modify existing transaction details (amount, category, date, payment mode)
 - **Delete Transactions**: Remove transactions with confirmation dialog and automatic budget recalculation
 - **Delete Income Sources**: Bulk delete all income sources for a month with confirmation
@@ -256,7 +257,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Database Functions**: 4 PostgreSQL RPC functions (get_monthly_record, insert/update/delete transactions) with enhanced validation and atomic operations
 - **Features**: 35+ major features implemented
 - **Authentication**: Email/password + Google OAuth
-- **Income Management**: Full income tracking with 6 predefined categories and source-level tracking
+- **Income Management**: Full income tracking with database-driven monthly income sources and source-level tracking
 - **Unified Data Model**: Centralized monthly_records table linking budgets, income sources, and transactions
 
 ## 🙏 Acknowledgments

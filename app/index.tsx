@@ -1,6 +1,7 @@
 // import logo from "@/assets/images/logo.png";
 import { styles } from "@/assets/styles/index.style";
 import IndexHeader from "@/components/header/index-header";
+import IncomeSourcesModal from "@/components/modal/income-sources-modal";
 import NoBudgetSet from "@/components/noBudgetSet";
 import ProfileModal from "@/components/profile/profile-modal";
 import { checkForUpdates } from "@/components/version/updateChecker";
@@ -25,6 +26,7 @@ export default function Index() {
   const [monthRecord, setMonthRecord] = useState<MonthlyRecord | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
@@ -119,6 +121,11 @@ export default function Index() {
     return monthRecord.total_budget - monthRecord.total_spent;
   };
 
+  const getCashflowBalance = () => {
+    if (!monthRecord) return 0;
+    return monthRecord.total_income - monthRecord.total_spent;
+  };
+
   if (isBudgetLoading || isLoadingUser) {
     return (
       <SafeAreaView style={styles.container}>
@@ -150,32 +157,76 @@ export default function Index() {
         ) : (
           <>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Monthly Overview</Text>
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Total Budget</Text>
-                  <Text style={styles.summaryAmount}>
-                    ₹{monthRecord.total_budget.toLocaleString()}
-                  </Text>
+              <Text style={styles.summaryTitle}>Monthly Summary</Text>
+
+              {/* 4-Item Grid Layout */}
+              <View style={styles.summaryGrid}>
+                <View style={styles.gridRow}>
+                  {/* Total Income */}
+                  <TouchableOpacity
+                    style={styles.gridItem}
+                    onPress={() => setShowIncomeSourcesModal(true)}
+                  >
+                    <View style={styles.incomeHeaderWithIcon}>
+                      <Text style={styles.summaryLabel}>Total Income</Text>
+                      <Ionicons
+                        name="information-circle"
+                        size={18}
+                        color="#1ac8a9"
+                      />
+                    </View>
+                    <Text style={[styles.summaryAmount, styles.incomeAmount]}>
+                      ₹{monthRecord.total_income.toLocaleString()}
+                    </Text>
+                  </TouchableOpacity>
+                  {/* Total Budget */}
+                  <View style={styles.gridItem}>
+                    <Text style={styles.summaryLabel}>Total Budget</Text>
+                    <Text style={styles.summaryAmount}>
+                      ₹{monthRecord.total_budget.toLocaleString()}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Total Spent</Text>
-                  <Text style={[styles.summaryAmount, styles.spentAmount]}>
-                    ₹{monthRecord.total_spent.toLocaleString()}
-                  </Text>
+
+                <View style={styles.gridRow}>
+                  {/* Overall Spent */}
+                  <View style={styles.gridItem}>
+                    <Text style={styles.summaryLabel}>Overall Spent</Text>
+                    <Text style={[styles.summaryAmount, styles.spentAmount]}>
+                      ₹{monthRecord.total_spent.toLocaleString()}
+                    </Text>
+                  </View>
+                  {/* Budget Remaining */}
+                  <View style={styles.gridItem}>
+                    <Text style={styles.summaryLabel}>Budget Remaining</Text>
+                    <Text
+                      style={[
+                        styles.summaryAmount,
+                        {
+                          color: getRemainingAmount() >= 0 ? "#666" : "#ff4444",
+                        },
+                      ]}
+                    >
+                      ₹{Math.abs(getRemainingAmount()).toLocaleString()}
+                    </Text>
+                  </View>
                 </View>
               </View>
-              <View style={styles.remainingSection}>
-                <Text style={styles.remainingLabel}>Remaining</Text>
+
+              {/* Cashflow Balance Section */}
+              <View style={styles.cashflowSection}>
+                <Text style={styles.cashflowLabel}>
+                  {getCashflowBalance() >= 0 ? "Surplus" : "Deficit"}
+                </Text>
                 <Text
                   style={[
-                    styles.remainingAmount,
+                    styles.cashflowAmount,
                     {
-                      color: getRemainingAmount() >= 0 ? "#28a745" : "#ff4444",
+                      color: getCashflowBalance() >= 0 ? "#28a745" : "#ff4444",
                     },
                   ]}
                 >
-                  ₹{Math.abs(getRemainingAmount()).toLocaleString()}
+                  ₹{Math.abs(getCashflowBalance()).toLocaleString()}
                 </Text>
               </View>
             </View>
@@ -322,6 +373,14 @@ export default function Index() {
         visible={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         user={user}
+      />
+
+      {/* Income Sources Modal */}
+      <IncomeSourcesModal
+        visible={showIncomeSourcesModal}
+        onClose={() => setShowIncomeSourcesModal(false)}
+        incomeSources={monthRecord?.income_sources || []}
+        totalIncome={monthRecord?.total_income || 0}
       />
     </SafeAreaView>
   );

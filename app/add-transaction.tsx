@@ -30,6 +30,7 @@ const defaultTransaction: Transaction = {
   // id: "",
   user_id: "",
   category_id: "",
+  income_source_id: "",
   category_name: "",
   amount: 0,
   description: "",
@@ -162,8 +163,13 @@ export default function AddExpenseScreen() {
   };
 
   const validateTransaction = () => {
-    if (!transaction.category_id) {
-      Alert.alert("Error", "Please select a category.");
+    if (transaction.type === "expense" && !transaction.category_id) {
+      Alert.alert("Error", "Please select an expense category.");
+      return false;
+    }
+
+    if (transaction.type === "income" && !transaction.income_source_id) {
+      Alert.alert("Error", "Please select an income source.");
       return false;
     }
 
@@ -203,6 +209,7 @@ export default function AddExpenseScreen() {
         ...transaction,
         type: tab,
         category_id: "",
+        income_source_id: "",
         category_name: "",
       });
 
@@ -227,15 +234,6 @@ export default function AddExpenseScreen() {
     // console.log("Add transaction function called", transaction);
 
     if (!validateTransaction()) {
-      return;
-    }
-    // Show coming soon message for income
-    if (activeTab === "income") {
-      Alert.alert(
-        "Coming Soon",
-        "Income tracking feature is under development and will be available soon!",
-        [{ text: "OK" }],
-      );
       return;
     }
 
@@ -334,10 +332,20 @@ export default function AddExpenseScreen() {
             />
           ) : (
             <ShowIncomeCategory
-              selectedCategoryId={transaction.category_id as string}
-              onSelectCategory={(category_id, category_name) =>
-                setTransaction({ ...transaction, category_id, category_name })
+              selectedCategoryId={
+                (transaction.income_source_id ||
+                  transaction.category_id) as string
               }
+              onSelectCategory={(income_source_id, category_name) =>
+                setTransaction({
+                  ...transaction,
+                  income_source_id,
+                  category_id: "",
+                  category_name,
+                })
+              }
+              month={transaction.month}
+              year={transaction.year}
             />
           )}
 
