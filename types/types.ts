@@ -2,7 +2,7 @@ export interface BudgetCategory {
   id?: string;
   name: string;
   budget: number;
-  index: number; // for ordering
+  index: number;
   spent?: number;
 }
 
@@ -41,9 +41,9 @@ export enum IncomeSourceType {
 export interface IncomeSource {
   id: string;
   user_id: string;
-  name: string; // e.g. "Salary", "Dividends"
+  name: string;
   income_type: IncomeSourceType;
-  earned: number; // Total accumulated for this month
+  earned: number;
 }
 
 export enum IncomeSourceFields {
@@ -52,21 +52,18 @@ export enum IncomeSourceFields {
 }
 
 export interface MonthlyRecord {
-  id: string; // The single ID for "Feb 2026"
+  id: string;
   user_id: string;
   month: number;
   year: number;
 
-  // 💰 The "Money In" Section
   total_income: number;
-  income_sources: IncomeSource[]; // The array of Salary, Dividends, etc.
+  income_sources: IncomeSource[];
 
-  // 💸 The "Money Out" Section
   total_budget: number;
   total_spent: number;
-  budget_categories: BudgetCategory[]; // The array of Food, Rent, etc.
+  budget_categories: BudgetCategory[];
 
-  // ⚙️ Metadata
   created_at?: string;
   updated_at?: string;
 }

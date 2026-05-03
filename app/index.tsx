@@ -1,11 +1,8 @@
-// import logo from "@/assets/images/logo.png";
 import { styles } from "@/assets/styles/index.style";
 import IndexHeader from "@/components/header/index-header";
-import IncomeSourcesModal from "@/components/modal/income-sources-modal";
-import NoBudgetSet from "@/components/noBudgetSet";
 import ProfileModal from "@/components/profile/profile-modal";
 import { checkForUpdates } from "@/components/version/updateChecker";
-import { getMonthlyRecords } from "@/services/monthly_records";
+import { getTransactions } from "@/services/transaction";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
@@ -19,14 +16,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MonthlyRecord } from "../types/types";
+import { Transaction } from "../types/types";
 
 export default function Index() {
-  const [isBudgetLoading, setIsBudgetLoading] = useState(false);
-  const [monthRecord, setMonthRecord] = useState<MonthlyRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
@@ -37,7 +33,6 @@ export default function Index() {
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event);
         if (session?.user) {
           setUser(session.user);
         } else {
@@ -70,30 +65,58 @@ export default function Index() {
 
   const loadMonthData = async () => {
     try {
-      setIsBudgetLoading(true);
-      const res = await getMonthlyRecords(
+      setIsLoading(true);
+      const res = await getTransactions(
         selectedDate.getMonth() + 1,
         selectedDate.getFullYear(),
       );
-      setMonthRecord(
-        res
-          ? {
-              ...res,
-              budget_categories:
-                res.budget_categories && res.budget_categories.length > 0
-                  ? res.budget_categories.map((cat: any) => ({
-                      ...cat,
-                      budget: cat.budget ?? cat.amount ?? 0,
-                    }))
-                  : [],
-            }
-          : null,
-      );
+      setTransactions(res || []);
     } catch (error) {
-      console.error("Error loading month budget:", error);
+      console.error("Error loading month transactions:", error);
     } finally {
-      setIsBudgetLoading(false);
+      setIsLoading(false);
     }
+  };
+
+  // Calculate total income
+  const getTotalIncome = () => {
+    return transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  // Calculate total spent
+  const getTotalSpent = () => {
+    return transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  // Calculate net (surplus/deficit)
+  const getNet = () => {
+    return getTotalIncome() - getTotalSpent();
+  };
+
+  // Group expenses by category
+  const getExpensesByCategory = () => {
+    const categoryMap: { [key: string]: number } = {};
+
+    transactions
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        if (categoryMap[t.category_name]) {
+          categoryMap[t.category_name] += t.amount;
+        } else {
+          categoryMap[t.category_name] = t.amount;
+        }
+      });
+
+    return Object.entries(categoryMap)
+      .map(([name, amount]) => ({
+        name,
+        amount,
+      }))
+      .sort((a, b) => b.amount - a.amount);
   };
 
   const getProgressPercentage = (spent: number, budget: number) => {
@@ -116,17 +139,7 @@ export default function Index() {
     );
   };
 
-  const getRemainingAmount = () => {
-    if (!monthRecord) return 0;
-    return monthRecord.total_budget - monthRecord.total_spent;
-  };
-
-  const getCashflowBalance = () => {
-    if (!monthRecord) return 0;
-    return monthRecord.total_income - monthRecord.total_spent;
-  };
-
-  if (isBudgetLoading || isLoadingUser) {
+  if (isLoading || isLoadingUser) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -152,92 +165,62 @@ export default function Index() {
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {!monthRecord || monthRecord.budget_categories.length === 0 ? (
-          <NoBudgetSet selectedDate={selectedDate} />
+        {transactions.length === 0 ? (
+          <View style={styles.noDataContainer}>
+            <Ionicons name="wallet-outline" size={48} color="#999" />
+            <Text style={styles.noDataTitle}>No Transactions</Text>
+            <Text style={styles.noDataText}>
+              Start tracking your income and expenses by adding a transaction.
+            </Text>
+          </View>
         ) : (
           <>
+            {/* Monthly Summary */}
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Monthly Summary</Text>
 
-              {/* 4-Item Grid Layout */}
+              {/* 2-Item First Row */}
               <View style={styles.summaryGrid}>
-                <View style={styles.gridRow}>
-                  {/* Total Income */}
-                  <TouchableOpacity
-                    style={styles.gridItem}
-                    onPress={() => setShowIncomeSourcesModal(true)}
-                  >
-                    <View style={styles.incomeHeaderWithIcon}>
-                      <Text style={styles.summaryLabel}>Total Income</Text>
-                      <Ionicons
-                        name="information-circle"
-                        size={18}
-                        color="#1ac8a9"
-                      />
-                    </View>
-                    <Text style={[styles.summaryAmount, styles.incomeAmount]}>
-                      ₹{monthRecord.total_income.toLocaleString()}
-                    </Text>
-                  </TouchableOpacity>
-                  {/* Total Budget */}
-                  <View style={styles.gridItem}>
-                    <Text style={styles.summaryLabel}>Total Budget</Text>
-                    <Text style={styles.summaryAmount}>
-                      ₹{monthRecord.total_budget.toLocaleString()}
-                    </Text>
-                  </View>
+                {/* Total Income */}
+                <View style={styles.gridItem}>
+                  <Text style={styles.summaryLabel}>Total Income</Text>
+                  <Text style={[styles.summaryAmount, styles.incomeAmount]}>
+                    ₹{getTotalIncome().toLocaleString()}
+                  </Text>
                 </View>
 
-                <View style={styles.gridRow}>
-                  {/* Overall Spent */}
-                  <View style={styles.gridItem}>
-                    <Text style={styles.summaryLabel}>Overall Spent</Text>
-                    <Text style={[styles.summaryAmount, styles.spentAmount]}>
-                      ₹{monthRecord.total_spent.toLocaleString()}
-                    </Text>
-                  </View>
-                  {/* Budget Remaining */}
-                  <View style={styles.gridItem}>
-                    <Text style={styles.summaryLabel}>Budget Remaining</Text>
-                    <Text
-                      style={[
-                        styles.summaryAmount,
-                        {
-                          color: getRemainingAmount() >= 0 ? "#666" : "#ff4444",
-                        },
-                      ]}
-                    >
-                      ₹{Math.abs(getRemainingAmount()).toLocaleString()}
-                    </Text>
-                  </View>
+                {/* Overall Spent */}
+                <View style={styles.gridItem}>
+                  <Text style={styles.summaryLabel}>Overall Spent</Text>
+                  <Text style={[styles.summaryAmount, styles.spentAmount]}>
+                    ₹{getTotalSpent().toLocaleString()}
+                  </Text>
                 </View>
               </View>
 
-              {/* Cashflow Balance Section */}
-              <View style={styles.cashflowSection}>
-                <Text style={styles.cashflowLabel}>
-                  {getCashflowBalance() >= 0 ? "Surplus" : "Deficit"}
+              {/* Net Surplus/Deficit - Second Row */}
+              <View style={styles.netSection}>
+                <Text style={styles.summaryLabel}>
+                  {getNet() >= 0 ? "Surplus" : "Deficit"}
                 </Text>
                 <Text
                   style={[
-                    styles.cashflowAmount,
+                    styles.netAmount,
                     {
-                      color: getCashflowBalance() >= 0 ? "#28a745" : "#ff4444",
+                      color: getNet() >= 0 ? "#28a745" : "#ff4444",
                     },
                   ]}
                 >
-                  ₹{Math.abs(getCashflowBalance()).toLocaleString()}
+                  ₹{Math.abs(getNet()).toLocaleString()}
                 </Text>
               </View>
             </View>
 
-            {/* Quick Actions */}
+            {/* Expense History Link */}
             <View style={styles.quickActionsSection}>
               <TouchableOpacity
                 style={styles.quickActionButton}
                 onPress={() => {
-                  // const month = (selectedDate.getMonth() + 1).toString();
-                  // const year = selectedDate.getFullYear();
                   router.push(
                     `./expense-history?month=${(
                       selectedDate.getMonth() + 1
@@ -251,90 +234,33 @@ export default function Index() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.categoriesSection}>
-              <Text style={styles.sectionTitle}>Budget Categories</Text>
-              {monthRecord.budget_categories.map((category) => {
-                const spent = category.spent || 0;
-                const percentage = getProgressPercentage(
-                  spent,
-                  category.budget,
-                );
-                const progressColor = getProgressColor(percentage);
-
-                return (
+            {/* Expense Categories */}
+            {getExpensesByCategory().length > 0 && (
+              <View style={styles.categoriesSection}>
+                <Text style={styles.sectionTitle}>Categories</Text>
+                {getExpensesByCategory().map((category) => (
                   <TouchableOpacity
-                    key={category.id}
+                    key={category.name}
                     style={styles.categoryCard}
                     activeOpacity={0.7}
                     onPress={() => {
                       const month = (selectedDate.getMonth() + 1).toString();
                       const year = selectedDate.getFullYear().toString();
                       router.push(
-                        `/expense-history?month=${month}&year=${year}&categoryId=${category.id}`,
+                        `/expense-history?month=${month}&year=${year}&categoryName=${encodeURIComponent(category.name)}`,
                       );
                     }}
                   >
                     <View style={styles.categoryHeader}>
                       <Text style={styles.categoryName}>{category.name}</Text>
                       <Text style={styles.categoryAmount}>
-                        ₹{spent.toLocaleString()} / ₹
-                        {category.budget.toLocaleString()}
-                      </Text>
-                    </View>
-                    <View style={styles.progressBarContainer}>
-                      <View style={styles.progressBarBackground}>
-                        <View
-                          style={[
-                            styles.progressBarFill,
-                            {
-                              width: `${percentage}%`,
-                              backgroundColor: progressColor,
-                            },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.progressPercentage}>
-                        {Math.round(percentage)}%
+                        ₹{category.amount.toLocaleString()}
                       </Text>
                     </View>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <View style={styles.quickActionsSection}>
-              <TouchableOpacity
-                style={[
-                  styles.editBudgetButton,
-                  { borderLeftColor: "#007AFF", borderLeftWidth: 4 },
-                ]}
-                onPress={() => {
-                  router.push(
-                    `/monthly-setup?selected_date=${selectedDate.toISOString()}&view=budget`,
-                  );
-                }}
-              >
-                <Ionicons name="settings" size={20} color="#007AFF" />
-                <Text style={styles.editBudgetText}>Edit Budget</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.editBudgetButton,
-                  { borderLeftColor: "#28a745", borderLeftWidth: 4 },
-                ]}
-                onPress={() => {
-                  router.push(
-                    `/monthly-setup?selected_date=${selectedDate.toISOString()}&view=income`,
-                  );
-                }}
-              >
-                <Ionicons name="settings" size={20} color="#28a745" />
-                <Text style={[styles.editBudgetText, { color: "#28a745" }]}>
-                  Edit Income Source
-                </Text>
-              </TouchableOpacity>
-            </View>
+                ))}
+              </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -373,14 +299,6 @@ export default function Index() {
         visible={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         user={user}
-      />
-
-      {/* Income Sources Modal */}
-      <IncomeSourcesModal
-        visible={showIncomeSourcesModal}
-        onClose={() => setShowIncomeSourcesModal(false)}
-        incomeSources={monthRecord?.income_sources || []}
-        totalIncome={monthRecord?.total_income || 0}
       />
     </SafeAreaView>
   );

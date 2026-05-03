@@ -1,3 +1,56 @@
+-- 02 may 2026
+declare
+  v_old_tx record;
+  v_month numeric;
+  v_year numeric;
+begin
+  -- ====================================================
+  -- 1. FETCH & LOCK TRANSACTION (With Security Check)
+  -- ====================================================
+  select * into v_old_tx from transactions 
+  where id = p_transaction_id and user_id = p_user_id 
+  for update;
+
+  if v_old_tx is null then
+    raise exception 'TRANSACTION_NOT_FOUND: Transaction does not exist or you do not have permission to delete it.';
+  end if;
+
+  v_month := extract(month from v_old_tx.date);
+  v_year := extract(year from v_old_tx.date);
+
+  -- ====================================================
+  -- 2. REVERSE THE DATA (Refund the amounts)
+  -- ====================================================
+  if v_old_tx.type = 'expense' then
+      -- Revert Parent (monthly_records still tracks overall totals)
+      update monthly_records 
+      set total_spent = total_spent - v_old_tx.amount 
+      where user_id = p_user_id and month = v_month and year = v_year;
+      
+      -- NOTE: The child update (budget_categories) has been removed 
+      -- because 'spent' was dropped and categories are now global.
+
+  elsif v_old_tx.type = 'income' then
+      -- Revert Parent
+      update monthly_records 
+      set total_income = total_income - v_old_tx.amount 
+      where user_id = p_user_id and month = v_month and year = v_year;
+      
+      -- NOTE: The child update (income_sources) has been removed 
+      -- because 'earned' was dropped.
+  end if;
+
+  -- ====================================================
+  -- 3. DELETE THE ROW
+  -- ====================================================
+  delete from transactions where id = p_transaction_id;
+
+  return jsonb_build_object(
+    'status', 'success', 
+    'deleted_transaction_id', p_transaction_id
+  );
+end;
+
 
 -- 01 March 2026
 create or replace function delete_full_transaction(

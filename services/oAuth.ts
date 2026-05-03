@@ -27,7 +27,6 @@ export const handleGoogleoAuth = async (
 
     if (error) throw error;
 
-    // console.log("Google Signup successful:", data);
     Alert.alert("Success", "Signed in with Google successfully!", [
       { text: "OK", onPress: () => router.replace("/" as any) },
     ]);

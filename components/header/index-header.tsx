@@ -39,15 +39,12 @@ const IndexHeader = ({
 
   const isFutureThreeMonth = () => {
     const today = new Date();
-    // const selectedDate = new Date(selectedDate);
 
     // Calculate the date 3 months from now
     const threeMonthsLater = new Date(today);
     threeMonthsLater.setMonth(today.getMonth() + 2);
-    // console.log("Three Months Later:", threeMonthsLater);
 
     // Allow only future months within 3 months range
-    // return selectedDate > today && selectedDate <= threeMonthsLater;
     return selectedDate > threeMonthsLater;
   };
 

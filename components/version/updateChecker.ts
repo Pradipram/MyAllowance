@@ -36,8 +36,6 @@ export const checkForUpdates = async (isManualCheck = false) => {
     }
 
     // 4. Compare Versions
-    // console.log("Current Version:", currentVersion);
-    // console.log("Latest Version:", latestVersion);
     if (isNewerVersion(currentVersion, latestVersion)) {
       Alert.alert(
         "Update Available! 🚀",

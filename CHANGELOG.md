@@ -5,26 +5,33 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.0] - Unreleased
+## [4.0.0] - 2026-05-03
+
+### Added
+- **Global Income Source Management**: Added `fetchIncomeSources` and `addIncomeSource` to allow adding new income sources directly into the `income_sources` table and caching them seamlessly via `services/income-source.ts`.
+- **Unified Category Bottom Sheet**: Refactored `CategoryBottomSheet` to be used for both "expenses" and "incomes" based on a `type` prop, adapting titles, services, and behavior appropriately.
+- **Dynamic Category Form**: Refactored `AddNewCategoryForm` to adapt its interface for either "Category" or "Income Source" additions based on a `type` prop.
 
 ### Changed
-
-- **Income Category Loading** (`components/income/show-income-category.tsx`):
-  - Replaced hardcoded income category chips with database-driven monthly income sources
-  - Added month/year-aware loading via `getMonthlyRecords` to keep selection aligned with selected transaction month
-  - Added empty-state helper text when no income sources are configured for the selected month
+- **Income Category Loading** (`components/income/show-income-category.tsx` was removed/replaced):
+  - Replaced hardcoded discrete UI paths with the reusable `CategoryBottomSheet` allowing consistent, database-driven loading of monthly income sources.
 - **Add Transaction Wiring** (`app/add-transaction.tsx`):
-  - Updated income selection flow to persist selected source in `income_source_id`
-  - Passed selected month/year into income source picker for consistent data fetch
-  - Added `income_source_id` reset when switching between income/expense tabs
+  - Updated selection flow to persist the selected source using the new unified Bottom Sheet.
+  - Selected month/year fetch optimizations implemented via global fetches.
+  - Added `income_source_id` vs `category_id` reset logic when switching between the income and expense tabs to prevent data contamination.
+- **Code Optimizations & Refinements**:
+  - Removed outdated debug codes (`console.log`) throughout `services/`, `utils/`, `app/`, and `components/`.
+  - Removed unused functions like `saveMonthlyBudgetCategories` and `saveMonthlyIncomeSources` from `services/monthly_records.ts` as they were obsoleted by individual insertions.
+  - Cleaned out obsolete comment blocks, commented-out JSX structures, and unused variable assignments from `app/expense-history.tsx`, `app/auth/callback.tsx`, and `components/header/index-header.tsx`.
+  - Removed stale mapping structures from `types/types.ts`.
 
 ### Fixed
-
 - **Income Save Flow** (`app/add-transaction.tsx`):
-  - Removed temporary "Coming Soon" blocker for income in add transaction flow
-  - Income transactions now submit through the same save path as expenses
+  - Income transactions now submit reliably through the same save path as expenses via `insertTransaction` mapping `income_source_id` directly.
 - **Validation Rules** (`app/add-transaction.tsx`):
-  - Added type-aware validation: expense requires `category_id`, income requires `income_source_id`
+  - Added type-aware validation: expense inherently requires `category_id`, income requires `income_source_id`.
+- **RPC Column Discrepancy**:
+  - Addressed crashes by stripping non-existent `total_budget` fields from the database RPC calls and relying on dynamically derived structures or valid fields.
 
 ## [3.1.0] - 29 March 2026
 

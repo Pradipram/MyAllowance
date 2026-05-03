@@ -1,3 +1,91 @@
+
+-- 03 May 2026
+declare
+  new_tx jsonb;
+  v_final_category_id uuid;
+  v_final_source_id uuid;
+begin
+  -- ====================================================
+  -- 1. HANDLE INCOME LOGIC
+  -- ====================================================
+  if p_type = 'income' then
+      if p_income_source_id is null then
+        raise exception 'Income Source ID is required for income transactions';
+      end if;
+
+      -- NOTE: The update to income_sources (earned) has been removed
+      -- because the 'earned' column was deleted.
+
+      -- Update parent totals for Dashboard
+      update monthly_records
+      set total_income = coalesce(total_income, 0) + p_amount,
+          updated_at = now()
+      where user_id = p_user_id and month = p_month and year = p_year;
+
+      v_final_category_id := null;
+      v_final_source_id := p_income_source_id;
+
+  -- ====================================================
+  -- 2. HANDLE EXPENSE LOGIC
+  -- ====================================================
+  elsif p_type = 'expense' then
+      if p_category_id is null then
+        raise exception 'Category ID is required for expense transactions';
+      end if;
+
+      -- NOTE: The update to budget_categories (spent) has been removed
+      -- because the 'spent' column was deleted and the table is now global.
+
+      -- Update parent totals for Dashboard
+      update monthly_records
+      set total_spent = coalesce(total_spent, 0) + p_amount,
+          updated_at = now()
+      where user_id = p_user_id and month = p_month and year = p_year;
+
+      v_final_category_id := p_category_id;
+      v_final_source_id := null;
+  end if;
+
+  -- ====================================================
+  -- 3. INSERT THE TRANSACTION
+  -- ====================================================
+  insert into transactions (
+    user_id,
+    category_id,
+    income_source_id,
+    category_name,
+    description,
+    date,
+    month,
+    year,
+    type,
+    payment_mode,
+    amount,
+    is_deleted,
+    created_at,
+    updated_at
+  )
+  values (
+    p_user_id,
+    v_final_category_id,
+    v_final_source_id,
+    p_category_name,
+    p_description,
+    p_date,
+    p_month,
+    p_year,
+    p_type,
+    p_payment_mode,
+    p_amount,
+    false,
+    now(),
+    now()
+  )
+  returning to_jsonb(transactions.*) into new_tx;
+
+  return new_tx;
+end;
+
 -- 04 April 2026
 create or replace function insert_full_transaction_v2(
   p_user_id uuid,

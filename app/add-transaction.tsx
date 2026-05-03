@@ -1,6 +1,5 @@
 import { styles } from "@/assets/styles/add-expense.style";
-import ShowCategory from "@/components/expense/show-category";
-import ShowIncomeCategory from "@/components/income/show-income-category";
+import CategoryBottomSheet from "@/components/expense/category-bottom-sheet";
 import {
   getTransactionById,
   insertTransaction,
@@ -55,6 +54,7 @@ export default function AddExpenseScreen() {
   const [activeTab, setActiveTab] = useState<"expense" | "income">(
     (type as "expense" | "income") || "expense",
   );
+  const [showCategoryBottomSheet, setShowCategoryBottomSheet] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
 
@@ -104,7 +104,6 @@ export default function AddExpenseScreen() {
       const fetchedTransaction = await getTransactionById(
         transactionId as string,
       );
-      // console.log("Fetched transaction for editing:", fetchedTransaction);
       setTransaction({
         ...fetchedTransaction,
         date: new Date(fetchedTransaction.date),
@@ -231,8 +230,6 @@ export default function AddExpenseScreen() {
   };
 
   const addTransaction = async () => {
-    // console.log("Add transaction function called", transaction);
-
     if (!validateTransaction()) {
       return;
     }
@@ -240,7 +237,6 @@ export default function AddExpenseScreen() {
     setLoading(true);
     try {
       const res = await insertTransaction(transaction as Transaction);
-      // console.log("Transaction added successfully:", res);
       const message = `${activeTab === "expense" ? "Expense" : "Income"} added successfully!`;
       Alert.alert("Success", message, [
         { text: "OK", onPress: () => router.replace("/") },
@@ -261,7 +257,6 @@ export default function AddExpenseScreen() {
     try {
       // Update logic here
       const res = await updateTransaction(transaction as Transaction);
-      // console.log("Transaction updated successfully:", res);
       const message =
         activeTab === "income"
           ? "Income updated successfully!"
@@ -319,35 +314,28 @@ export default function AddExpenseScreen() {
             transform: [{ translateY: translateYAnim }],
           }}
         >
-          {/* Category Selection */}
-          {activeTab === "expense" ? (
-            <ShowCategory
-              selectedCategoryId={transaction.category_id as string}
-              onSelectCategory={(category_id, category_name) =>
-                setTransaction({ ...transaction, category_id, category_name })
-              }
-              month={transaction.month}
-              year={transaction.year}
-              from="add-expense"
-            />
-          ) : (
-            <ShowIncomeCategory
-              selectedCategoryId={
-                (transaction.income_source_id ||
-                  transaction.category_id) as string
-              }
-              onSelectCategory={(income_source_id, category_name) =>
-                setTransaction({
-                  ...transaction,
-                  income_source_id,
-                  category_id: "",
-                  category_name,
-                })
-              }
-              month={transaction.month}
-              year={transaction.year}
-            />
-          )}
+          {/* Category / Income Source Selection */}
+          <View style={styles.formSection}>
+            <Text style={styles.label}>
+              {activeTab === "expense" ? "Category *" : "Income Source *"}
+            </Text>
+            <TouchableOpacity
+              style={styles.categoryButton}
+              onPress={() => setShowCategoryBottomSheet(true)}
+            >
+              <Text style={styles.categoryButtonText}>
+                {transaction.category_name ||
+                  (activeTab === "expense"
+                    ? "Select Category"
+                    : "Select Income Source")}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={activeTab === "expense" ? "#007AFF" : "#34C759"}
+              />
+            </TouchableOpacity>
+          </View>
 
           {/* Amount Input */}
           <View style={styles.formSection}>
@@ -518,6 +506,33 @@ export default function AddExpenseScreen() {
           maximumDate={new Date()}
         />
       )}
+
+      {/* Category Bottom Sheet */}
+      <CategoryBottomSheet
+        visible={showCategoryBottomSheet}
+        type={activeTab}
+        onClose={() => setShowCategoryBottomSheet(false)}
+        selectedCategoryId={
+          (activeTab === "expense"
+            ? transaction.category_id
+            : transaction.income_source_id) as string
+        }
+        onSelectCategory={(id, name) =>
+          activeTab === "expense"
+            ? setTransaction({
+                ...transaction,
+                category_id: id,
+                income_source_id: "",
+                category_name: name,
+              })
+            : setTransaction({
+                ...transaction,
+                income_source_id: id,
+                category_id: "",
+                category_name: name,
+              })
+        }
+      />
     </SafeAreaView>
   );
 }

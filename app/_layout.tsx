@@ -28,14 +28,6 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
-          name="monthly-setup"
-          options={{
-            title: "Monthly Setup",
-            headerShown: false,
-            // presentation: "modal",
-          }}
-        />
-        <Stack.Screen
           name="learn-more"
           options={{
             title: "Learn More",

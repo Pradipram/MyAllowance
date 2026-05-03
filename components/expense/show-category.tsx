@@ -1,5 +1,5 @@
 import { styles } from "@/assets/styles/add-expense.style";
-import { getMonthlyRecords } from "@/services/monthly_records";
+import { fetchExpenseCategories } from "@/services/expense-category";
 import { BudgetCategory } from "@/types/types";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -37,14 +37,12 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
   const loadBudget = useCallback(async () => {
     try {
       setIsBudgetLoading(true);
-      const res = await getMonthlyRecords(month, year);
-      if (res && res.budget_categories && res.budget_categories.length > 0) {
-        const mapped: BudgetCategory[] = res.budget_categories.map(
-          (cat: any) => ({
-            ...cat,
-            budget: cat.budget ?? cat.amount ?? 0,
-          }),
-        );
+      const res = await fetchExpenseCategories();
+      if (res && res.length > 0) {
+        const mapped: BudgetCategory[] = res.map((cat: any) => ({
+          ...cat,
+          budget: 0,
+        }));
         const categoriesToShow =
           from === "add-expense" ? mapped : [defaultCategory, ...mapped];
         setCategories(categoriesToShow);
@@ -52,12 +50,12 @@ const ShowCategory: React.FC<ShowCategoryProps> = ({
         setCategories(from === "add-expense" ? [] : [defaultCategory]);
       }
     } catch (error) {
-      console.error("Error loading budget:", error);
+      console.error("Error loading categories:", error);
       setCategories(from === "add-expense" ? [] : [defaultCategory]);
     } finally {
       setIsBudgetLoading(false);
     }
-  }, [month, year, from]);
+  }, [from]);
 
   useFocusEffect(
     useCallback(() => {

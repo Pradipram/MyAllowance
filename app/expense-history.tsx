@@ -50,7 +50,6 @@ export default function ExpenseHistoryScreen() {
         parseInt(month!),
         parseInt(year!),
       );
-      // console.log("Loaded month transactions:", transactionsResponse);
       setTransactions(transactionsResponse || []);
     } catch (error) {
       console.error("Error loading month transactions:", error);
@@ -155,7 +154,6 @@ export default function ExpenseHistoryScreen() {
               setTransactions((prev) => prev.filter((t) => t.id !== item.id));
 
               Alert.alert("Success", "Transaction deleted successfully");
-              // console.log("Deleting transaction:", item);
             } catch (error) {
               console.error("Error deleting transaction:", error);
               Alert.alert("Error", "Failed to delete transaction");
@@ -169,11 +167,8 @@ export default function ExpenseHistoryScreen() {
   };
 
   const renderExpenseItem = ({ item }: { item: Transaction }) => {
-    // const category = getCategoryById(item.categoryId);
-    // const categoryName = category?.name || "Unknown";
     const categoryName = item.category_name || "Unknown";
     const icon = getCategoryIcon(categoryName);
-    // console.log("Rendering expense item:", item, "with icon:", icon);
 
     return (
       <View style={styles.expenseItem}>
@@ -280,16 +275,13 @@ export default function ExpenseHistoryScreen() {
           month={parseInt(month as string)}
           year={parseInt(year as string)}
           selectedCategoryId={selectedCategoryId}
-          // setIsBudgetLoading={setIsMonthTransactionsLoading}
           onSelectCategory={(categoryId, categoryName) => {
-            // console.log("Selected category:", categoryId, categoryName);
             setSelectedCategoryId(categoryId);
           }}
         />
       </View>
 
       {/* Expenses List */}
-      {/* {filteredExpenses.length > 0 ? ( */}
       {filteredExpenses.length > 0 ? (
         <FlatList
           data={filteredExpenses.sort(

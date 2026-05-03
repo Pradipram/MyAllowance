@@ -2,8 +2,6 @@ import { Transaction } from "@/types/types";
 import { supabase } from "@/utils/supabase";
 
 export const insertTransaction = async (transaction: Transaction) => {
-  console.log("🔔 Inserting transaction:", transaction);
-
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user.id;
   if (!userId) throw new Error("User not authenticated");
@@ -17,8 +15,6 @@ export const insertTransaction = async (transaction: Transaction) => {
   if (transaction.type === "expense" && !transaction.category_id) {
     throw new Error("Category ID is required for expense transactions");
   }
-
-  // console.log("Inserting transaction", transaction);
 
   const { data, error } = await supabase.rpc("insert_full_transaction_v2", {
     p_user_id: userId,
@@ -64,10 +60,9 @@ export const getTransactions = async (month: number, year: number) => {
     throw error;
   }
 
-  // console.log("✅ Transactions fetched:", data?.length || 0);
+  console.log("✅ Transactions fetched:", data?.length || 0);
   return data as Transaction[];
 };
-
 export const getTransactionById = async (transactionId: string) => {
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user.id;
@@ -90,8 +85,6 @@ export const getTransactionById = async (transactionId: string) => {
 };
 
 export const updateTransaction = async (transaction: Transaction) => {
-  // console.log("🔔 Updating transaction:", transaction);
-
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user.id;
   if (!userId) throw new Error("User not authenticated");
@@ -134,8 +127,6 @@ export const updateTransaction = async (transaction: Transaction) => {
 };
 
 export const deleteTransaction = async (transactionId: string) => {
-  // console.log("🔔 Deleting transaction:", transactionId);
-
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user.id;
   if (!userId) throw new Error("User not authenticated");

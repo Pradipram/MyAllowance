@@ -154,7 +154,9 @@ export const styles = StyleSheet.create({
     color: "#1ac8a9",
   },
   summaryGrid: {
-    marginBottom: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   gridRow: {
     flexDirection: "row",
@@ -162,9 +164,20 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
   gridItem: {
-    flex: 1,
+    width: "48%",
     alignItems: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+  },
+  netSection: {
+    alignItems: "center",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#e9ecef",
+  },
+  netAmount: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: -6,
   },
   incomeHeaderWithIcon: {
     flexDirection: "row",

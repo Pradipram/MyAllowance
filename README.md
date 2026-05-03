@@ -29,8 +29,10 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Dual-Mode Entry**: Separate icons for adding income (+) and expenses (-) from dashboard
 - **Dual Setup Flow**: Separate "Set Up Budget" and "Setup Income Source" buttons for first-time configuration
 - **Income Source Selection**: Income sources are loaded from the current month's setup data in Supabase
-- **Category Selection**: Choose from predefined budget categories with visual indicators
-- **Income Categories**: Dynamic source list based on your configured monthly income sources
+- **Category Selection**: Choose from predefined budget categories or dynamic income sources using a robust `CategoryBottomSheet` adapted universally for both environments.
+- **Global Income Source Management**: Added `fetchIncomeSources` and `addIncomeSource` to allow adding new income sources directly into the `income_sources` table and caching them seamlessly via `services/income-source.ts`.
+- **Unified Category Bottom Sheet**: Refactored `CategoryBottomSheet` to be used for both "expenses" and "incomes" based on a `type` prop, adapting titles, services, and behavior appropriately.
+- **Transactions & Architecture Enhancements v4.0.0**: Stripped out legacy functions formatting `console.log` codes and unused files, adapting `CategoryBottomSheet` dynamically, creating a single highly-optimized source of truth for both incomes and expenses.
 - **Seamless Mode Switching**: Smooth animated transitions between Income and Expense modes with header toggle
 - **Payment Mode Tracking**: Cash, Card, UPI, Net Banking, and Other options with icons
 - **Date Selection**: Smart date picker with "Today"/"Yesterday" shortcuts
