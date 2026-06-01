@@ -18,10 +18,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Transaction } from "../types/types";
 
 export default function ExpenseHistoryScreen() {
-  const { month, year, categoryId } = useLocalSearchParams<{
+  const { month, year, categoryId, categoryName } = useLocalSearchParams<{
     month?: string;
     year?: string;
     categoryId?: string;
+    categoryName?: string;
   }>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMonthTransactionsLoading, setIsMonthTransactionsLoading] =
@@ -50,7 +51,21 @@ export default function ExpenseHistoryScreen() {
         parseInt(month!),
         parseInt(year!),
       );
-      setTransactions(transactionsResponse || []);
+      // Only show expenses in the expense history
+      const expensesOnly = (transactionsResponse || []).filter(
+        (t: Transaction) => t.type === "expense",
+      );
+      setTransactions(expensesOnly);
+
+      // If categoryName was passed (e.g. from dashboard), resolve it to a category_id
+      if (categoryName && !categoryId) {
+        const match = expensesOnly.find(
+          (t) => t.category_name === categoryName,
+        );
+        if (match && match.category_id) {
+          setSelectedCategoryId(match.category_id);
+        }
+      }
     } catch (error) {
       console.error("Error loading month transactions:", error);
     } finally {

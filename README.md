@@ -10,6 +10,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Monthly Budget Management**: Set up and edit budget categories with custom amounts
 - **Month-Specific Tracking**: Independent budget data for each month with seamless navigation
 - **Expense Tracking**: Add expenses with detailed information and payment mode tracking
+- **Decimal Amount Support**: Enter precise amounts with floating-point values (e.g., ₹12.50) using a decimal-friendly keyboard
 - **Receipt Upload**: Attach screenshots or photos of receipts to expenses
 - **Expense History**: Comprehensive transaction history with filtering and chronological sorting
 - **Progress Visualization**: Real-time progress bars with color-coded spending alerts
@@ -48,8 +49,9 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 
 ### 📊 Expense History & Analytics
 
-- **Comprehensive Transaction List**: View all expenses in chronological order
+- **Comprehensive Transaction List**: View all expenses in chronological order (income transactions excluded)
 - **Category Filtering**: Filter expenses by specific categories or view all
+- **Category Deep-Link**: Tap any category on the dashboard to jump directly to its filtered expense history
 - **Monthly Summary**: Total expenses and transaction count for selected month
 - **Smart Date Display**: Intelligent date formatting (Today, Yesterday, specific dates)
 - **Payment Mode Indicators**: Visual icons showing how each expense was paid
@@ -71,6 +73,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Progress Bars**: Color-coded spending visualization (Blue → Yellow → Orange → Red)
 - **Monthly Overview**: Total budget, spent amount, and remaining balance
 - **Category Breakdown**: Individual category progress and spending details
+- **Spend Share Insight**: Each category shows its percentage contribution to total expenses with a blue progress bar
+- **Income Impact Insight**: Each category shows how much of your total income it consumes, with color-coded alerts — green (≤25%), orange (25–50%), red (>50%)
 - **Current Month Indicator**: Clear visual indication of which month is current
 - **Dashboard Action Buttons**: Separate "Edit Budget" (Blue) and "Edit Income Source" (Green) buttons for streamlined access
 - **Quick Navigation**: Direct access to budget and income management from dashboard
@@ -257,7 +261,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Screens**: 8 fully-featured screens with authentication
 - **Components**: 28+ reusable UI components
 - **Database Functions**: 4 PostgreSQL RPC functions (get_monthly_record, insert/update/delete transactions) with enhanced validation and atomic operations
-- **Features**: 35+ major features implemented
+- **Features**: 40+ major features implemented
 - **Authentication**: Email/password + Google OAuth
 - **Income Management**: Full income tracking with database-driven monthly income sources and source-level tracking
 - **Unified Data Model**: Centralized monthly_records table linking budgets, income sources, and transactions

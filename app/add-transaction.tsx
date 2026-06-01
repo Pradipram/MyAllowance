@@ -50,6 +50,7 @@ export default function AddExpenseScreen() {
     useState<Transaction>(defaultTransaction);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [amountText, setAmountText] = useState("");
   const [screenshots, setScreenshots] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"expense" | "income">(
     (type as "expense" | "income") || "expense",
@@ -108,6 +109,7 @@ export default function AddExpenseScreen() {
         ...fetchedTransaction,
         date: new Date(fetchedTransaction.date),
       });
+      setAmountText(fetchedTransaction.amount ? fetchedTransaction.amount.toString() : "");
       setActiveTab(fetchedTransaction.type || "expense");
     } catch (error) {
       console.error("Error fetching transaction:", error);
@@ -344,15 +346,19 @@ export default function AddExpenseScreen() {
               <Text style={styles.currencySymbol}>₹</Text>
               <TextInput
                 style={styles.amountInput}
-                value={transaction.amount?.toString() || ""}
-                onChangeText={(text) =>
-                  setTransaction({
-                    ...transaction,
-                    amount: text ? Number(text) : 0,
-                  })
-                }
+                value={amountText}
+                onChangeText={(text) => {
+                  // Allow only valid decimal input (digits and at most one decimal point)
+                  if (text === "" || /^\d*\.?\d*$/.test(text)) {
+                    setAmountText(text);
+                    setTransaction({
+                      ...transaction,
+                      amount: text ? parseFloat(text) || 0 : 0,
+                    });
+                  }
+                }}
                 placeholder="0.00"
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 maxLength={10}
               />
             </View>

@@ -225,7 +225,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
   },
   categoryName: {
     fontSize: 16,
@@ -258,6 +257,23 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#666",
     minWidth: 35,
+    textAlign: "right",
+  },
+  percentageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  percentageLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#999",
+    width: 78,
+  },
+  percentageValue: {
+    fontSize: 12,
+    fontWeight: "700",
+    minWidth: 46,
     textAlign: "right",
   },
   quickActionsSection: {

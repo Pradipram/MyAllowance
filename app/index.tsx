@@ -238,27 +238,104 @@ export default function Index() {
             {getExpensesByCategory().length > 0 && (
               <View style={styles.categoriesSection}>
                 <Text style={styles.sectionTitle}>Categories</Text>
-                {getExpensesByCategory().map((category) => (
-                  <TouchableOpacity
-                    key={category.name}
-                    style={styles.categoryCard}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      const month = (selectedDate.getMonth() + 1).toString();
-                      const year = selectedDate.getFullYear().toString();
-                      router.push(
-                        `/expense-history?month=${month}&year=${year}&categoryName=${encodeURIComponent(category.name)}`,
-                      );
-                    }}
-                  >
-                    <View style={styles.categoryHeader}>
-                      <Text style={styles.categoryName}>{category.name}</Text>
-                      <Text style={styles.categoryAmount}>
-                        ₹{category.amount.toLocaleString()}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                {getExpensesByCategory().map((category) => {
+                  const totalExpenses = getTotalSpent();
+                  const totalIncome = getTotalIncome();
+                  const pctOfExpenses =
+                    totalExpenses > 0
+                      ? (category.amount / totalExpenses) * 100
+                      : 0;
+                  const pctOfIncome =
+                    totalIncome > 0
+                      ? (category.amount / totalIncome) * 100
+                      : 0;
+
+                  return (
+                    <TouchableOpacity
+                      key={category.name}
+                      style={styles.categoryCard}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        const month = (
+                          selectedDate.getMonth() + 1
+                        ).toString();
+                        const year = selectedDate.getFullYear().toString();
+                        router.push(
+                          `/expense-history?month=${month}&year=${year}&categoryName=${encodeURIComponent(category.name)}`,
+                        );
+                      }}
+                    >
+                      <View style={styles.categoryHeader}>
+                        <Text style={styles.categoryName}>
+                          {category.name}
+                        </Text>
+                        <Text style={styles.categoryAmount}>
+                          ₹{category.amount.toLocaleString()}
+                        </Text>
+                      </View>
+
+                      {/* % of Total Expenses */}
+                      <View style={styles.percentageRow}>
+                        <Text style={styles.percentageLabel}>Spend Share</Text>
+                        <View style={styles.progressBarBackground}>
+                          <View
+                            style={[
+                              styles.progressBarFill,
+                              {
+                                width: `${Math.min(pctOfExpenses, 100)}%`,
+                                backgroundColor: "#007AFF",
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            styles.percentageValue,
+                            { color: "#007AFF" },
+                          ]}
+                        >
+                          {pctOfExpenses.toFixed(1)}%
+                        </Text>
+                      </View>
+
+                      {/* % of Total Income */}
+                      <View style={[styles.percentageRow, { marginTop: 6 }]}>
+                        <Text style={styles.percentageLabel}>Income Impact</Text>
+                        <View style={styles.progressBarBackground}>
+                          <View
+                            style={[
+                              styles.progressBarFill,
+                              {
+                                width: `${Math.min(pctOfIncome, 100)}%`,
+                                backgroundColor:
+                                  pctOfIncome > 50
+                                    ? "#FF3B30"
+                                    : pctOfIncome > 25
+                                      ? "#ff9500"
+                                      : "#34C759",
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            styles.percentageValue,
+                            {
+                              color:
+                                pctOfIncome > 50
+                                  ? "#FF3B30"
+                                  : pctOfIncome > 25
+                                    ? "#ff9500"
+                                    : "#34C759",
+                            },
+                          ]}
+                        >
+                          {pctOfIncome.toFixed(1)}%
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
           </>

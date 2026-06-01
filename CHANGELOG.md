@@ -5,6 +5,22 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-06-01
+
+### Added
+- **Category Spending Insights on Dashboard**: Each expense category card now displays two visual progress bars:
+  - **Spend Share**: Percentage of total expenses this category represents (blue bar)
+  - **Income Impact**: Percentage of total income consumed by this category, with color-coded alerts — green (≤25%), orange (25–50%), red (>50%)
+
+### Changed
+- **Decimal Amount Input**: The amount field now accepts floating-point values (e.g., ₹12.50) when adding or editing expenses and income. Keyboard type changed from `numeric` to `decimal-pad`, with regex validation to allow only valid decimal patterns.
+- **Expense History Filtering**: The Expense History page now shows only expenses, excluding income transactions from the list, totals, and transaction count.
+
+### Fixed
+- **Category Deep-Link from Dashboard**: Tapping a category card on the dashboard now correctly pre-selects that category in the Expense History filter. Previously, it always opened with "All" selected due to a `categoryName` vs `categoryId` param mismatch.
+
+---
+
 ## [4.0.0] - 2026-05-03
 
 ### Added
