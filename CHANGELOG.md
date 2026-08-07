@@ -5,6 +5,15 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-08-07
+
+### Changed
+- **Category Insights Dropdown**: Replaced the segmented toggle next to "Categories" with an extensible dropdown picker. Users can now switch between "Spend Share" and "Income Impact" views, with room to add more metrics in the future.
+- **Colored Card Fill**: Category cards now show the percentage visually as a colored background fill on the card itself, replacing the separate progress bar row. The fill color uses the same severity scale as budget progress bars (Blue → Yellow → Orange → Red) via `getProgressColor`.
+- **Income History Tab**: The History page now has an Expenses/Income tab bar. The Income tab shows income transactions with a green color scheme, its own summary totals, and tab-specific empty states. The category filter only appears on the Expenses tab.
+
+---
+
 ## [4.1.0] - 2026-06-01
 
 ### Added

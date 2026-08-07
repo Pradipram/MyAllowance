@@ -27,6 +27,37 @@ export const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  tabBar: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginBottom: 4,
+    backgroundColor: "#e9ecef",
+    borderRadius: 10,
+    padding: 3,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  tabActive: {
+    backgroundColor: "#007AFF",
+  },
+  tabActiveIncome: {
+    backgroundColor: "#34C759",
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+  },
+  tabTextActive: {
+    color: "#ffffff",
+  },
+  tabTextActiveIncome: {
+    color: "#ffffff",
+  },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -134,6 +165,17 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#ff9500",
+  },
+  incomeIcon: {
+    backgroundColor: "#edfcf2",
+  },
+  incomeAmountText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#34C759",
+  },
+  summaryAmountIncome: {
+    color: "#34C759",
   },
   expenseInfo: {
     gap: 4,

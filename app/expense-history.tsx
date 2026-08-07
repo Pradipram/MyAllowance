@@ -24,11 +24,12 @@ export default function ExpenseHistoryScreen() {
     categoryId?: string;
     categoryName?: string;
   }>();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [isMonthTransactionsLoading, setIsMonthTransactionsLoading] =
     useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
 
   useEffect(() => {
     if (categoryId) {
@@ -39,7 +40,6 @@ export default function ExpenseHistoryScreen() {
   // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      // loadData();
       loadMonthTransactions();
     }, []),
   );
@@ -51,13 +51,12 @@ export default function ExpenseHistoryScreen() {
         parseInt(month!),
         parseInt(year!),
       );
-      // Only show expenses in the expense history
+      setAllTransactions(transactionsResponse || []);
+
+      // If categoryName was passed (e.g. from dashboard), resolve it to a category_id
       const expensesOnly = (transactionsResponse || []).filter(
         (t: Transaction) => t.type === "expense",
       );
-      setTransactions(expensesOnly);
-
-      // If categoryName was passed (e.g. from dashboard), resolve it to a category_id
       if (categoryName && !categoryId) {
         const match = expensesOnly.find(
           (t) => t.category_name === categoryName,
@@ -72,6 +71,10 @@ export default function ExpenseHistoryScreen() {
       setIsMonthTransactionsLoading(false);
     }
   };
+
+  // Split transactions by type
+  const expenseTransactions = allTransactions.filter((t) => t.type === "expense");
+  const incomeTransactions = allTransactions.filter((t) => t.type === "income");
 
   const getCategoryIcon = (categoryName: string): string => {
     const iconMap: { [key: string]: string } = {
@@ -105,6 +108,31 @@ export default function ExpenseHistoryScreen() {
     return "cash-outline"; // default icon
   };
 
+  const getIncomeIcon = (sourceName: string): string => {
+    const iconMap: { [key: string]: string } = {
+      Salary: "wallet-outline",
+      Freelance: "laptop-outline",
+      Investment: "trending-up-outline",
+      Gift: "gift-outline",
+      Refund: "return-down-back-outline",
+      Other: "ellipsis-horizontal-outline",
+    };
+
+    const exactMatch = iconMap[sourceName];
+    if (exactMatch) return exactMatch;
+
+    for (const key in iconMap) {
+      if (
+        sourceName.toLowerCase().includes(key.toLowerCase()) ||
+        key.toLowerCase().includes(sourceName.toLowerCase())
+      ) {
+        return iconMap[key];
+      }
+    }
+
+    return "cash-outline";
+  };
+
   const formatDate = (date: Date): string => {
     const today = new Date();
     const yesterday = new Date(today);
@@ -126,9 +154,9 @@ export default function ExpenseHistoryScreen() {
 
   const getFilteredExpenses = (): Transaction[] => {
     if (selectedCategoryId === "all") {
-      return transactions;
+      return expenseTransactions;
     }
-    return transactions.filter(
+    return expenseTransactions.filter(
       (expense) => expense.category_id === selectedCategoryId,
     );
   };
@@ -136,6 +164,13 @@ export default function ExpenseHistoryScreen() {
   const getTotalExpenses = (): number => {
     return getFilteredExpenses().reduce(
       (sum, expense) => sum + expense.amount,
+      0,
+    );
+  };
+
+  const getTotalIncome = (): number => {
+    return incomeTransactions.reduce(
+      (sum, income) => sum + income.amount,
       0,
     );
   };
@@ -152,9 +187,10 @@ export default function ExpenseHistoryScreen() {
   };
 
   const handleDeleteTransaction = (item: Transaction) => {
+    const typeLabel = item.type === "income" ? "income" : "expense";
     Alert.alert(
       "Delete Transaction",
-      `Are you sure you want to delete this ₹${item.amount.toLocaleString()} expense?`,
+      `Are you sure you want to delete this ₹${item.amount.toLocaleString()} ${typeLabel}?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -166,9 +202,7 @@ export default function ExpenseHistoryScreen() {
               const deletedTx = await deleteTransaction(item.id as string);
               Alert.alert("Success", "Transaction deleted successfully");
 
-              setTransactions((prev) => prev.filter((t) => t.id !== item.id));
-
-              Alert.alert("Success", "Transaction deleted successfully");
+              setAllTransactions((prev) => prev.filter((t) => t.id !== item.id));
             } catch (error) {
               console.error("Error deleting transaction:", error);
               Alert.alert("Error", "Failed to delete transaction");
@@ -246,63 +280,157 @@ export default function ExpenseHistoryScreen() {
     );
   };
 
+  const renderIncomeItem = ({ item }: { item: Transaction }) => {
+    const sourceName = item.category_name || "Unknown";
+    const icon = getIncomeIcon(sourceName);
+
+    return (
+      <View style={styles.expenseItem}>
+        <View style={[styles.expenseIcon, styles.incomeIcon]}>
+          <Ionicons name={icon as any} size={24} color="#34C759" />
+        </View>
+
+        <View style={styles.expenseDetails}>
+          <View style={styles.expenseHeader}>
+            <Text style={styles.categoryText}>{sourceName}</Text>
+            <Text style={styles.incomeAmountText}>
+              ₹{item.amount.toLocaleString()}
+            </Text>
+          </View>
+
+          <View style={styles.expenseInfo}>
+            <Text style={styles.descriptionText} numberOfLines={1}>
+              {item.description}
+            </Text>
+            <View style={styles.expenseMetaRow}>
+              <View style={styles.metaInfo}>
+                <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+                {item.payment_mode && (
+                  <>
+                    <Text style={styles.dotSeparator}>•</Text>
+                    <Text style={styles.paymentModeText}>
+                      {item.payment_mode}
+                    </Text>
+                  </>
+                )}
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => handleEditTransaction(item)}
+                  activeOpacity={0.7}
+                  disabled={deletingId === item.id}
+                >
+                  <Ionicons name="create-outline" size={16} color="#007AFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteTransaction(item)}
+                  activeOpacity={0.7}
+                  disabled={deletingId === item.id}
+                >
+                  {deletingId === item.id ? (
+                    <ActivityIndicator size="small" color="#FF3B30" />
+                  ) : (
+                    <Ionicons name="trash-outline" size={16} color="#FF3B30" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   if (isMonthTransactionsLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading expenses...</Text>
+          <Text style={styles.loadingText}>Loading transactions...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   const filteredExpenses = getFilteredExpenses();
+  const currentList = activeTab === 'expense' ? filteredExpenses : incomeTransactions;
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <Header
-        heading={`Expense History - ${getMonthYearStringFromNumbers(
+        heading={`History - ${getMonthYearStringFromNumbers(
           parseInt(month as string),
           parseInt(year as string),
         )}`}
       />
 
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'expense' && styles.tabActive]}
+          onPress={() => setActiveTab('expense')}
+        >
+          <Text style={[styles.tabText, activeTab === 'expense' && styles.tabTextActive]}>
+            Expenses
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'income' && styles.tabActiveIncome]}
+          onPress={() => setActiveTab('income')}
+        >
+          <Text style={[styles.tabText, activeTab === 'income' && styles.tabTextActiveIncome]}>
+            Income
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Summary Card */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Total Expenses</Text>
-            <Text style={styles.summaryAmount}>
-              ₹{getTotalExpenses().toLocaleString()}
+            <Text style={styles.summaryLabel}>
+              {activeTab === 'expense' ? 'Total Expenses' : 'Total Income'}
+            </Text>
+            <Text style={[
+              styles.summaryAmount,
+              activeTab === 'income' && styles.summaryAmountIncome,
+            ]}>
+              ₹{(activeTab === 'expense' ? getTotalExpenses() : getTotalIncome()).toLocaleString()}
             </Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Transactions</Text>
-            <Text style={styles.summaryCount}>{filteredExpenses.length}</Text>
+            <Text style={styles.summaryCount}>{currentList.length}</Text>
           </View>
         </View>
       </View>
 
-      <View style={{ marginLeft: 30, marginBottom: 10 }}>
-        <ShowCategory
-          month={parseInt(month as string)}
-          year={parseInt(year as string)}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={(categoryId, categoryName) => {
-            setSelectedCategoryId(categoryId);
-          }}
-        />
-      </View>
+      {/* Category filter - only for expenses */}
+      {activeTab === 'expense' && (
+        <View style={{ marginLeft: 30, marginBottom: 10 }}>
+          <ShowCategory
+            month={parseInt(month as string)}
+            year={parseInt(year as string)}
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategory={(categoryId, categoryName) => {
+              setSelectedCategoryId(categoryId);
+            }}
+          />
+        </View>
+      )}
 
-      {/* Expenses List */}
-      {filteredExpenses.length > 0 ? (
+      {/* Transaction List */}
+      {currentList.length > 0 ? (
         <FlatList
-          data={filteredExpenses.sort(
+          data={[...currentList].sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           )}
-          renderItem={renderExpenseItem}
+          renderItem={activeTab === 'expense' ? renderExpenseItem : renderIncomeItem}
           keyExtractor={(item) => item.id as string}
           style={styles.expensesList}
           contentContainerStyle={styles.expensesListContent}
@@ -310,16 +438,24 @@ export default function ExpenseHistoryScreen() {
         />
       ) : (
         <View style={styles.emptyState}>
-          <Ionicons name="receipt-outline" size={60} color="#ccc" />
+          <Ionicons
+            name={activeTab === 'expense' ? "receipt-outline" : "wallet-outline"}
+            size={60}
+            color="#ccc"
+          />
           <Text style={styles.emptyStateTitle}>
-            {selectedCategoryId === "all"
-              ? "No Expenses Yet"
-              : "No Expenses in This Category"}
+            {activeTab === 'expense'
+              ? selectedCategoryId === "all"
+                ? "No Expenses Yet"
+                : "No Expenses in This Category"
+              : "No Income Yet"}
           </Text>
           <Text style={styles.emptyStateText}>
-            {selectedCategoryId === "all"
-              ? "Start by adding your first expense using the + button"
-              : "Try selecting a different category or add expenses to this category"}
+            {activeTab === 'expense'
+              ? selectedCategoryId === "all"
+                ? "Start by adding your first expense using the - button"
+                : "Try selecting a different category or add expenses to this category"
+              : "Start by adding your first income using the + button"}
           </Text>
         </View>
       )}

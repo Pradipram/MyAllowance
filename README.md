@@ -47,11 +47,12 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Delete Income Sources**: Bulk delete all income sources for a month with confirmation
 - **Real-Time Updates**: Automatic adjustment of spent amounts and income when editing or deleting
 
-### 📊 Expense History & Analytics
+### 📊 History & Analytics
 
-- **Comprehensive Transaction List**: View all expenses in chronological order (income transactions excluded)
+- **Comprehensive Transaction List**: View all expenses and income in chronological order
+- **Tabbed View**: Switch between Expenses and Income tabs to view transactions by type
 - **Category Filtering**: Filter expenses by specific categories or view all
-- **Category Deep-Link**: Tap any category on the dashboard to jump directly to its filtered expense history
+- **Category Deep-Link**: Tap any category on the dashboard to jump directly to its filtered history
 - **Monthly Summary**: Total expenses and transaction count for selected month
 - **Smart Date Display**: Intelligent date formatting (Today, Yesterday, specific dates)
 - **Payment Mode Indicators**: Visual icons showing how each expense was paid
@@ -73,8 +74,9 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Progress Bars**: Color-coded spending visualization (Blue → Yellow → Orange → Red)
 - **Monthly Overview**: Total budget, spent amount, and remaining balance
 - **Category Breakdown**: Individual category progress and spending details
-- **Spend Share Insight**: Each category shows its percentage contribution to total expenses with a blue progress bar
-- **Income Impact Insight**: Each category shows how much of your total income it consumes, with color-coded alerts — green (≤25%), orange (25–50%), red (>50%)
+- **Spend Share Insight**: Each category shows its percentage contribution to total expenses via a colored card background fill
+- **Income Impact Insight**: Each category shows how much of your total income it consumes via a colored card background fill, with severity-based coloring (Blue → Yellow → Orange → Red)
+- **Category View Dropdown**: Extensible dropdown picker next to "Categories" to switch between Spend Share, Income Impact, and future metric views
 - **Current Month Indicator**: Clear visual indication of which month is current
 - **Dashboard Action Buttons**: Separate "Edit Budget" (Blue) and "Edit Income Source" (Green) buttons for streamlined access
 - **Quick Navigation**: Direct access to budget and income management from dashboard

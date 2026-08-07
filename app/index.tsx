@@ -7,9 +7,10 @@ import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -25,6 +26,18 @@ export default function Index() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [categoryViewMode, setCategoryViewMode] = useState<'spend' | 'income'>('spend');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const dropdownButtonRef = useRef<View>(null);
+
+  const categoryViewOptions = [
+    { key: 'spend' as const, label: 'Spend Share' },
+    { key: 'income' as const, label: 'Income Impact' },
+  ];
+
+  const getSelectedLabel = () =>
+    categoryViewOptions.find((o) => o.key === categoryViewMode)?.label || '';
 
   // Check authentication status
   useEffect(() => {
@@ -229,7 +242,7 @@ export default function Index() {
                 }}
               >
                 <Ionicons name="time-outline" size={20} color="#007AFF" />
-                <Text style={styles.quickActionText}>Expense History</Text>
+                <Text style={styles.quickActionText}>History</Text>
                 <Ionicons name="chevron-forward" size={16} color="#666" />
               </TouchableOpacity>
             </View>
@@ -237,7 +250,68 @@ export default function Index() {
             {/* Expense Categories */}
             {getExpensesByCategory().length > 0 && (
               <View style={styles.categoriesSection}>
-                <Text style={styles.sectionTitle}>Categories</Text>
+                <View style={styles.categoriesHeader}>
+                  <Text style={styles.sectionTitle}>Categories</Text>
+                  <TouchableOpacity
+                    style={styles.dropdownButton}
+                    onPress={() => {
+                      dropdownButtonRef.current?.measureInWindow((x, y, width, height) => {
+                        setDropdownPosition({ top: y + height + 4, right: 20 });
+                        setShowCategoryDropdown(true);
+                      });
+                    }}
+                  >
+                    <View ref={dropdownButtonRef} collapsable={false} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={styles.dropdownButtonText}>
+                        {getSelectedLabel()}
+                      </Text>
+                      <Ionicons name="chevron-down" size={14} color="#007AFF" />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Dropdown Modal */}
+                <Modal
+                  visible={showCategoryDropdown}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setShowCategoryDropdown(false)}
+                >
+                  <TouchableOpacity
+                    style={styles.dropdownOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowCategoryDropdown(false)}
+                  >
+                    <View style={[styles.dropdownMenu, { position: 'absolute', top: dropdownPosition.top, right: dropdownPosition.right }]}>
+                      {categoryViewOptions.map((option) => (
+                        <TouchableOpacity
+                          key={option.key}
+                          style={[
+                            styles.dropdownOption,
+                            categoryViewMode === option.key && styles.dropdownOptionActive,
+                          ]}
+                          onPress={() => {
+                            setCategoryViewMode(option.key);
+                            setShowCategoryDropdown(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.dropdownOptionText,
+                              categoryViewMode === option.key && styles.dropdownOptionTextActive,
+                            ]}
+                          >
+                            {option.label}
+                          </Text>
+                          {categoryViewMode === option.key && (
+                            <Ionicons name="checkmark" size={18} color="#007AFF" />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
+
                 {getExpensesByCategory().map((category) => {
                   const totalExpenses = getTotalSpent();
                   const totalIncome = getTotalIncome();
@@ -249,6 +323,9 @@ export default function Index() {
                     totalIncome > 0
                       ? (category.amount / totalIncome) * 100
                       : 0;
+
+                  const pct = categoryViewMode === 'spend' ? pctOfExpenses : pctOfIncome;
+                  const fillColor = getProgressColor(pct);
 
                   return (
                     <TouchableOpacity
@@ -265,72 +342,27 @@ export default function Index() {
                         );
                       }}
                     >
-                      <View style={styles.categoryHeader}>
-                        <Text style={styles.categoryName}>
-                          {category.name}
-                        </Text>
-                        <Text style={styles.categoryAmount}>
-                          ₹{category.amount.toLocaleString()}
-                        </Text>
-                      </View>
-
-                      {/* % of Total Expenses */}
-                      <View style={styles.percentageRow}>
-                        <Text style={styles.percentageLabel}>Spend Share</Text>
-                        <View style={styles.progressBarBackground}>
-                          <View
-                            style={[
-                              styles.progressBarFill,
-                              {
-                                width: `${Math.min(pctOfExpenses, 100)}%`,
-                                backgroundColor: "#007AFF",
-                              },
-                            ]}
-                          />
+                      {/* Colored fill background */}
+                      <View
+                        style={[
+                          styles.categoryFill,
+                          {
+                            width: `${Math.min(pct, 100)}%`,
+                            backgroundColor: fillColor,
+                          },
+                        ]}
+                      />
+                      <View style={styles.categoryContent}>
+                        <View style={styles.categoryHeader}>
+                          <Text style={styles.categoryName}>
+                            {category.name}
+                          </Text>
+                          <Text style={styles.categoryAmount}>
+                            ₹{category.amount.toLocaleString()}
+                          </Text>
                         </View>
-                        <Text
-                          style={[
-                            styles.percentageValue,
-                            { color: "#007AFF" },
-                          ]}
-                        >
-                          {pctOfExpenses.toFixed(1)}%
-                        </Text>
-                      </View>
-
-                      {/* % of Total Income */}
-                      <View style={[styles.percentageRow, { marginTop: 6 }]}>
-                        <Text style={styles.percentageLabel}>Income Impact</Text>
-                        <View style={styles.progressBarBackground}>
-                          <View
-                            style={[
-                              styles.progressBarFill,
-                              {
-                                width: `${Math.min(pctOfIncome, 100)}%`,
-                                backgroundColor:
-                                  pctOfIncome > 50
-                                    ? "#FF3B30"
-                                    : pctOfIncome > 25
-                                      ? "#ff9500"
-                                      : "#34C759",
-                              },
-                            ]}
-                          />
-                        </View>
-                        <Text
-                          style={[
-                            styles.percentageValue,
-                            {
-                              color:
-                                pctOfIncome > 50
-                                  ? "#FF3B30"
-                                  : pctOfIncome > 25
-                                    ? "#ff9500"
-                                    : "#34C759",
-                            },
-                          ]}
-                        >
-                          {pctOfIncome.toFixed(1)}%
+                        <Text style={[styles.categoryPercentage, { color: fillColor }]}>
+                          {pct.toFixed(1)}%
                         </Text>
                       </View>
                     </TouchableOpacity>
