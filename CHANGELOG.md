@@ -5,9 +5,38 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.1] - 2026-08-14
+
+### Added
+
+- **6-Month Average on Category Trends**: The Category Trends bar chart now computes and displays a 6-month rolling average (excluding zero-spend months). A semi-transparent blue reference line is overlaid on the chart at the correct proportional height, accompanied by a floating `avg ₹X` badge. A `6-mo avg: ₹X/mo` stat row also appears below the current-vs-previous comparison line.
+- **6-Month Average on Income Trends**: The Income Trends chart receives the same treatment with a green (`#28a745`) average reference line, badge, and `6-mo avg: ₹X/mo` stat row.
+- **Scroll-to-Trends Icon on Monthly Summary**: A `trending-up` icon button is now displayed at the right edge of the "Monthly Summary" card header. Tapping it smoothly scrolls the dashboard down to the Category Trends card. The icon is only shown when at least one expense category exists. Implemented using `measureInWindow` + a scroll-offset ref for accurate positioning.
+- **Total Trend View — Category Trends**: A "Total" pill is now pinned as the first item in the Category Trends pill scroll bar. Selecting it switches the chart to show aggregated total expenses across all categories for the 6-month window, including the average line, avg badge, comparison text, and 6-mo avg stat.
+- **Total Trend View — Income Trends**: Same "Total" pill added to the Income Trends card, showing aggregated total income across all sources for the 6-month window.
+- **MoM Savings Trends (Surplus/Deficit)**: New "Savings Trends" card on the dashboard providing 6-month historical tracking for net savings and financial health. Includes 4 interactive view modes via horizontal pills:
+  - **Net Savings**: Monthly surplus (`+₹...`, emerald green `#10b981`) and deficit (`-₹...`, coral red `#ef4444`) bars, dual-colored 6-month average line, and month-over-month comparison.
+  - **Savings Rate**: Monthly savings rate percentage (`(net / income) * 100`) with average rate overlay and comparison metrics.
+  - **Income & Expenses**: Dedicated 6-month historical total income and expense comparison views.
+- **Savings Trend Service** (`services/savings-trend.ts`): Fetches all transactions in a single 6-month window query and computes monthly net savings, savings rate, MoM trend direction, and average stats.
+- **`getCategoryTotalTrendData`** (`services/category-trend.ts`): New service function that fetches all expense transactions over the 6-month window without a category filter, returning aggregated monthly totals and MoM trend data.
+- **`getIncomeTotalTrendData`** (`services/income-trend.ts`): New service function that fetches all income transactions over the 6-month window without a source filter, returning aggregated monthly totals and MoM trend data.
+
+### Changed
+
+- **Trend Chart Container**: Both `CategoryTrendCard` and `IncomeTrendCard` now wrap their bar chart in a `trendChartWrapper` (`position: relative`) to support the absolute-positioned average line overlay, with `marginBottom` moved from the inner container to the wrapper.
+- **`trendStyles` / `incomeTrendStyles` / `savingsTrendStyles`** (`assets/styles/index.style.js`): Added `trendChartWrapper`, `trendAvgLine`, `trendAvgLabel`, `trendAvgLabelText`, `trendAvgStat`, `trendAvgStatText`, `trendAvgStatLabel` to trend style objects, along with the full `savingsTrendStyles` suite.
+- **`summaryStyles`** (`assets/styles/index.style.js`): Added `summaryTitleRow` (row layout with `position: relative`) and `summaryTrendIcon` (absolute right-aligned) to support the new icon button without shifting the centred title.
+- **`CategoryTrendCard`**: Added `totalTrendData` / `totalLoading` props and internal `showTotal` state. Active dataset (`activeData`) switches between `totalTrendData` and `trendData` based on the selected pill; all chart rendering, badge, comparison text, and average stat use `activeData`. Selecting a category pill resets `showTotal` to `false`.
+- **`IncomeTrendCard`**: Same structural change as `CategoryTrendCard`, using green theming. `totalTrendData` / `totalLoading` props added; internal `showTotal` state drives active dataset.
+- **Dashboard Trend Layout** (`app/index.tsx`): Positioned `SavingsTrendCard` directly below `IncomeTrendCard` with proper bottom spacing for Floating Action Buttons.
+
+---
+
 ## [4.3.0] - 2026-08-14
 
 ### Added
+
 - **MoM Category Spending Trends**: New "Category Trends" card on the dashboard showing a 6-month bar chart for each expense category. Users can switch between categories via horizontal pill selectors. Includes a MoM change badge (↑/↓/Flat) and a current-vs-previous month comparison line.
 - **MoM Income Trends**: New "Income Trends" card on the dashboard showing a 6-month bar chart for each income source. Uses green-themed styling (`#28a745`) to visually distinguish from the blue expense trends. Includes the same pill selector, MoM badge, and comparison features.
 - **Income Trend Service** (`services/income-trend.ts`): Fetches income transactions over a 6-month rolling window from Supabase, grouped by income source, and computes MoM change percentage and trend direction.
@@ -18,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.2.0] - 2026-08-07
 
 ### Changed
+
 - **Category Insights Dropdown**: Replaced the segmented toggle next to "Categories" with an extensible dropdown picker. Users can now switch between "Spend Share" and "Income Impact" views, with room to add more metrics in the future.
 - **Colored Card Fill**: Category cards now show the percentage visually as a colored background fill on the card itself, replacing the separate progress bar row. The fill color uses the same severity scale as budget progress bars (Blue → Yellow → Orange → Red) via `getProgressColor`.
 - **Income History Tab**: The History page now has an Expenses/Income tab bar. The Income tab shows income transactions with a green color scheme, its own summary totals, and tab-specific empty states. The category filter only appears on the Expenses tab.
@@ -27,15 +57,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.1.0] - 2026-06-01
 
 ### Added
+
 - **Category Spending Insights on Dashboard**: Each expense category card now displays two visual progress bars:
   - **Spend Share**: Percentage of total expenses this category represents (blue bar)
   - **Income Impact**: Percentage of total income consumed by this category, with color-coded alerts — green (≤25%), orange (25–50%), red (>50%)
 
 ### Changed
+
 - **Decimal Amount Input**: The amount field now accepts floating-point values (e.g., ₹12.50) when adding or editing expenses and income. Keyboard type changed from `numeric` to `decimal-pad`, with regex validation to allow only valid decimal patterns.
 - **Expense History Filtering**: The Expense History page now shows only expenses, excluding income transactions from the list, totals, and transaction count.
 
 ### Fixed
+
 - **Category Deep-Link from Dashboard**: Tapping a category card on the dashboard now correctly pre-selects that category in the Expense History filter. Previously, it always opened with "All" selected due to a `categoryName` vs `categoryId` param mismatch.
 
 ---
@@ -43,11 +76,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.0.0] - 2026-05-03
 
 ### Added
+
 - **Global Income Source Management**: Added `fetchIncomeSources` and `addIncomeSource` to allow adding new income sources directly into the `income_sources` table and caching them seamlessly via `services/income-source.ts`.
 - **Unified Category Bottom Sheet**: Refactored `CategoryBottomSheet` to be used for both "expenses" and "incomes" based on a `type` prop, adapting titles, services, and behavior appropriately.
 - **Dynamic Category Form**: Refactored `AddNewCategoryForm` to adapt its interface for either "Category" or "Income Source" additions based on a `type` prop.
 
 ### Changed
+
 - **Income Category Loading** (`components/income/show-income-category.tsx` was removed/replaced):
   - Replaced hardcoded discrete UI paths with the reusable `CategoryBottomSheet` allowing consistent, database-driven loading of monthly income sources.
 - **Add Transaction Wiring** (`app/add-transaction.tsx`):
@@ -61,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed stale mapping structures from `types/types.ts`.
 
 ### Fixed
+
 - **Income Save Flow** (`app/add-transaction.tsx`):
   - Income transactions now submit reliably through the same save path as expenses via `insertTransaction` mapping `income_source_id` directly.
 - **Validation Rules** (`app/add-transaction.tsx`):

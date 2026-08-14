@@ -2,10 +2,12 @@ import { styles } from "@/assets/styles/index.style";
 import IndexHeader from "@/components/header/index-header";
 import CategoryTrendCard from "@/components/expense/category-trend-card";
 import IncomeTrendCard from "@/components/income/income-trend-card";
+import SavingsTrendCard from "@/components/savings/savings-trend-card";
 import ProfileModal from "@/components/profile/profile-modal";
 import { checkForUpdates } from "@/components/version/updateChecker";
-import { getCategoryTrendData, CategoryTrendData } from "@/services/category-trend";
-import { getIncomeTrendData, IncomeTrendData } from "@/services/income-trend";
+import { getCategoryTrendData, getCategoryTotalTrendData, CategoryTrendData } from "@/services/category-trend";
+import { getIncomeTrendData, getIncomeTotalTrendData, IncomeTrendData } from "@/services/income-trend";
+import { getSavingsTrendData, SavingsTrendData } from "@/services/savings-trend";
 import { getTransactions } from "@/services/transaction";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
@@ -38,12 +40,24 @@ export default function Index() {
   const [selectedTrendCategory, setSelectedTrendCategory] = useState<string>('');
   const [categoryTrendData, setCategoryTrendData] = useState<CategoryTrendData | null>(null);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
+  const [categoryTotalTrendData, setCategoryTotalTrendData] = useState<CategoryTrendData | null>(null);
+  const [isTotalTrendLoading, setIsTotalTrendLoading] = useState(false);
 
   // ── MoM Trend state (income) ──
   const [selectedTrendSource, setSelectedTrendSource] = useState<string>('');
   const [incomeTrendData, setIncomeTrendData] = useState<IncomeTrendData | null>(null);
   const [isIncomeTrendLoading, setIsIncomeTrendLoading] = useState(false);
+  const [incomeTotalTrendData, setIncomeTotalTrendData] = useState<IncomeTrendData | null>(null);
+  const [isIncomeTotalTrendLoading, setIsIncomeTotalTrendLoading] = useState(false);
+
+  // ── MoM Trend state (savings) ──
+  const [savingsTrendData, setSavingsTrendData] = useState<SavingsTrendData | null>(null);
+  const [isSavingsTrendLoading, setIsSavingsTrendLoading] = useState(false);
+
   const dropdownButtonRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const categoryTrendRef = useRef<View>(null);
+  const scrollOffsetRef = useRef<number>(0);
 
   const categoryViewOptions = [
     { key: 'spend' as const, label: 'Spend Share' },
@@ -187,6 +201,78 @@ export default function Index() {
     fetchIncomeTrend();
   }, [selectedTrendSource, selectedDate]);
 
+  // Fetch total category trend data (all categories) when month changes
+  useEffect(() => {
+    if (expenseCategoryNames.length === 0) {
+      setCategoryTotalTrendData(null);
+      return;
+    }
+    const fetchTotalTrend = async () => {
+      try {
+        setIsTotalTrendLoading(true);
+        const data = await getCategoryTotalTrendData(
+          selectedDate.getMonth() + 1,
+          selectedDate.getFullYear(),
+        );
+        setCategoryTotalTrendData(data);
+      } catch (error) {
+        console.error('Error loading total category trend:', error);
+        setCategoryTotalTrendData(null);
+      } finally {
+        setIsTotalTrendLoading(false);
+      }
+    };
+    fetchTotalTrend();
+  }, [selectedDate, expenseCategoryNames]);
+
+  // Fetch total income trend data (all sources) when month changes
+  useEffect(() => {
+    if (incomeSourceNames.length === 0) {
+      setIncomeTotalTrendData(null);
+      return;
+    }
+    const fetchIncomeTotalTrend = async () => {
+      try {
+        setIsIncomeTotalTrendLoading(true);
+        const data = await getIncomeTotalTrendData(
+          selectedDate.getMonth() + 1,
+          selectedDate.getFullYear(),
+        );
+        setIncomeTotalTrendData(data);
+      } catch (error) {
+        console.error('Error loading total income trend:', error);
+        setIncomeTotalTrendData(null);
+      } finally {
+        setIsIncomeTotalTrendLoading(false);
+      }
+    };
+    fetchIncomeTotalTrend();
+  }, [selectedDate, incomeSourceNames]);
+
+  // Fetch savings trend data (surplus/deficit) when month or transactions change
+  useEffect(() => {
+    if (!user) {
+      setSavingsTrendData(null);
+      return;
+    }
+    const fetchSavingsTrend = async () => {
+      try {
+        setIsSavingsTrendLoading(true);
+        const data = await getSavingsTrendData(
+          selectedDate.getMonth() + 1,
+          selectedDate.getFullYear(),
+        );
+        setSavingsTrendData(data);
+      } catch (error) {
+        console.error('Error loading savings trend:', error);
+        setSavingsTrendData(null);
+      } finally {
+        setIsSavingsTrendLoading(false);
+      }
+    };
+    fetchSavingsTrend();
+  }, [selectedDate, transactions, user]);
+
   // Calculate total income
   const getTotalIncome = () => {
     return transactions
@@ -271,8 +357,13 @@ export default function Index() {
       />
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        onScroll={(e) => {
+          scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
       >
         {transactions.length === 0 ? (
           <View style={styles.noDataContainer}>
@@ -286,7 +377,28 @@ export default function Index() {
           <>
             {/* Monthly Summary */}
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Monthly Summary</Text>
+              <View style={styles.summaryTitleRow}>
+                <Text style={styles.summaryTitle}>Monthly Summary</Text>
+                {expenseCategoryNames.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.summaryTrendIcon}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      categoryTrendRef.current?.measureInWindow((_x, cardY) => {
+                        (scrollViewRef.current as any)?.measureInWindow(
+                          (_sx: number, svY: number) => {
+                            // Scroll content position = current offset + (card screen y - scrollview screen y)
+                            const targetY = scrollOffsetRef.current + (cardY - svY) - 12;
+                            scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY), animated: true });
+                          }
+                        );
+                      });
+                    }}
+                  >
+                    <Ionicons name="trending-up-outline" size={20} color="#007AFF" />
+                  </TouchableOpacity>
+                )}
+              </View>
 
               {/* 2-Item First Row */}
               <View style={styles.summaryGrid}>
@@ -469,24 +581,38 @@ export default function Index() {
 
             {/* MoM Category Trend Card */}
             {expenseCategoryNames.length > 0 && (
-              <CategoryTrendCard
-                categories={expenseCategoryNames}
-                selectedCategory={selectedTrendCategory}
-                onSelectCategory={setSelectedTrendCategory}
-                trendData={categoryTrendData}
-                loading={isTrendLoading}
-              />
+              <View ref={categoryTrendRef} collapsable={false}>
+                <CategoryTrendCard
+                  categories={expenseCategoryNames}
+                  selectedCategory={selectedTrendCategory}
+                  onSelectCategory={setSelectedTrendCategory}
+                  trendData={categoryTrendData}
+                  loading={isTrendLoading}
+                  totalTrendData={categoryTotalTrendData}
+                  totalLoading={isTotalTrendLoading}
+                />
+              </View>
             )}
 
             {/* MoM Income Trend Card */}
             {incomeSourceNames.length > 0 && (
+              <IncomeTrendCard
+                sources={incomeSourceNames}
+                selectedSource={selectedTrendSource}
+                onSelectSource={setSelectedTrendSource}
+                trendData={incomeTrendData}
+                loading={isIncomeTrendLoading}
+                totalTrendData={incomeTotalTrendData}
+                totalLoading={isIncomeTotalTrendLoading}
+              />
+            )}
+
+            {/* MoM Savings Trend Card */}
+            {transactions.length > 0 && (
               <View style={{ marginBottom: 80 }}>
-                <IncomeTrendCard
-                  sources={incomeSourceNames}
-                  selectedSource={selectedTrendSource}
-                  onSelectSource={setSelectedTrendSource}
-                  trendData={incomeTrendData}
-                  loading={isIncomeTrendLoading}
+                <SavingsTrendCard
+                  trendData={savingsTrendData}
+                  loading={isSavingsTrendLoading}
                 />
               </View>
             )}

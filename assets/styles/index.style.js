@@ -104,12 +104,23 @@ export const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  summaryTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    position: "relative",
+  },
   summaryTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#666",
-    marginBottom: 16,
     textAlign: "center",
+  },
+  summaryTrendIcon: {
+    position: "absolute",
+    right: 0,
+    padding: 4,
   },
   summaryRow: {
     flexDirection: "row",
@@ -612,12 +623,15 @@ export const trendStyles = StyleSheet.create({
   },
 
   // ── Bar Chart ──
+  trendChartWrapper: {
+    position: "relative",
+    marginBottom: 12,
+  },
   trendChartContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     height: 160,
-    marginBottom: 12,
   },
   trendBarWrapper: {
     flex: 1,
@@ -659,6 +673,48 @@ export const trendStyles = StyleSheet.create({
   trendBarLabelCurrent: {
     color: "#007AFF",
     fontWeight: "700",
+  },
+
+  // ── Average line overlay ──
+  trendAvgLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 1.5,
+    backgroundColor: "#007AFF",
+    opacity: 0.45,
+  },
+  trendAvgLabel: {
+    position: "absolute",
+    right: 0,
+    backgroundColor: "#007AFF",
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  trendAvgLabelText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  // ── Average stat row ──
+  trendAvgStat: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
+  },
+  trendAvgStatText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  trendAvgStatLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#aaa",
   },
 
   // ── Comparison ──
@@ -775,12 +831,15 @@ export const incomeTrendStyles = StyleSheet.create({
   },
 
   // ── Bar Chart ──
+  trendChartWrapper: {
+    position: "relative",
+    marginBottom: 12,
+  },
   trendChartContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     height: 160,
-    marginBottom: 12,
   },
   trendBarWrapper: {
     flex: 1,
@@ -822,6 +881,275 @@ export const incomeTrendStyles = StyleSheet.create({
   trendBarLabelCurrent: {
     color: "#28a745",
     fontWeight: "700",
+  },
+
+  // ── Average line overlay ──
+  trendAvgLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 1.5,
+    backgroundColor: "#28a745",
+    opacity: 0.45,
+  },
+  trendAvgLabel: {
+    position: "absolute",
+    right: 0,
+    backgroundColor: "#28a745",
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  trendAvgLabelText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  // ── Average stat row ──
+  trendAvgStat: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
+  },
+  trendAvgStatText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#28a745",
+  },
+  trendAvgStatLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#aaa",
+  },
+
+  // ── Comparison ──
+  trendCompare: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#888",
+    textAlign: "center",
+    marginTop: 4,
+  },
+
+  // ── Empty / Loading ──
+  trendEmptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    gap: 8,
+  },
+  trendEmptyText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#bbb",
+    textAlign: "center",
+  },
+  trendLoadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+});
+
+// ── Savings Trend Card Styles ────────────────────────────────────────
+
+export const savingsTrendStyles = StyleSheet.create({
+  trendCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  trendHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  trendTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1a1a1a",
+  },
+
+  // ── MoM Badge ──
+  trendBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  trendBadgeUp: {
+    backgroundColor: "#e8f5e9",
+  },
+  trendBadgeDown: {
+    backgroundColor: "#ffebee",
+  },
+  trendBadgeFlat: {
+    backgroundColor: "#f5f5f5",
+  },
+  trendBadgeTextUp: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2e7d32",
+  },
+  trendBadgeTextDown: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#e53935",
+  },
+  trendBadgeTextFlat: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#999",
+  },
+
+  // ── Option Pills ──
+  trendPillScroll: {
+    marginBottom: 18,
+    maxHeight: 36,
+  },
+  trendPillContent: {
+    gap: 8,
+    paddingRight: 4,
+  },
+  trendPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: "#f0f0f0",
+  },
+  trendPillActive: {
+    backgroundColor: "#10b981",
+  },
+  trendPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+  },
+  trendPillTextActive: {
+    color: "#ffffff",
+  },
+
+  // ── Bar Chart ──
+  trendChartWrapper: {
+    position: "relative",
+    marginBottom: 12,
+  },
+  trendChartContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 160,
+  },
+  trendBarWrapper: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    paddingHorizontal: 2,
+  },
+  trendBarAmount: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#999",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  trendBarAmountSurplus: {
+    color: "#10b981",
+    fontWeight: "700",
+  },
+  trendBarAmountDeficit: {
+    color: "#ef4444",
+    fontWeight: "700",
+  },
+  trendBarAmountCurrent: {
+    fontWeight: "700",
+  },
+  trendBar: {
+    width: "70%",
+    flex: 1,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 6,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  trendBarDeficit: {
+    backgroundColor: "#fef2f2",
+  },
+  trendBarFill: {
+    width: "100%",
+    borderRadius: 6,
+  },
+  trendBarLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 6,
+    textAlign: "center",
+  },
+  trendBarLabelCurrent: {
+    color: "#10b981",
+    fontWeight: "700",
+  },
+
+  // ── Average line overlay ──
+  trendAvgLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 1.5,
+    backgroundColor: "#10b981",
+    opacity: 0.45,
+  },
+  trendAvgLineDeficit: {
+    backgroundColor: "#ef4444",
+  },
+  trendAvgLabel: {
+    position: "absolute",
+    right: 0,
+    backgroundColor: "#10b981",
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  trendAvgLabelDeficit: {
+    backgroundColor: "#ef4444",
+  },
+  trendAvgLabelText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  // ── Average stat row ──
+  trendAvgStat: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
+  },
+  trendAvgStatText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#10b981",
+  },
+  trendAvgStatTextDeficit: {
+    color: "#ef4444",
+  },
+  trendAvgStatLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#aaa",
   },
 
   // ── Comparison ──

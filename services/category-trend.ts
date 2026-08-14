@@ -128,3 +128,74 @@ export const getCategoryTrendData = async (
     momChangePercent,
   };
 };
+
+/**
+ * Fetches ALL expense transactions over a 6-month window (across every
+ * category) and returns aggregated monthly totals for comparison.
+ */
+export const getCategoryTotalTrendData = async (
+  selectedMonth: number,
+  selectedYear: number,
+): Promise<CategoryTrendData> => {
+  const session = await supabase.auth.getSession();
+  const userId = session.data.session?.user.id;
+  if (!userId) throw new Error("User not authenticated");
+
+  const window = getSixMonthWindow(selectedMonth, selectedYear);
+
+  const monthYearFilters = window
+    .map((w) => `and(month.eq.${w.month},year.eq.${w.year})`)
+    .join(",");
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("month, year, amount")
+    .eq("user_id", userId)
+    .eq("type", "expense")
+    .eq("is_deleted", false)
+    .or(monthYearFilters);
+
+  if (error) {
+    console.error("❌ Error fetching total category trend:", error);
+    throw error;
+  }
+
+  const sumMap: Record<string, number> = {};
+  (data || []).forEach((row: any) => {
+    const key = `${row.year}-${row.month}`;
+    sumMap[key] = (sumMap[key] || 0) + row.amount;
+  });
+
+  const months: MonthlySpend[] = window.map((w) => ({
+    month: w.month,
+    year: w.year,
+    total: sumMap[`${w.year}-${w.month}`] || 0,
+    label: MONTH_LABELS[w.month - 1],
+  }));
+
+  const currentMonthTotal = months[5].total;
+  const previousMonthTotal = months[4].total;
+
+  let momChangePercent: number | null = null;
+  let trend: "up" | "down" | "flat" = "flat";
+
+  if (previousMonthTotal > 0) {
+    momChangePercent =
+      ((currentMonthTotal - previousMonthTotal) / previousMonthTotal) * 100;
+    if (momChangePercent > 1) trend = "up";
+    else if (momChangePercent < -1) trend = "down";
+    else trend = "flat";
+  } else if (currentMonthTotal > 0) {
+    trend = "up";
+    momChangePercent = null;
+  }
+
+  return {
+    categoryName: "Total",
+    months,
+    currentMonth: currentMonthTotal,
+    previousMonth: previousMonthTotal,
+    trend,
+    momChangePercent,
+  };
+};

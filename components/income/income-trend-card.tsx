@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -16,6 +16,8 @@ interface IncomeTrendCardProps {
   onSelectSource: (name: string) => void;
   trendData: IncomeTrendData | null;
   loading: boolean;
+  totalTrendData: IncomeTrendData | null;
+  totalLoading: boolean;
 }
 
 const formatAmount = (amount: number): string => {
@@ -30,15 +32,23 @@ export default function IncomeTrendCard({
   onSelectSource,
   trendData,
   loading,
+  totalTrendData,
+  totalLoading,
 }: IncomeTrendCardProps) {
   if (sources.length === 0) return null;
 
+  const [showTotal, setShowTotal] = useState(false);
+
+  // Active dataset: total view or per-source view
+  const activeData = showTotal ? totalTrendData : trendData;
+  const isLoading = showTotal ? totalLoading : loading;
+
   const maxTotal =
-    trendData?.months.reduce((max, m) => Math.max(max, m.total), 0) || 0;
+    activeData?.months.reduce((max, m) => Math.max(max, m.total), 0) || 0;
 
   const renderBadge = () => {
-    if (!trendData) return null;
-    const { trend, momChangePercent } = trendData;
+    if (!activeData) return null;
+    const { trend, momChangePercent } = activeData;
 
     if (momChangePercent === null && trend === "up") {
       return (
@@ -78,8 +88,8 @@ export default function IncomeTrendCard({
   };
 
   const renderChart = () => {
-    if (!trendData) return null;
-    const { months } = trendData;
+    if (!activeData) return null;
+    const { months } = activeData;
 
     if (maxTotal === 0) {
       return (
@@ -92,50 +102,84 @@ export default function IncomeTrendCard({
       );
     }
 
+    // Compute 6-month average (only non-zero months)
+    const nonZeroMonths = months.filter((m) => m.total > 0);
+    const average =
+      nonZeroMonths.length > 0
+        ? nonZeroMonths.reduce((s, m) => s + m.total, 0) / nonZeroMonths.length
+        : 0;
+
+    const avgPct = maxTotal > 0 ? (average / maxTotal) * 100 : 0;
+    const bottomOffset = (avgPct / 100) * 160;
+
     return (
-      <View style={incomeTrendStyles.trendChartContainer}>
-        {months.map((m, i) => {
-          const heightPct = maxTotal > 0 ? (m.total / maxTotal) * 100 : 0;
-          const isCurrentMonth = i === months.length - 1;
+      <View style={incomeTrendStyles.trendChartWrapper}>
+        <View style={incomeTrendStyles.trendChartContainer}>
+          {months.map((m, i) => {
+            const heightPct = maxTotal > 0 ? (m.total / maxTotal) * 100 : 0;
+            const isCurrentMonth = i === months.length - 1;
 
-          return (
-            <View key={`${m.year}-${m.month}`} style={incomeTrendStyles.trendBarWrapper}>
-              {/* Amount label */}
-              <Text
-                style={[
-                  incomeTrendStyles.trendBarAmount,
-                  isCurrentMonth && incomeTrendStyles.trendBarAmountCurrent,
-                ]}
-                numberOfLines={1}
-              >
-                {m.total > 0 ? formatAmount(m.total) : "–"}
-              </Text>
-
-              {/* Bar */}
-              <View style={incomeTrendStyles.trendBar}>
-                <View
+            return (
+              <View key={`${m.year}-${m.month}`} style={incomeTrendStyles.trendBarWrapper}>
+                {/* Amount label */}
+                <Text
                   style={[
-                    incomeTrendStyles.trendBarFill,
-                    {
-                      height: `${Math.max(heightPct, 2)}%`,
-                      backgroundColor: isCurrentMonth ? "#28a745" : "#a3e4b8",
-                    },
+                    incomeTrendStyles.trendBarAmount,
+                    isCurrentMonth && incomeTrendStyles.trendBarAmountCurrent,
                   ]}
-                />
-              </View>
+                  numberOfLines={1}
+                >
+                  {m.total > 0 ? formatAmount(m.total) : "–"}
+                </Text>
 
-              {/* Month label */}
-              <Text
-                style={[
-                  incomeTrendStyles.trendBarLabel,
-                  isCurrentMonth && incomeTrendStyles.trendBarLabelCurrent,
-                ]}
-              >
-                {m.label}
+                {/* Bar */}
+                <View style={incomeTrendStyles.trendBar}>
+                  <View
+                    style={[
+                      incomeTrendStyles.trendBarFill,
+                      {
+                        height: `${Math.max(heightPct, 2)}%`,
+                        backgroundColor: isCurrentMonth ? "#28a745" : "#a3e4b8",
+                      },
+                    ]}
+                  />
+                </View>
+
+                {/* Month label */}
+                <Text
+                  style={[
+                    incomeTrendStyles.trendBarLabel,
+                    isCurrentMonth && incomeTrendStyles.trendBarLabelCurrent,
+                  ]}
+                >
+                  {m.label}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Average reference line */}
+        {average > 0 && (
+          <>
+            <View
+              style={[
+                incomeTrendStyles.trendAvgLine,
+                { bottom: bottomOffset },
+              ]}
+            />
+            <View
+              style={[
+                incomeTrendStyles.trendAvgLabel,
+                { bottom: bottomOffset + 2 },
+              ]}
+            >
+              <Text style={incomeTrendStyles.trendAvgLabelText}>
+                avg {formatAmount(average)}
               </Text>
             </View>
-          );
-        })}
+          </>
+        )}
       </View>
     );
   };
@@ -155,19 +199,40 @@ export default function IncomeTrendCard({
         style={incomeTrendStyles.trendPillScroll}
         contentContainerStyle={incomeTrendStyles.trendPillContent}
       >
+        {/* Total pill — always first */}
+        <TouchableOpacity
+          style={[
+            incomeTrendStyles.trendPill,
+            showTotal && incomeTrendStyles.trendPillActive,
+          ]}
+          onPress={() => setShowTotal(true)}
+        >
+          <Text
+            style={[
+              incomeTrendStyles.trendPillText,
+              showTotal && incomeTrendStyles.trendPillTextActive,
+            ]}
+          >
+            Total
+          </Text>
+        </TouchableOpacity>
+
         {sources.map((src) => (
           <TouchableOpacity
             key={src}
             style={[
               incomeTrendStyles.trendPill,
-              selectedSource === src && incomeTrendStyles.trendPillActive,
+              !showTotal && selectedSource === src && incomeTrendStyles.trendPillActive,
             ]}
-            onPress={() => onSelectSource(src)}
+            onPress={() => {
+              setShowTotal(false);
+              onSelectSource(src);
+            }}
           >
             <Text
               style={[
                 incomeTrendStyles.trendPillText,
-                selectedSource === src && incomeTrendStyles.trendPillTextActive,
+                !showTotal && selectedSource === src && incomeTrendStyles.trendPillTextActive,
               ]}
             >
               {src}
@@ -177,7 +242,7 @@ export default function IncomeTrendCard({
       </ScrollView>
 
       {/* Chart area */}
-      {loading ? (
+      {isLoading ? (
         <View style={incomeTrendStyles.trendLoadingContainer}>
           <ActivityIndicator size="small" color="#28a745" />
         </View>
@@ -186,11 +251,26 @@ export default function IncomeTrendCard({
           {renderChart()}
 
           {/* Comparison line */}
-          {trendData && maxTotal > 0 && (
-            <Text style={incomeTrendStyles.trendCompare}>
-              {formatAmount(trendData.currentMonth)} this month vs{" "}
-              {formatAmount(trendData.previousMonth)} last month
-            </Text>
+          {activeData && maxTotal > 0 && (
+            <>
+              <Text style={incomeTrendStyles.trendCompare}>
+                {formatAmount(activeData.currentMonth)} this month vs{" "}
+                {formatAmount(activeData.previousMonth)} last month
+              </Text>
+              {/* 6-month average stat */}
+              <View style={incomeTrendStyles.trendAvgStat}>
+                <Text style={incomeTrendStyles.trendAvgStatLabel}>6-mo avg:</Text>
+                <Text style={incomeTrendStyles.trendAvgStatText}>
+                  {formatAmount(
+                    activeData.months.filter((m) => m.total > 0).length > 0
+                      ? activeData.months.filter((m) => m.total > 0).reduce((s, m) => s + m.total, 0) /
+                          activeData.months.filter((m) => m.total > 0).length
+                      : 0
+                  )}
+                  /mo
+                </Text>
+              </View>
+            </>
           )}
         </>
       )}
