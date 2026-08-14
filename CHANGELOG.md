@@ -5,6 +5,16 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 2026-08-14
+
+### Added
+- **MoM Category Spending Trends**: New "Category Trends" card on the dashboard showing a 6-month bar chart for each expense category. Users can switch between categories via horizontal pill selectors. Includes a MoM change badge (↑/↓/Flat) and a current-vs-previous month comparison line.
+- **MoM Income Trends**: New "Income Trends" card on the dashboard showing a 6-month bar chart for each income source. Uses green-themed styling (`#28a745`) to visually distinguish from the blue expense trends. Includes the same pill selector, MoM badge, and comparison features.
+- **Income Trend Service** (`services/income-trend.ts`): Fetches income transactions over a 6-month rolling window from Supabase, grouped by income source, and computes MoM change percentage and trend direction.
+- **Category Trend Service** (`services/category-trend.ts`): Fetches expense transactions over a 6-month rolling window from Supabase, grouped by category, and computes MoM change percentage and trend direction.
+
+---
+
 ## [4.2.0] - 2026-08-07
 
 ### Changed

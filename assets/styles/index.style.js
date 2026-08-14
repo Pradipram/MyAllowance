@@ -526,3 +526,329 @@ export const styles = StyleSheet.create({
     maxWidth: 80,
   },
 });
+
+// ── Category Trend Card Styles ───────────────────────────────────────
+
+export const trendStyles = StyleSheet.create({
+  trendCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  trendHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  trendTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1a1a1a",
+  },
+
+  // ── MoM Badge ──
+  trendBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  trendBadgeUp: {
+    backgroundColor: "#ffebee",
+  },
+  trendBadgeDown: {
+    backgroundColor: "#e8f5e9",
+  },
+  trendBadgeFlat: {
+    backgroundColor: "#f5f5f5",
+  },
+  trendBadgeTextUp: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#e53935",
+  },
+  trendBadgeTextDown: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2e7d32",
+  },
+  trendBadgeTextFlat: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#999",
+  },
+
+  // ── Category Pills ──
+  trendPillScroll: {
+    marginBottom: 18,
+    maxHeight: 36,
+  },
+  trendPillContent: {
+    gap: 8,
+    paddingRight: 4,
+  },
+  trendPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: "#f0f0f0",
+  },
+  trendPillActive: {
+    backgroundColor: "#007AFF",
+  },
+  trendPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+  },
+  trendPillTextActive: {
+    color: "#ffffff",
+  },
+
+  // ── Bar Chart ──
+  trendChartContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 160,
+    marginBottom: 12,
+  },
+  trendBarWrapper: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    paddingHorizontal: 2,
+  },
+  trendBarAmount: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#999",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  trendBarAmountCurrent: {
+    color: "#007AFF",
+    fontWeight: "700",
+  },
+  trendBar: {
+    width: "70%",
+    flex: 1,
+    backgroundColor: "#f0f4f8",
+    borderRadius: 6,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  trendBarFill: {
+    width: "100%",
+    borderRadius: 6,
+  },
+  trendBarLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 6,
+    textAlign: "center",
+  },
+  trendBarLabelCurrent: {
+    color: "#007AFF",
+    fontWeight: "700",
+  },
+
+  // ── Comparison ──
+  trendCompare: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#888",
+    textAlign: "center",
+    marginTop: 4,
+  },
+
+  // ── Empty / Loading ──
+  trendEmptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    gap: 8,
+  },
+  trendEmptyText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#bbb",
+    textAlign: "center",
+  },
+  trendLoadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+});
+
+// ── Income Trend Card Styles ─────────────────────────────────────────
+
+export const incomeTrendStyles = StyleSheet.create({
+  trendCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  trendHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  trendTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1a1a1a",
+  },
+
+  // ── MoM Badge ──
+  trendBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  trendBadgeUp: {
+    backgroundColor: "#e8f5e9",
+  },
+  trendBadgeDown: {
+    backgroundColor: "#ffebee",
+  },
+  trendBadgeFlat: {
+    backgroundColor: "#f5f5f5",
+  },
+  trendBadgeTextUp: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2e7d32",
+  },
+  trendBadgeTextDown: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#e53935",
+  },
+  trendBadgeTextFlat: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#999",
+  },
+
+  // ── Source Pills ──
+  trendPillScroll: {
+    marginBottom: 18,
+    maxHeight: 36,
+  },
+  trendPillContent: {
+    gap: 8,
+    paddingRight: 4,
+  },
+  trendPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: "#f0f0f0",
+  },
+  trendPillActive: {
+    backgroundColor: "#28a745",
+  },
+  trendPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+  },
+  trendPillTextActive: {
+    color: "#ffffff",
+  },
+
+  // ── Bar Chart ──
+  trendChartContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 160,
+    marginBottom: 12,
+  },
+  trendBarWrapper: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    paddingHorizontal: 2,
+  },
+  trendBarAmount: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#999",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  trendBarAmountCurrent: {
+    color: "#28a745",
+    fontWeight: "700",
+  },
+  trendBar: {
+    width: "70%",
+    flex: 1,
+    backgroundColor: "#f0f8f2",
+    borderRadius: 6,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  trendBarFill: {
+    width: "100%",
+    borderRadius: 6,
+  },
+  trendBarLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 6,
+    textAlign: "center",
+  },
+  trendBarLabelCurrent: {
+    color: "#28a745",
+    fontWeight: "700",
+  },
+
+  // ── Comparison ──
+  trendCompare: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#888",
+    textAlign: "center",
+    marginTop: 4,
+  },
+
+  // ── Empty / Loading ──
+  trendEmptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    gap: 8,
+  },
+  trendEmptyText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#bbb",
+    textAlign: "center",
+  },
+  trendLoadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+});

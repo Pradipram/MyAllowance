@@ -77,6 +77,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Spend Share Insight**: Each category shows its percentage contribution to total expenses via a colored card background fill
 - **Income Impact Insight**: Each category shows how much of your total income it consumes via a colored card background fill, with severity-based coloring (Blue → Yellow → Orange → Red)
 - **Category View Dropdown**: Extensible dropdown picker next to "Categories" to switch between Spend Share, Income Impact, and future metric views
+- **MoM Category Spending Trends**: 6-month bar chart per expense category with pill selector, MoM change badge (↑/↓/Flat), and current-vs-previous month comparison
+- **MoM Income Trends**: 6-month bar chart per income source with green-themed styling, pill selector, MoM badge, and comparison line
 - **Current Month Indicator**: Clear visual indication of which month is current
 - **Dashboard Action Buttons**: Separate "Edit Budget" (Blue) and "Edit Income Source" (Green) buttons for streamlined access
 - **Quick Navigation**: Direct access to budget and income management from dashboard
@@ -195,7 +197,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **🏷️ Advanced Categorization**: Custom tags, subcategories, and smart auto-categorization
 - **🎯 Goal Setting**: Savings goals, budget targets, and achievement tracking
 - **📤 Export & Reporting**: PDF reports, CSV exports, and financial summaries
-- **💵 Advanced Income Analytics**: Income tracking with source breakdown and trends
+- ~~**💵 Advanced Income Analytics**: Income tracking with source breakdown and trends~~ ✅ Delivered in v4.3.0
 
 ### Technical Roadmap
 

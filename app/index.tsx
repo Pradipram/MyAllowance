@@ -1,13 +1,17 @@
 import { styles } from "@/assets/styles/index.style";
 import IndexHeader from "@/components/header/index-header";
+import CategoryTrendCard from "@/components/expense/category-trend-card";
+import IncomeTrendCard from "@/components/income/income-trend-card";
 import ProfileModal from "@/components/profile/profile-modal";
 import { checkForUpdates } from "@/components/version/updateChecker";
+import { getCategoryTrendData, CategoryTrendData } from "@/services/category-trend";
+import { getIncomeTrendData, IncomeTrendData } from "@/services/income-trend";
 import { getTransactions } from "@/services/transaction";
 import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@supabase/supabase-js";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -29,6 +33,16 @@ export default function Index() {
   const [categoryViewMode, setCategoryViewMode] = useState<'spend' | 'income'>('spend');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+
+  // ── MoM Trend state (expenses) ──
+  const [selectedTrendCategory, setSelectedTrendCategory] = useState<string>('');
+  const [categoryTrendData, setCategoryTrendData] = useState<CategoryTrendData | null>(null);
+  const [isTrendLoading, setIsTrendLoading] = useState(false);
+
+  // ── MoM Trend state (income) ──
+  const [selectedTrendSource, setSelectedTrendSource] = useState<string>('');
+  const [incomeTrendData, setIncomeTrendData] = useState<IncomeTrendData | null>(null);
+  const [isIncomeTrendLoading, setIsIncomeTrendLoading] = useState(false);
   const dropdownButtonRef = useRef<View>(null);
 
   const categoryViewOptions = [
@@ -90,6 +104,88 @@ export default function Index() {
       setIsLoading(false);
     }
   };
+
+  // Derive unique expense category names from current transactions
+  const expenseCategoryNames = useMemo(() => {
+    const names = new Set<string>();
+    transactions
+      .filter((t) => t.type === 'expense')
+      .forEach((t) => names.add(t.category_name));
+    return Array.from(names).sort();
+  }, [transactions]);
+
+  // Derive unique income source names from current transactions
+  const incomeSourceNames = useMemo(() => {
+    const names = new Set<string>();
+    transactions
+      .filter((t) => t.type === 'income')
+      .forEach((t) => names.add(t.category_name));
+    return Array.from(names).sort();
+  }, [transactions]);
+
+  // Auto-select first category when category list changes
+  useEffect(() => {
+    if (expenseCategoryNames.length > 0 && !expenseCategoryNames.includes(selectedTrendCategory)) {
+      setSelectedTrendCategory(expenseCategoryNames[0]);
+    }
+  }, [expenseCategoryNames]);
+
+  // Auto-select first income source when source list changes
+  useEffect(() => {
+    if (incomeSourceNames.length > 0 && !incomeSourceNames.includes(selectedTrendSource)) {
+      setSelectedTrendSource(incomeSourceNames[0]);
+    }
+  }, [incomeSourceNames]);
+
+  // Fetch trend data when selected category or month changes
+  useEffect(() => {
+    if (!selectedTrendCategory) {
+      setCategoryTrendData(null);
+      return;
+    }
+    const fetchTrend = async () => {
+      try {
+        setIsTrendLoading(true);
+        const data = await getCategoryTrendData(
+          selectedDate.getMonth() + 1,
+          selectedDate.getFullYear(),
+          selectedTrendCategory,
+        );
+        setCategoryTrendData(data);
+      } catch (error) {
+        console.error('Error loading category trend:', error);
+        setCategoryTrendData(null);
+      } finally {
+        setIsTrendLoading(false);
+      }
+    };
+    fetchTrend();
+  }, [selectedTrendCategory, selectedDate]);
+
+  // Fetch income trend data when selected source or month changes
+  useEffect(() => {
+    if (!selectedTrendSource) {
+      setIncomeTrendData(null);
+      return;
+    }
+    const fetchIncomeTrend = async () => {
+      try {
+        setIsIncomeTrendLoading(true);
+        const data = await getIncomeTrendData(
+          selectedDate.getMonth() + 1,
+          selectedDate.getFullYear(),
+          selectedTrendSource,
+        );
+        setIncomeTrendData(data);
+      } catch (error) {
+        console.error('Error loading income trend:', error);
+        setIncomeTrendData(null);
+      } finally {
+        setIsIncomeTrendLoading(false);
+      }
+    };
+    fetchIncomeTrend();
+  }, [selectedTrendSource, selectedDate]);
 
   // Calculate total income
   const getTotalIncome = () => {
@@ -370,6 +466,32 @@ export default function Index() {
                 })}
               </View>
             )}
+
+            {/* MoM Category Trend Card */}
+            {expenseCategoryNames.length > 0 && (
+              <CategoryTrendCard
+                categories={expenseCategoryNames}
+                selectedCategory={selectedTrendCategory}
+                onSelectCategory={setSelectedTrendCategory}
+                trendData={categoryTrendData}
+                loading={isTrendLoading}
+              />
+            )}
+
+            {/* MoM Income Trend Card */}
+            {incomeSourceNames.length > 0 && (
+              <View style={{ marginBottom: 80 }}>
+                <IncomeTrendCard
+                  sources={incomeSourceNames}
+                  selectedSource={selectedTrendSource}
+                  onSelectSource={setSelectedTrendSource}
+                  trendData={incomeTrendData}
+                  loading={isIncomeTrendLoading}
+                />
+              </View>
+            )}
+
+
           </>
         )}
       </ScrollView>
