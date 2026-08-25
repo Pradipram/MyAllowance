@@ -378,10 +378,9 @@ export default function SavingsTrendCard({
 
     if (viewMode === "income") {
       const maxIncome = months.reduce((max, m) => Math.max(max, m.income), 0);
-      const activeMonths = months.filter((m) => m.income > 0);
       const average =
-        activeMonths.length > 0
-          ? activeMonths.reduce((s, m) => s + m.income, 0) / activeMonths.length
+        months.length > 0
+          ? months.reduce((s, m) => s + m.income, 0) / months.length
           : 0;
       const avgPct = maxIncome > 0 ? (average / maxIncome) * 100 : 0;
       const bottomOffset = (avgPct / 100) * 160;
@@ -454,12 +453,10 @@ export default function SavingsTrendCard({
       );
     }
 
-    // viewMode === "expense"
     const maxExpense = months.reduce((max, m) => Math.max(max, m.expense), 0);
-    const activeMonths = months.filter((m) => m.expense > 0);
     const average =
-      activeMonths.length > 0
-        ? activeMonths.reduce((s, m) => s + m.expense, 0) / activeMonths.length
+      months.length > 0
+        ? months.reduce((s, m) => s + m.expense, 0) / months.length
         : 0;
     const avgPct = maxExpense > 0 ? (average / maxExpense) * 100 : 0;
     const bottomOffset = (avgPct / 100) * 160;
@@ -582,8 +579,7 @@ export default function SavingsTrendCard({
     }
 
     if (viewMode === "income") {
-      const activeMonths = months.filter((m) => m.income > 0);
-      const avgIncome = activeMonths.length > 0 ? activeMonths.reduce((s, m) => s + m.income, 0) / activeMonths.length : 0;
+      const avgIncome = months.length > 0 ? months.reduce((s, m) => s + m.income, 0) / months.length : 0;
       return (
         <>
           <Text style={savingsTrendStyles.trendCompare}>
@@ -600,8 +596,7 @@ export default function SavingsTrendCard({
     }
 
     // viewMode === "expense"
-    const activeMonths = months.filter((m) => m.expense > 0);
-    const avgExpense = activeMonths.length > 0 ? activeMonths.reduce((s, m) => s + m.expense, 0) / activeMonths.length : 0;
+    const avgExpense = months.length > 0 ? months.reduce((s, m) => s + m.expense, 0) / months.length : 0;
     return (
       <>
         <Text style={savingsTrendStyles.trendCompare}>

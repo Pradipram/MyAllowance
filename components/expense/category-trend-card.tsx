@@ -102,11 +102,10 @@ export default function CategoryTrendCard({
       );
     }
 
-    // Compute 6-month average (only non-zero months)
-    const nonZeroMonths = months.filter((m) => m.total > 0);
+    // Compute 6-month average (all months included)
     const average =
-      nonZeroMonths.length > 0
-        ? nonZeroMonths.reduce((s, m) => s + m.total, 0) / nonZeroMonths.length
+      months.length > 0
+        ? months.reduce((s, m) => s + m.total, 0) / months.length
         : 0;
 
     const avgPct = maxTotal > 0 ? (average / maxTotal) * 100 : 0;

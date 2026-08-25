@@ -1,6 +1,6 @@
 # My Allowance 💰
 
-A comprehensive React Native budget tracking app built with Expo and Supabase that helps users manage their monthly expenses, track spending across different categories, and maintain detailed expense history with real-time financial insights.
+A comprehensive React Native budget tracking and investment portfolio app built with Expo and Supabase that helps users manage monthly expenses, track spending across categories, monitor investment portfolios, and maintain detailed financial history with real-time insights.
 
 ## 📱 Features
 
@@ -13,6 +13,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Decimal Amount Support**: Enter precise amounts with floating-point values (e.g., ₹12.50) using a decimal-friendly keyboard
 - **Receipt Upload**: Attach screenshots or photos of receipts to expenses
 - **Expense History**: Comprehensive transaction history with filtering and chronological sorting
+- **Analysis Page**: Dedicated analysis screen with Savings, Category Spending, and Income trend charts accessible via the trending-up icon on the dashboard
+- **Bottom Tab Navigation**: Two-tab layout — **Cashflow** (transactions & budgets) and **Portfolio** (asset tracking) — for seamless switching between financial views
 - **Progress Visualization**: Real-time progress bars with color-coded spending alerts
 - **Smart Navigation**: Month-by-month navigation with future month restrictions
 
@@ -80,14 +82,25 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **MoM Category Spending Trends**: 6-month bar chart per expense category with pill selector, MoM change badge (↑/↓/Flat), and current-vs-previous month comparison
 - **MoM Income Trends**: 6-month bar chart per income source with green-themed styling, pill selector, MoM badge, and comparison line
 - **MoM Savings Trends (Surplus / Deficit)**: 6-month financial health tracking with 4 view modes (Net Savings, Savings Rate, Income, Expenses), surplus/deficit color coding (Green `#10b981` / Red `#ef4444`), MoM improvement badges, average reference lines, and comparison summaries
-- **6-Month Average Line on Trends**: Category, Income, and Savings trend charts display proportional average reference lines overlaid on the bars, floating `avg` badges, and `6-mo avg` summary stats
-- **Scroll-to-Trends Shortcut**: A `trending-up` icon in the Monthly Summary card header instantly scrolls the dashboard to the Category Trends section
+- **6-Month Average Line on Trends**: Category, Income, and Savings trend charts display proportional average reference lines (including zero-activity months) overlaid on the bars, floating `avg` badges, and `6-mo avg` summary stats
+- **Analysis Page Shortcut**: A `trending-up` icon in the Monthly Summary card header navigates to the dedicated Analysis page for the selected month
 - **Total Trend View**: A "Total" pill pinned at the start of both Category Trends and Income Trends pill scroll bars for viewing aggregate historical performance across all categories or income sources
 - **Current Month Indicator**: Clear visual indication of which month is current
 - **Dashboard Action Buttons**: Separate "Edit Budget" (Blue) and "Edit Income Source" (Green) buttons for streamlined access
 - **Quick Navigation**: Direct access to budget and income management from dashboard
 - **Real-Time Updates**: Live calculation from actual transaction data
 - **Consistent Totals**: Unified spending calculations across all screens
+
+### 📈 Portfolio & Asset Tracking
+
+- **Portfolio Dashboard**: Dedicated tab showing total portfolio value with absolute and percentage return delta, color-coded (green for gains, red for losses)
+- **Asset Management**: Track individual holdings across Equity, Mutual Funds, and other asset types with invested amount vs. current market value
+- **Add Asset Flow**: Dedicated form screen with name, type selector, invested amount, and current value inputs with decimal-pad keyboard and form validation
+- **Quick Valuation Updates**: Tap any asset card to open a bottom-sheet modal for rapid market value updates without leaving the portfolio view
+- **Auto-Refresh on Focus**: Portfolio data refreshes automatically when navigating back to the tab
+- **Pull-to-Refresh**: Swipe down on the portfolio list to manually refresh all asset data
+- **Clean Empty State**: Friendly onboarding message when no assets have been added yet
+- **Floating Action Button**: Quick access to Add Asset screen from the portfolio dashboard
 
 ## 🚀 Getting Started
 
@@ -182,7 +195,7 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 - **Framework**: React Native with Expo SDK 54
 - **Language**: TypeScript for enhanced development experience
 - **Backend**: Supabase (PostgreSQL database, Authentication, Storage)
-- **Navigation**: Expo Router (file-based routing) with dynamic headers
+- **Navigation**: Expo Router (file-based routing) with bottom tab navigation and dynamic headers
 - **UI Components**: React Native core components + Ionicons for visual consistency
 - **Date Handling**: @react-native-community/datetimepicker for precise date selection
 - **State Management**: React hooks (useState, useEffect, useCallback)
@@ -192,7 +205,8 @@ A comprehensive React Native budget tracking app built with Expo and Supabase th
 
 ### Planned Features
 
-- **📊 Advanced Analytics Dashboard**: Detailed spending trends, insights, and financial health metrics
+- ~~**📊 Advanced Analytics Dashboard**: Detailed spending trends, insights, and financial health metrics~~ ✅ Delivered in v4.3.0
+- ~~**📈 Portfolio & Asset Tracking**: Investment portfolio management with real-time valuation tracking~~ ✅ Delivered in v4.4.0
 - **📈 Interactive Charts & Graphs**: Visual spending analysis with customizable time periods
 - **🔔 Smart Notifications**: Budget alerts, spending reminders, and milestone notifications
 - **☁️ Cloud Sync & Backup**: Secure data backup and multi-device synchronization
@@ -264,14 +278,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Development Stats
 
-- **Backend**: Supabase PostgreSQL with 6 main tables (monthly_records, budget_categories, income_sources, transactions, auth, and related tables)
-- **Lines of Code**: 4,000+ lines of TypeScript/TSX
-- **Screens**: 8 fully-featured screens with authentication
-- **Components**: 28+ reusable UI components
-- **Database Functions**: 4 PostgreSQL RPC functions (get_monthly_record, insert/update/delete transactions) with enhanced validation and atomic operations
-- **Features**: 40+ major features implemented
+- **Backend**: Supabase PostgreSQL with 8 main tables (monthly_records, budget_categories, income_sources, transactions, assets, asset_valuations, auth, and related tables)
+- **Lines of Code**: 5,000+ lines of TypeScript/TSX
+- **Screens**: 10 fully-featured screens with authentication
+- **Components**: 31+ reusable UI components
+- **Database Functions**: 7 PostgreSQL RPC functions (get_monthly_record, insert/update/delete transactions, get_portfolio_summary, insert_new_asset, update_asset_valuation) with enhanced validation and atomic operations
+- **Features**: 50+ major features implemented
 - **Authentication**: Email/password + Google OAuth
 - **Income Management**: Full income tracking with database-driven monthly income sources and source-level tracking
+- **Portfolio Management**: Investment tracking with asset types, valuation history, and portfolio-level aggregations
 - **Unified Data Model**: Centralized monthly_records table linking budgets, income sources, and transactions
 
 ## 🙏 Acknowledgments

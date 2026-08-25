@@ -135,17 +135,15 @@ export const getSavingsTrendData = async (
     momChangePercent = null;
   }
 
-  // Calculate average net and average savings rate over months with transactions
-  const activeMonths = months.filter((m) => m.income > 0 || m.expense > 0);
-  const activeCount = activeMonths.length > 0 ? activeMonths.length : 1;
+  // Calculate average net and average savings rate over all 6 months
   const averageNet =
-    activeMonths.length > 0
-      ? activeMonths.reduce((sum, m) => sum + m.net, 0) / activeCount
+    months.length > 0
+      ? months.reduce((sum, m) => sum + m.net, 0) / months.length
       : 0;
 
   const averageSavingsRate =
-    activeMonths.length > 0
-      ? activeMonths.reduce((sum, m) => sum + m.savingsRate, 0) / activeMonths.length
+    months.length > 0
+      ? months.reduce((sum, m) => sum + m.savingsRate, 0) / months.length
       : 0;
 
   return {

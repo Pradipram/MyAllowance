@@ -4,12 +4,18 @@ import { StatusBar } from "expo-status-bar";
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" translucent={true} backgroundColor="transparent" />
       <Stack>
         <Stack.Screen
           name="index"
           options={{
             title: "My Allowance",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
             headerShown: false,
           }}
         />
@@ -43,10 +49,24 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="analysis"
+          options={{
+            title: "Analysis",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="add-transaction"
           options={{
             title: "Add Transaction",
             headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="add-asset"
+          options={{
+            title: "Add Asset",
+            headerShown: false,
           }}
         />
       </Stack>

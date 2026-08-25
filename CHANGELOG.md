@@ -5,6 +5,47 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-08-25
+
+### Added
+- **Asset & Portfolio Tracking**: Full investment portfolio management feature allowing users to track stocks, mutual funds, and other assets with invested amount vs. current value tracking.
+  - **Portfolio Types** (`types/portfolio.ts`, `types/types.ts`): `Asset` and `PortfolioSummary` TypeScript interfaces for individual holdings and aggregate portfolio data.
+  - **Portfolio Service** (`services/portfolio.ts`): Three RPC-backed service functions — `fetchPortfolioSummary()`, `addAsset()`, and `updateValuation()` — all returning the standard `{ success, data, error }` response pattern with auth checks and error handling.
+  - **Portfolio Header Component** (`components/portfolio/portfolio-header.tsx`): Hero card displaying Total Portfolio Value with a green/red pill badge showing absolute and percentage delta.
+  - **Asset Card Component** (`components/portfolio/asset-card.tsx`): Reusable card showing asset name, type, current value, and color-coded percentage return (green for gains, red for losses).
+  - **Update Valuation Sheet** (`components/portfolio/update-valuation-sheet.tsx`): Bottom-sheet modal triggered by tapping an asset card, allowing quick inline valuation updates with previous value display, decimal-pad input, and automatic portfolio refresh on save.
+  - **Add Asset Screen** (`app/add-asset.tsx`): Dedicated form screen with inputs for asset name, type selector (Equity/Mutual Fund/Other), invested amount, and current value. Includes a "Same as invested" helper, form validation, and navigation back on success.
+  - **Portfolio Tab Screen** (`app/(tabs)/portfolio.tsx`): Full portfolio dashboard with `FlatList` rendering of asset cards, `PortfolioHeader` as list header, pull-to-refresh, empty state, `useFocusEffect` for auto-refresh on tab focus, and a FAB navigating to the Add Asset screen.
+- **Bottom Tab Navigation**: Restructured the app to use a two-tab bottom navigation bar, replacing the previous standalone home screen.
+  - **Cashflow Tab**: Home screen (monthly transactions, summary, categories) moved into `app/(tabs)/index.tsx` with a cash icon.
+  - **Portfolio Tab**: Asset tracking dashboard at `app/(tabs)/portfolio.tsx` with a pie-chart icon.
+  - **Tab Layout** (`app/(tabs)/_layout.tsx`): Configured both tabs with active/inactive tint colors and clean white tab bar styling.
+
+### Changed
+- **App Navigation Architecture**: Moved `app/index.tsx` into `app/(tabs)/index.tsx` and updated `app/_layout.tsx` to use the `(tabs)` group as the entry point, enabling the bottom tab bar across the main screens.
+- **Home Tab Renamed**: Changed the first tab label from "MyAllowance" (app name) to "Cashflow" to better describe its transaction-tracking purpose.
+- **Status Bar Visibility Fix**: Updated `StatusBar` in root layout from `style="auto"` to `style="dark"` with `translucent={true}` and `backgroundColor="transparent"`, ensuring Android system icons (battery, time, signal) are visible with `edgeToEdgeEnabled`.
+
+### Database
+- **New Supabase RPCs**: `get_portfolio_summary(p_user_id)`, `insert_new_asset(p_user_id, p_name, p_asset_type, p_invested_amount, p_current_value)`, `update_asset_valuation(p_asset_id, p_new_value)`.
+
+---
+
+## [4.3.2] - 2026-08-17
+
+### Added
+- **Dedicated Analysis Page** (`app/analysis.tsx`): New full-screen page titled "Analysis" that houses all three MoM trend cards — Savings Trends, Category Spending Trends, and Income Trends — with a back-navigation header and month/year subheading. The page independently loads transactions and all trend data based on `month` and `year` query params, keeping the dashboard lightweight.
+
+### Changed
+- **Trending-Up Icon → Navigate to Analysis**: The `trending-up-outline` icon in the Monthly Summary card now navigates to `/analysis?month=X&year=Y` instead of scrolling to an inline trend section. The icon is shown whenever transactions exist for the current month.
+- **Dashboard Simplified** (`app/index.tsx`): Removed all trend-related state, imports, effects, and card rendering (~250 lines). The home page now focuses on: Monthly Summary → History → Categories.
+- **`MonthlySummaryCard` Simplified** (`components/monthly-summary/monthly-summary-card.tsx`): Removed scroll ref dependencies (`categoryTrendRef`, `scrollViewRef`, `scrollOffsetRef`) and replaced with simple `selectedMonth`/`selectedYear` props and a `hasTransactions` flag. The icon handler now calls `router.push` instead of `scrollTo`.
+
+### Fixed
+- **6-Month Average Now Includes Zero Months**: All trend average calculations across Category Trends, Income Trends, and Savings Trends now divide by the full 6-month window instead of only counting months with non-zero values. This gives a more accurate true average that reflects months with no activity. Affected files: `category-trend-card.tsx`, `income-trend-card.tsx`, `savings-trend-card.tsx` (4 locations), and `savings-trend.ts` (`averageNet`, `averageSavingsRate`).
+
+---
+
 ## [4.3.1] - 2026-08-14
 
 ### Added

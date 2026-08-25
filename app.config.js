@@ -29,7 +29,7 @@ export default {
   expo: {
     name: getAppName(),
     slug: "MyAllowance",
-    version: "4.3.1",
+    version: "4.4.0",
     orientation: "portrait",
     icon: "./assets/images/myallowanceicon.png",
     scheme: "myallowance",
