@@ -1,6 +1,7 @@
+import { styles } from "@/assets/styles/portfolio.style";
 import AssetCard from "@/components/portfolio/asset-card";
+import PortfolioDetails from "@/components/portfolio/portfolio-details";
 import PortfolioHeader from "@/components/portfolio/portfolio-header";
-import UpdateValuationSheet from "@/components/portfolio/update-valuation-sheet";
 import { fetchPortfolioSummary } from "@/services/portfolio";
 import { Asset, PortfolioSummary } from "@/types/types";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,10 +11,9 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,6 +30,7 @@ export default function PortfolioScreen() {
       const response = await fetchPortfolioSummary();
       if (response.success && response.data) {
         setSummary(response.data);
+        // console.log("Portfolio summary fetched successfully:", response.data);
       } else {
         console.error("Error fetching portfolio summary:", response.error);
       }
@@ -126,7 +127,7 @@ export default function PortfolioScreen() {
       </TouchableOpacity>
 
       {/* Update Valuation Sheet */}
-      <UpdateValuationSheet
+      {/* <UpdateValuationSheet
         visible={isValuationSheetVisible}
         assetId={selectedAsset?.asset_id || ""}
         currentValue={selectedAsset?.current_value}
@@ -135,63 +136,12 @@ export default function PortfolioScreen() {
           setSelectedAsset(null);
         }}
         onSuccess={handleValuationSuccess}
+      /> */}
+      <PortfolioDetails
+        visible={selectedAsset !== null}
+        asset={selectedAsset}
+        onClose={() => setSelectedAsset(null)}
       />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 12,
-  },
-  listContent: {
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 32,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#495057",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#6c757d",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 24,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007AFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-});

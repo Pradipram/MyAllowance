@@ -7,13 +7,6 @@ export default function RootLayout() {
       <StatusBar style="dark" translucent={true} backgroundColor="transparent" />
       <Stack>
         <Stack.Screen
-          name="index"
-          options={{
-            title: "My Allowance",
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
           name="(tabs)"
           options={{
             headerShown: false,

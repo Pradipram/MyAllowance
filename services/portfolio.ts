@@ -95,8 +95,7 @@ export const addAsset = async (
       };
     }
 
-    const { data, error } = await supabase.rpc("insert_new_asset", {
-      p_user_id: user.id,
+    const { data, error } = await supabase.rpc("insert_new_asset_v2", {
       p_name: name.trim(),
       p_asset_type: type,
       p_invested_amount: invested,
@@ -112,6 +111,7 @@ export const addAsset = async (
       };
     }
 
+    console.log("Add Asset data: ",data);
     return {
       success: true,
       data: data,
