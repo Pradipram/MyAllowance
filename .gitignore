@@ -44,3 +44,9 @@ app-example
 /android
 
 *.apk
+
+# Gemini CLI
+.gemini/
+
+# Google GitHub credentials
+gha-creds-*.json
