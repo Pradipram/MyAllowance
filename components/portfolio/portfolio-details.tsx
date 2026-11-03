@@ -1,6 +1,6 @@
 import { Asset } from '@/types/types'
 import { Ionicons } from '@expo/vector-icons'
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import {
   Modal,
   Pressable,
@@ -19,67 +19,158 @@ interface PortfolioDetailsProps {
 const formatCurrency = (value: number) =>
   `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-// ── Action row types ─────────────────────────────────────────────────────────
-type ActionRow = {
+// ── Action definitions ───────────────────────────────────────────────────────
+interface ActionDef {
   key: string
   label: string
+  tooltip: string
   icon: keyof typeof Ionicons.glyphMap
   iconColor: string
   labelColor?: string
-  onPress: () => void
 }
 
-const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) => {
+const ACTIONS: ActionDef[] = [
+  {
+    key: 'edit',
+    label: 'Edit asset',
+    tooltip: 'Correct initial entry mistakes (e.g. wrong name, incorrect buy price). Only available if no valuation updates have been recorded.',
+    icon: 'create-outline',
+    iconColor: '#7c8395',
+  },
+  {
+    key: 'update',
+    label: 'Update valuation',
+    tooltip: 'Update the current market value. You can also add to your invested amount if you bought more of this asset.',
+    icon: 'trending-up-outline',
+    iconColor: '#7c8395',
+  },
+  {
+    key: 'sold',
+    label: 'Mark as sold',
+    tooltip: 'Record that this asset has been sold. It will be locked from further valuation updates.',
+    icon: 'swap-horizontal-outline',
+    iconColor: '#7c8395',
+  },
+  {
+    key: 'delete',
+    label: 'Delete asset',
+    tooltip: 'Permanently remove this asset and all its valuation history, as if it was never added.',
+    icon: 'trash-outline',
+    iconColor: '#eb5b3c',
+    labelColor: '#eb5b3c',
+  },
+]
 
-  const actions: ActionRow[] = [
-    {
-      key: 'edit',
-      label: 'Edit asset',
-      icon: 'create-outline',
-      iconColor: '#7c8395',
-      onPress: () => {},
-    },
-    {
-      key: 'update',
-      label: 'Update valuation',
-      icon: 'trending-up-outline',
-      iconColor: '#7c8395',
-      onPress: () => {},
-    },
-    {
-      key: 'sold',
-      label: 'Mark as sold',
-      icon: 'swap-horizontal-outline',
-      iconColor: '#7c8395',
-      onPress: () => {},
-    },
-    {
-      key: 'delete',
-      label: 'Delete asset',
-      icon: 'trash-outline',
-      iconColor: '#eb5b3c',
-      labelColor: '#eb5b3c',
-      onPress: () => {},
-    },
-  ]
+// ── Tooltip component ────────────────────────────────────────────────────────
+interface TooltipProps {
+  text: string
+  visible: boolean
+  onClose: () => void
+  anchorY: number
+}
+
+const Tooltip = ({ text, visible, onClose, anchorY }: TooltipProps) => {
+  if (!visible) return null
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <Pressable style={tooltipStyles.backdrop} onPress={onClose}>
+        <View style={[tooltipStyles.bubble, { bottom: anchorY }]}>
+          <Text style={tooltipStyles.text}>{text}</Text>
+          {/* Arrow pointing down */}
+          <View style={tooltipStyles.arrow} />
+        </View>
+      </Pressable>
+    </Modal>
+  )
+}
+
+const tooltipStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+  },
+  bubble: {
+    position: 'absolute',
+    right: 24,
+    maxWidth: 260,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  text: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#f0f0f0',
+  },
+  arrow: {
+    position: 'absolute',
+    bottom: -6,
+    right: 14,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#1a1a1a',
+  },
+})
+
+// ── Main component ───────────────────────────────────────────────────────────
+const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) => {
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
+  const [tooltipY, setTooltipY] = useState(0)
+  const infoRefs = useRef<Record<string, View | null>>({})
+
+  const showTooltip = (key: string) => {
+    const ref = infoRefs.current[key]
+    if (ref) {
+      ref.measureInWindow((_x, y, _w, h) => {
+        // Position tooltip so its bottom + arrow sits just above the icon
+        const screenBottomOffset = Math.round(
+          // distance from bottom of screen to the top of the icon
+          (global as any).screen?.height
+            ? (global as any).screen.height - y
+            : 800 - y  // fallback
+        )
+        setTooltipY(screenBottomOffset + 4)
+        setActiveTooltip(key)
+      })
+    } else {
+      setActiveTooltip(key)
+    }
+  }
+
+  const handleClose = () => {
+    setActiveTooltip(null)
+    onClose()
+  }
+
+  const activeAction = ACTIONS.find((a) => a.key === activeTooltip)
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleClose}>
+      <Pressable style={styles.overlay} onPress={handleClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
 
-          {/* ── Header ───────────────────────────────────────────────────── */}
+          {/* ── Header ─────────────────────────────────────────────────── */}
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text style={styles.sheetTitle}>Asset Details</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={8}>
+            <TouchableOpacity onPress={handleClose} hitSlop={8}>
               <Ionicons name="close" size={24} color="#6c757d" />
             </TouchableOpacity>
           </View>
 
-          {/* ── Info Card ────────────────────────────────────────────────── */}
+          {/* ── Info Card ──────────────────────────────────────────────── */}
           <View style={styles.card}>
-            {/* Row 1: Name & Type */}
             <View style={styles.row}>
               <View style={styles.cell}>
                 <Text style={styles.label}>Asset name</Text>
@@ -93,7 +184,6 @@ const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) =>
 
             <View style={styles.divider} />
 
-            {/* Row 2: Invested & Current Value */}
             <View style={styles.row}>
               <View style={styles.cell}>
                 <Text style={styles.label}>Invested amount</Text>
@@ -110,44 +200,54 @@ const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) =>
             </View>
           </View>
 
-          {/* ── Action List ──────────────────────────────────────────────── */}
+          {/* ── Action List ────────────────────────────────────────────── */}
           <View style={[styles.card, styles.actionList]}>
-            {actions.map((action, index) => (
+            {ACTIONS.map((action, index) => (
               <React.Fragment key={action.key}>
-                <TouchableOpacity style={styles.actionRow} onPress={action.onPress} activeOpacity={0.7}>
+                <TouchableOpacity
+                  style={styles.actionRow}
+                  onPress={() => {/* TODO: wire backend */}}
+                  activeOpacity={0.7}
+                >
+                  {/* Left: icon + label + info */}
                   <View style={styles.actionLeft}>
                     <Ionicons name={action.icon} size={20} color={action.iconColor} />
                     <Text style={[styles.actionLabel, action.labelColor ? { color: action.labelColor } : null]}>
                       {action.label}
                     </Text>
+                    <TouchableOpacity
+                      ref={(ref) => { infoRefs.current[action.key] = ref }}
+                      onPress={(e) => {
+                        e.stopPropagation()
+                        showTooltip(action.key)
+                      }}
+                      hitSlop={8}
+                      style={styles.infoButton}
+                    >
+                      <Ionicons name="information-circle-outline" size={16} color="#c4c7d0" />
+                    </TouchableOpacity>
                   </View>
+
+                  {/* Right: chevron */}
                   <Ionicons name="chevron-forward" size={16} color="#c4c7d0" />
                 </TouchableOpacity>
-                {index < actions.length - 1 && <View style={styles.divider} />}
+                {index < ACTIONS.length - 1 && <View style={styles.divider} />}
               </React.Fragment>
             ))}
           </View>
 
-          {/* ── Sticky Bottom Action Bar ─────────────────────────────────── */}
-          <View style={styles.bottomBar}>
-            {/* Edit — outlined */}
-            <TouchableOpacity style={styles.btnOutline} activeOpacity={0.8}>
-              <Text style={styles.btnOutlineText}>Edit</Text>
-            </TouchableOpacity>
-
-            {/* Sold — orange filled */}
-            <TouchableOpacity style={[styles.btnFilled, styles.btnSold]} activeOpacity={0.8}>
-              <Text style={styles.btnFilledText}>Sold</Text>
-            </TouchableOpacity>
-
-            {/* Update Valuation — green filled */}
-            <TouchableOpacity style={[styles.btnFilled, styles.btnUpdate]} activeOpacity={0.8}>
-              <Text style={styles.btnFilledText}>Update</Text>
-            </TouchableOpacity>
-          </View>
-
         </Pressable>
       </Pressable>
+
+      {/* ── Tooltip overlay ────────────────────────────────────────────── */}
+      {activeAction && (
+        <Tooltip
+          text={activeAction.tooltip}
+          visible={true}
+          onClose={() => setActiveTooltip(null)}
+          anchorY={tooltipY}
+        />
+      )}
     </Modal>
   )
 }
@@ -186,7 +286,7 @@ const styles = StyleSheet.create({
     color: '#212529',
   },
 
-  // ── Info Card ──────────────────────────────────────────────────────────────
+  // ── Info Card ────────────────────────────────────────────────────────────
   card: {
     borderWidth: 1,
     borderColor: '#e6e7eb',
@@ -223,7 +323,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 
-  // ── Action List ────────────────────────────────────────────────────────────
+  // ── Action List ──────────────────────────────────────────────────────────
   actionList: {
     marginTop: 12,
   },
@@ -238,50 +338,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   actionLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#44475b',
   },
-
-  // ── Bottom Bar ─────────────────────────────────────────────────────────────
-  bottomBar: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
-  },
-  btnOutline: {
-    flex: 1,
-    height: 48,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#00d09c',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnOutlineText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#00d09c',
-  },
-  btnFilled: {
-    flex: 2,
-    height: 48,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnFilledText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  btnSold: {
-    backgroundColor: '#eb5b3c',
-  },
-  btnUpdate: {
-    backgroundColor: '#00d09c',
+  infoButton: {
+    padding: 4,
   },
 })
 
