@@ -1,8 +1,7 @@
-import { updateValuation } from "@/services/portfolio";
+import { Asset } from "@/types/types";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Modal,
@@ -16,279 +15,195 @@ import {
 } from "react-native";
 
 interface UpdateValuationSheetProps {
-  assetId: string;
-  currentValue?: number;
+  asset: Asset | null;
   visible: boolean;
   onClose: () => void;
-  onSuccess: () => void;
 }
 
+const formatCurrency = (value: number) =>
+  `₹${value.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 export default function UpdateValuationSheet({
-  assetId,
-  currentValue,
+  asset,
   visible,
   onClose,
-  onSuccess,
 }: UpdateValuationSheetProps) {
-  const [newValueText, setNewValueText] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [investedText, setInvestedText] = useState("");
+  const [currentText, setCurrentText] = useState("");
 
   useEffect(() => {
-    if (visible) {
-      setNewValueText(
-        currentValue !== undefined && currentValue !== null
-          ? currentValue.toString()
-          : "",
-      );
+    if (visible && asset) {
+      setInvestedText(asset.invested_amount.toString());
+      setCurrentText(asset.current_value.toString());
     }
-  }, [visible, currentValue]);
+  }, [visible, asset]);
 
-  const handleSave = async () => {
-    if (!assetId) {
-      Alert.alert("Error", "Asset ID is missing.");
-      return;
-    }
+  const invested = Number.parseFloat(investedText) || 0;
+  const current = Number.parseFloat(currentText) || 0;
+  const gain = current - invested;
+  const gainPercent = invested > 0 ? (gain / invested) * 100 : 0;
+  const isGain = gain >= 0;
 
-    const parsedValue = parseFloat(newValueText);
-    if (isNaN(parsedValue) || parsedValue < 0) {
-      Alert.alert("Invalid Value", "Please enter a valid valuation amount.");
-      return;
-    }
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(new Date()),
+    [],
+  );
 
-    try {
-      setLoading(true);
-      const response = await updateValuation(assetId, parsedValue);
-
-      if (response.success) {
-        onSuccess();
-      } else {
-        Alert.alert(
-          "Update Failed",
-          response.error || "Failed to update valuation. Please try again.",
-        );
-      }
-    } catch (error: any) {
-      console.error("Error updating valuation:", error);
-      Alert.alert("Error", "An unexpected error occurred while updating valuation.");
-    } finally {
-      setLoading(false);
-    }
+  const handleSave = () => {
+    Alert.alert("Not implemented", "Saving valuation is not implemented yet.");
   };
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent
       onRequestClose={onClose}
     >
-      {/* Backdrop overlay */}
-      <Pressable style={styles.overlay} onPress={onClose} />
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.sheetWrapper}
+        >
+          <Pressable style={styles.sheet} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.handle} />
 
-      {/* Sheet Content with Keyboard Avoidance */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.sheetWrapper}
-      >
-        <View style={styles.sheetContent}>
-          {/* Sheet Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Update Valuation</Text>
-            <TouchableOpacity
-              onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
+            <View style={styles.header}>
+              <Text style={styles.title}>Update Valuation</Text>
+              <TouchableOpacity onPress={onClose} hitSlop={8}>
+                <Ionicons name="close" size={24} color="#8e8e93" />
+              </TouchableOpacity>
+            </View>
 
-          {/* Form Body */}
-          <View style={styles.body}>
-            {currentValue !== undefined && currentValue !== null && (
-              <View style={styles.currentValueBadge}>
-                <Text style={styles.currentValueLabel}>Previous Value:</Text>
-                <Text style={styles.currentValueAmount}>
-                  ₹{currentValue.toLocaleString()}
-                </Text>
+            <View style={styles.identity}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{asset?.name.charAt(0).toUpperCase()}</Text>
               </View>
-            )}
+              <View style={styles.identityText}>
+                <Text style={styles.assetName}>{asset?.name}</Text>
+                <Text style={styles.assetType}>{asset?.asset_type}</Text>
+              </View>
+              <Text style={styles.assetId}>Asset ID #{asset?.asset_id.slice(0, 4)}</Text>
+            </View>
 
-            <Text style={styles.inputLabel}>New Market Value *</Text>
-            <View style={styles.amountInputContainer}>
-              <Text style={styles.currencySymbol}>₹</Text>
+            <Text style={styles.label}>Valuation date</Text>
+            <View style={styles.dateField}>
+              <Text style={styles.fieldText}>{formattedDate}</Text>
+              <Ionicons name="calendar-outline" size={19} color="#8e8e93" />
+            </View>
+
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Invested amount</Text>
+              <Text style={styles.previous}>Previously {formatCurrency(asset?.invested_amount ?? 0)}</Text>
+            </View>
+            <View style={styles.inputField}>
+              <Text style={styles.currency}>₹</Text>
               <TextInput
-                style={styles.amountInput}
-                value={newValueText}
-                onChangeText={(text) => {
-                  if (text === "" || /^\d*\.?\d*$/.test(text)) {
-                    setNewValueText(text);
-                  }
-                }}
-                placeholder="0.00"
-                placeholderTextColor="#999"
+                value={investedText}
+                onChangeText={setInvestedText}
                 keyboardType="decimal-pad"
-                autoFocus
-                maxLength={12}
-                editable={!loading}
+                style={styles.input}
+                selectTextOnFocus
               />
             </View>
 
-            {/* Action Buttons */}
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={onClose}
-                disabled={loading}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Current value</Text>
+              <Text style={styles.previous}>Previously {formatCurrency(asset?.current_value ?? 0)}</Text>
+            </View>
+            <View style={styles.inputField}>
+              <Text style={styles.currency}>₹</Text>
+              <TextInput
+                value={currentText}
+                onChangeText={setCurrentText}
+                keyboardType="decimal-pad"
+                style={styles.input}
+                selectTextOnFocus
+              />
+            </View>
 
-              <TouchableOpacity
-                style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-                onPress={handleSave}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>Save Valuation</Text>
-                )}
+            <View style={[styles.preview, isGain ? styles.previewGain : styles.previewLoss]}>
+              <Text style={styles.previewLabel}>{isGain ? "Unrealised gain" : "Unrealised loss"}</Text>
+              <Text style={[styles.previewValue, isGain ? styles.gain : styles.loss]}>
+                {isGain ? "+" : "-"}{formatCurrency(Math.abs(gain))} ({isGain ? "+" : "-"}{Math.abs(gainPercent).toFixed(2)}%)
+              </Text>
+            </View>
+
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveText}>Save valuation</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Pressable>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  sheetWrapper: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  sheetContent: {
-    backgroundColor: "#ffffff",
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
+  sheetWrapper: { flex: 1, justifyContent: "flex-end" },
+  sheet: {
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
-    backgroundColor: "#ffffff",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-  },
-  body: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    padding: 20,
     paddingBottom: Platform.OS === "ios" ? 34 : 24,
   },
-  currentValueBadge: {
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#e5e5ea",
+    alignSelf: "center",
+    marginBottom: 18,
+  },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
+  title: { fontSize: 20, fontWeight: "700", color: "#111" },
+  identity: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f1f3f5",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: "#f8f8fa",
     borderRadius: 10,
-    marginBottom: 16,
-    gap: 8,
-  },
-  currentValueLabel: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#6c757d",
-  },
-  currentValueAmount: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#212529",
-  },
-  inputLabel: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    marginBottom: 8,
-  },
-  amountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-    paddingHorizontal: 16,
+    padding: 12,
     marginBottom: 24,
   },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#007AFF",
-    marginRight: 8,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    paddingVertical: 14,
-  },
-  buttonGroup: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderWidth: 2,
-    borderColor: "#e9ecef",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#007AFF",
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#9ec5fe",
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ffffff",
-  },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#e5e5ea", alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 13, fontWeight: "700", color: "#555" },
+  identityText: { flex: 1, marginLeft: 12 },
+  assetName: { fontSize: 15, fontWeight: "600", color: "#111" },
+  assetType: { fontSize: 12, color: "#8e8e93", marginTop: 2 },
+  assetId: { fontSize: 11, color: "#8e8e93" },
+  labelRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  label: { fontSize: 13, fontWeight: "600", color: "#555", marginBottom: 8 },
+  previous: { fontSize: 11, color: "#8e8e93", marginBottom: 8 },
+  dateField: { height: 44, borderWidth: 1, borderColor: "#d1d1d6", borderRadius: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, marginBottom: 24 },
+  fieldText: { fontSize: 14, color: "#111" },
+  inputField: { height: 48, borderWidth: 1.2, borderColor: "#d1d1d6", borderRadius: 8, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, marginBottom: 20 },
+  currency: { fontSize: 15, color: "#8e8e93", marginRight: 8 },
+  input: { flex: 1, fontSize: 17, fontWeight: "600", color: "#111" },
+  preview: { borderRadius: 8, padding: 10, marginBottom: 14 },
+  previewGain: { backgroundColor: "#f1faf2" },
+  previewLoss: { backgroundColor: "#fff1f0" },
+  previewLabel: { fontSize: 11, color: "#666", marginBottom: 2 },
+  previewValue: { fontSize: 14, fontWeight: "700" },
+  gain: { color: "#228b22" },
+  loss: { color: "#d64545" },
+  actions: { flexDirection: "row", gap: 10 },
+  cancelButton: { flex: 1, height: 44, borderRadius: 9, borderWidth: 1, borderColor: "#d1d1d6", alignItems: "center", justifyContent: "center" },
+  cancelText: { fontSize: 14, fontWeight: "600", color: "#555" },
+  saveButton: { flex: 1, height: 44, borderRadius: 9, backgroundColor: "#007aff", alignItems: "center", justifyContent: "center" },
+  saveText: { fontSize: 14, fontWeight: "600", color: "#fff" },
 });

@@ -1,5 +1,6 @@
 import { deleteAsset } from '@/services/portfolio'
 import { Asset } from '@/types/types'
+import UpdateValuationSheet from '@/components/portfolio/update-valuation-sheet'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import React, { useRef, useState } from 'react'
@@ -138,6 +139,7 @@ const PortfolioDetails = ({
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
   const [tooltipY, setTooltipY] = useState(0)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
+  const [showUpdateSheet, setShowUpdateSheet] = useState(false)
   const infoRefs = useRef<Record<string, View | null>>({})
 
   const showTooltip = (key: string) => {
@@ -162,6 +164,7 @@ const PortfolioDetails = ({
   const handleClose = () => {
     setActiveTooltip(null)
     setLoadingAction(null)
+    setShowUpdateSheet(false)
     onClose()
   }
 
@@ -220,6 +223,8 @@ const PortfolioDetails = ({
       handleEdit()
     } else if (key === 'delete') {
       handleDelete()
+    } else if (key === 'update') {
+      setShowUpdateSheet(true)
     }
   }
 
@@ -313,6 +318,12 @@ const PortfolioDetails = ({
 
         </Pressable>
       </Pressable>
+
+      <UpdateValuationSheet
+        visible={showUpdateSheet}
+        asset={asset}
+        onClose={() => setShowUpdateSheet(false)}
+      />
 
       {/* ── Tooltip overlay ────────────────────────────────────────────── */}
       {activeAction && (
