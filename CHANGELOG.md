@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Update Valuation Sheet** (`components/portfolio/update-valuation-sheet.tsx`): Added the designed valuation form UI with asset details, date, invested amount, and current value. The form is scrollable and keyboard-aware, saves through the `update_asset_valuation` RPC, shows a loader while saving, displays a top success toast with a timed progress indicator, and refreshes the portfolio after a successful update.
+- **Mark as Sold** (`components/portfolio/portfolio-details.tsx`): Added an irreversible warning, final sale value form, and `close_asset` RPC integration.
 - **Portfolio Screen** (`app/(tabs)/portfolio.tsx`): Asset card tap now opens `PortfolioDetails` sheet instead of `UpdateValuationSheet`. The `PortfolioDetails` component receives `visible`, `asset`, `onClose`, and `onSuccess` props to refresh portfolio summary upon deletion or edits.
 - **Add Asset Screen** (`app/add-asset.tsx`): Supports edit mode via route parameters (`isEditing`, `assetId`, `name`, `assetType`, `investedAmount`, `currentValue`), dynamically updating header titles, button labels, and delegating submission to `editAsset`.
 - **`UpdateValuationSheet`**: Commented out in the portfolio screen; will be re-integrated as a sub-action triggered from the Portfolio Details action menu in a future release.

@@ -234,6 +234,40 @@ export const editAsset = async (
   }
 };
 
+export const closeAsset = async (
+  assetId: string,
+  finalValue: number
+): Promise<PortfolioServiceResponse> => {
+  try {
+    const { data, error } = await supabase.rpc("close_asset", {
+      p_asset_id: assetId,
+      p_final_value: finalValue,
+    });
+
+    if (error) {
+      console.error("Supabase RPC error closing asset:", error);
+      return {
+        success: false,
+        data: null,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data,
+      error: null,
+    };
+  } catch (err: any) {
+    console.error("Unexpected error in closeAsset:", err);
+    return {
+      success: false,
+      data: null,
+      error: err?.message || "An unexpected error occurred while closing asset.",
+    };
+  }
+};
+
 export const deleteAsset = async (
   _assetId: string
 ): Promise<PortfolioServiceResponse<boolean>> => ({
