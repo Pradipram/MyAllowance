@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `deleteAsset(assetId)`: Deletes asset record and cascades deletion to valuation ledger entries.
 
 ### Changed
+- **Update Valuation Sheet** (`components/portfolio/update-valuation-sheet.tsx`): Made the form scrollable and keyboard-aware so amount fields remain visible while editing.
 - **Update Valuation Sheet** (`components/portfolio/update-valuation-sheet.tsx`): Added the designed valuation form UI with asset details, date, invested amount, current value, and gain/loss preview. Save behavior is intentionally not implemented yet.
 - **Portfolio Screen** (`app/(tabs)/portfolio.tsx`): Asset card tap now opens `PortfolioDetails` sheet instead of `UpdateValuationSheet`. The `PortfolioDetails` component receives `visible`, `asset`, `onClose`, and `onSuccess` props to refresh portfolio summary upon deletion or edits.
 - **Add Asset Screen** (`app/add-asset.tsx`): Supports edit mode via route parameters (`isEditing`, `assetId`, `name`, `assetType`, `investedAmount`, `currentValue`), dynamically updating header titles, button labels, and delegating submission to `editAsset`.

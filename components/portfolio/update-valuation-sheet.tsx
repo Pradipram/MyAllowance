@@ -7,6 +7,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -70,81 +71,87 @@ export default function UpdateValuationSheet({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.sheetWrapper}
         >
           <Pressable style={styles.sheet} onPress={(event) => event.stopPropagation()}>
-            <View style={styles.handle} />
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetContent}
+            >
+              <View style={styles.handle} />
 
-            <View style={styles.header}>
-              <Text style={styles.title}>Update Valuation</Text>
-              <TouchableOpacity onPress={onClose} hitSlop={8}>
-                <Ionicons name="close" size={24} color="#8e8e93" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.identity}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{asset?.name.charAt(0).toUpperCase()}</Text>
+              <View style={styles.header}>
+                <Text style={styles.title}>Update Valuation</Text>
+                <TouchableOpacity onPress={onClose} hitSlop={8}>
+                  <Ionicons name="close" size={24} color="#8e8e93" />
+                </TouchableOpacity>
               </View>
-              <View style={styles.identityText}>
-                <Text style={styles.assetName}>{asset?.name}</Text>
-                <Text style={styles.assetType}>{asset?.asset_type}</Text>
+
+              <View style={styles.identity}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{asset?.name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <View style={styles.identityText}>
+                  <Text style={styles.assetName}>{asset?.name}</Text>
+                  <Text style={styles.assetType}>{asset?.asset_type}</Text>
+                </View>
+                <Text style={styles.assetId}>Asset ID #{asset?.asset_id.slice(0, 4)}</Text>
               </View>
-              <Text style={styles.assetId}>Asset ID #{asset?.asset_id.slice(0, 4)}</Text>
-            </View>
 
-            <Text style={styles.label}>Valuation date</Text>
-            <View style={styles.dateField}>
-              <Text style={styles.fieldText}>{formattedDate}</Text>
-              <Ionicons name="calendar-outline" size={19} color="#8e8e93" />
-            </View>
+              <Text style={styles.label}>Valuation date</Text>
+              <View style={styles.dateField}>
+                <Text style={styles.fieldText}>{formattedDate}</Text>
+                <Ionicons name="calendar-outline" size={19} color="#8e8e93" />
+              </View>
 
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Invested amount</Text>
-              <Text style={styles.previous}>Previously {formatCurrency(asset?.invested_amount ?? 0)}</Text>
-            </View>
-            <View style={styles.inputField}>
-              <Text style={styles.currency}>₹</Text>
-              <TextInput
-                value={investedText}
-                onChangeText={setInvestedText}
-                keyboardType="decimal-pad"
-                style={styles.input}
-                selectTextOnFocus
-              />
-            </View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Invested amount</Text>
+                <Text style={styles.previous}>Previously {formatCurrency(asset?.invested_amount ?? 0)}</Text>
+              </View>
+              <View style={styles.inputField}>
+                <Text style={styles.currency}>₹</Text>
+                <TextInput
+                  value={investedText}
+                  onChangeText={setInvestedText}
+                  keyboardType="decimal-pad"
+                  style={styles.input}
+                  selectTextOnFocus
+                />
+              </View>
 
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Current value</Text>
-              <Text style={styles.previous}>Previously {formatCurrency(asset?.current_value ?? 0)}</Text>
-            </View>
-            <View style={styles.inputField}>
-              <Text style={styles.currency}>₹</Text>
-              <TextInput
-                value={currentText}
-                onChangeText={setCurrentText}
-                keyboardType="decimal-pad"
-                style={styles.input}
-                selectTextOnFocus
-              />
-            </View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Current value</Text>
+                <Text style={styles.previous}>Previously {formatCurrency(asset?.current_value ?? 0)}</Text>
+              </View>
+              <View style={styles.inputField}>
+                <Text style={styles.currency}>₹</Text>
+                <TextInput
+                  value={currentText}
+                  onChangeText={setCurrentText}
+                  keyboardType="decimal-pad"
+                  style={styles.input}
+                  selectTextOnFocus
+                />
+              </View>
 
-            <View style={[styles.preview, isGain ? styles.previewGain : styles.previewLoss]}>
-              <Text style={styles.previewLabel}>{isGain ? "Unrealised gain" : "Unrealised loss"}</Text>
-              <Text style={[styles.previewValue, isGain ? styles.gain : styles.loss]}>
-                {isGain ? "+" : "-"}{formatCurrency(Math.abs(gain))} ({isGain ? "+" : "-"}{Math.abs(gainPercent).toFixed(2)}%)
-              </Text>
-            </View>
+              <View style={[styles.preview, isGain ? styles.previewGain : styles.previewLoss]}>
+                <Text style={styles.previewLabel}>{isGain ? "Unrealised gain" : "Unrealised loss"}</Text>
+                <Text style={[styles.previewValue, isGain ? styles.gain : styles.loss]}>
+                  {isGain ? "+" : "-"}{formatCurrency(Math.abs(gain))} ({isGain ? "+" : "-"}{Math.abs(gainPercent).toFixed(2)}%)
+                </Text>
+              </View>
 
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                <Text style={styles.saveText}>Save valuation</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.actions}>
+                <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                  <Text style={styles.saveText}>Save valuation</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
@@ -159,6 +166,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    maxHeight: "90%",
+  },
+  sheetContent: {
     padding: 20,
     paddingBottom: Platform.OS === "ios" ? 34 : 24,
   },
