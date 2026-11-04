@@ -191,24 +191,12 @@ export const updateValuation = async (
   }
 };
 
-/**
- * Checks whether an asset has undergone any changes since it was added
- * by querying asset_monthly_snapshots. If more than two entries exist
- * with the asset_id, then something has been updated; otherwise it has not changed.
- *
- * @param {string} assetId - The UUID of the asset to check.
- * @returns {Promise<PortfolioServiceResponse<boolean>>} - true if changed (> 2 entries), false if unchanged (<= 2 entries).
- */
 export const checkAssetHasChanges = async (
   assetId: string
 ): Promise<PortfolioServiceResponse<boolean>> => {
   try {
     if (!assetId) {
-      return {
-        success: false,
-        data: null,
-        error: "Asset ID is required.",
-      };
+      return { success: false, data: null, error: "Asset ID is required." };
     }
 
     const {
@@ -224,27 +212,19 @@ export const checkAssetHasChanges = async (
       };
     }
 
-    // Check count of entries in asset_monthly_snapshots with the asset_id
     const { count, error } = await supabase
       .from("asset_monthly_snapshots")
       .select("*", { count: "exact", head: true })
       .eq("asset_id", assetId);
 
     if (error) {
-      console.error("Supabase error checking asset_monthly_snapshots:", error);
-      return {
-        success: false,
-        data: null,
-        error: error.message,
-      };
+      console.error("Supabase error checking asset snapshots:", error);
+      return { success: false, data: null, error: error.message };
     }
-
-    // If more than two entries exist with the asset_id, then something has been updated
-    const hasChanges = (count ?? 0) > 2;
 
     return {
       success: true,
-      data: hasChanges,
+      data: (count ?? 0) > 2,
       error: null,
     };
   } catch (err: any) {
@@ -252,23 +232,11 @@ export const checkAssetHasChanges = async (
     return {
       success: false,
       data: null,
-      error:
-        err?.message || "An unexpected error occurred while checking asset changes.",
+      error: err?.message || "An unexpected error occurred while checking asset changes.",
     };
   }
 };
 
-/**
- * Updates an asset's details if no subsequent updates have been recorded
- * (i.e. <= 2 entries exist in asset_monthly_snapshots).
- *
- * @param {string} assetId - The UUID of the asset to edit.
- * @param {string} name - The updated asset name.
- * @param {string} type - The updated asset type.
- * @param {number} invested - The updated invested amount.
- * @param {number} current - The updated current valuation amount.
- * @returns {Promise<PortfolioServiceResponse>}
- */
 export const editAsset = async (
   assetId: string,
   name: string,
@@ -278,19 +246,10 @@ export const editAsset = async (
 ): Promise<PortfolioServiceResponse> => {
   try {
     if (!assetId) {
-      return {
-        success: false,
-        data: null,
-        error: "Asset ID is required.",
-      };
+      return { success: false, data: null, error: "Asset ID is required." };
     }
-
     if (!name || !name.trim()) {
-      return {
-        success: false,
-        data: null,
-        error: "Asset name cannot be empty.",
-      };
+      return { success: false, data: null, error: "Asset name cannot be empty." };
     }
 
     const {
@@ -306,7 +265,6 @@ export const editAsset = async (
       };
     }
 
-    // Verify whether asset has been changed (more than 2 entries in asset_monthly_snapshots)
     const { count, error: countError } = await supabase
       .from("asset_monthly_snapshots")
       .select("*", { count: "exact", head: true })
@@ -314,24 +272,17 @@ export const editAsset = async (
 
     if (countError) {
       console.error("Error verifying asset snapshot count:", countError);
-      return {
-        success: false,
-        data: null,
-        error: countError.message,
-      };
+      return { success: false, data: null, error: countError.message };
     }
-
     if ((count ?? 0) > 2) {
       return {
         success: false,
         data: null,
-        error:
-          "It can't be edited as it has been changed after adding it. But if there is still error then Delete this asset and add it again.",
+        error: "It can't be edited as it has been changed after adding it.",
       };
     }
 
-    // Update the asset record
-    const { data: updatedAsset, error: updateError } = await supabase
+    const { data, error } = await supabase
       .from("assets")
       .update({
         name: name.trim(),
@@ -344,47 +295,27 @@ export const editAsset = async (
       .select()
       .single();
 
-    if (updateError) {
-      console.error("Supabase error editing asset:", updateError);
-      return {
-        success: false,
-        data: null,
-        error: updateError.message,
-      };
+    if (error) {
+      console.error("Supabase error editing asset:", error);
+      return { success: false, data: null, error: error.message };
     }
-
-    return {
-      success: true,
-      data: updatedAsset,
-      error: null,
-    };
+    return { success: true, data, error: null };
   } catch (err: any) {
     console.error("Unexpected error in editAsset:", err);
     return {
       success: false,
       data: null,
-      error:
-        err?.message || "An unexpected error occurred while editing asset.",
+      error: err?.message || "An unexpected error occurred while editing asset.",
     };
   }
 };
 
-/**
- * Permanently deletes an asset and associated records.
- *
- * @param {string} assetId - The UUID of the asset to delete.
- * @returns {Promise<PortfolioServiceResponse>}
- */
 export const deleteAsset = async (
   assetId: string
 ): Promise<PortfolioServiceResponse> => {
   try {
     if (!assetId) {
-      return {
-        success: false,
-        data: null,
-        error: "Asset ID is required.",
-      };
+      return { success: false, data: null, error: "Asset ID is required." };
     }
 
     const {
@@ -408,25 +339,15 @@ export const deleteAsset = async (
 
     if (error) {
       console.error("Supabase error deleting asset:", error);
-      return {
-        success: false,
-        data: null,
-        error: error.message,
-      };
+      return { success: false, data: null, error: error.message };
     }
-
-    return {
-      success: true,
-      data: true,
-      error: null,
-    };
+    return { success: true, data: true, error: null };
   } catch (err: any) {
     console.error("Unexpected error in deleteAsset:", err);
     return {
       success: false,
       data: null,
-      error:
-        err?.message || "An unexpected error occurred while deleting asset.",
+      error: err?.message || "An unexpected error occurred while deleting asset.",
     };
   }
 };
