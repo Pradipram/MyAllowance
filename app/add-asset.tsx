@@ -1,9 +1,9 @@
 import { styles } from "@/assets/styles/add-assets.style";
 import Header from "@/components/header/header";
-import { addAsset } from "@/services/portfolio";
+import { addAsset, editAsset } from "@/services/portfolio";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -31,12 +31,56 @@ const ASSET_TYPES: AssetTypeOption[] = [
   { id: "other", label: "Other", icon: "cube-outline" },
 ];
 
+const normalizeAssetType = (type?: string): AssetType => {
+  if (!type) return "equity";
+  const lower = type.toLowerCase().trim().replace(/[\s-]+/g, "_");
+  if (lower === "equity") return "equity";
+  if (lower === "mutual_fund" || lower === "mutualfund") return "mutual_fund";
+  return "other";
+};
+
 export default function AddAssetScreen() {
-  const [name, setName] = useState("");
-  const [selectedType, setSelectedType] = useState<AssetType>("equity");
-  const [investedAmountText, setInvestedAmountText] = useState("");
-  const [currentValueText, setCurrentValueText] = useState("");
+  const params = useLocalSearchParams<{
+    isEditing?: string;
+    assetId?: string;
+    name?: string;
+    assetType?: string;
+    investedAmount?: string;
+    currentValue?: string;
+  }>();
+
+  const isEditing = params.isEditing === "true";
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const [name, setName] = useState(params.name || "");
+  const [selectedType, setSelectedType] = useState<AssetType>(
+    normalizeAssetType(params.assetType)
+  );
+  const [investedAmountText, setInvestedAmountText] = useState(
+    params.investedAmount || ""
+  );
+  const [currentValueText, setCurrentValueText] = useState(
+    params.currentValue || ""
+  );
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (params.name !== undefined) setName(params.name);
+    if (params.assetType !== undefined) {
+      setSelectedType(normalizeAssetType(params.assetType));
+    }
+    if (params.investedAmount !== undefined) {
+      setInvestedAmountText(params.investedAmount);
+    }
+    if (params.currentValue !== undefined) {
+      setCurrentValueText(params.currentValue);
+    }
+  }, [
+    params.name,
+    params.assetType,
+    params.investedAmount,
+    params.currentValue,
+  ]);
 
   const handleInvestedAmountChange = (text: string) => {
     if (text === "" || /^\d*\.?\d*$/.test(text)) {
@@ -85,26 +129,51 @@ export default function AddAssetScreen() {
       const invested = parseFloat(investedAmountText);
       const current = parseFloat(currentValueText);
 
-      const response = await addAsset(
-        name.trim(),
-        selectedType,
-        invested,
-        current,
-      );
+      if (isEditing) {
+        if (!params.assetId) {
+          Alert.alert("Error", "Asset ID is missing.");
+          return;
+        }
 
-      if (response.success) {
-        router.back();
-      } else {
-        Alert.alert(
-          "Error",
-          response.error || "Failed to add asset. Please try again.",
+        const response = await editAsset(
+          params.assetId,
+          name.trim(),
+          selectedType,
+          invested,
+          current
         );
+
+        if (response.success) {
+          router.back();
+        } else {
+          Alert.alert(
+            "Error",
+            response.error ||
+              "Failed to update asset. But if there is still error then Delete this asset and add it again."
+          );
+        }
+      } else {
+        const response = await addAsset(
+          name.trim(),
+          selectedType,
+          invested,
+          current
+        );
+
+        if (response.success) {
+          router.back();
+        } else {
+          Alert.alert(
+            "Error",
+            response.error || "Failed to add asset. Please try again."
+          );
+        }
       }
     } catch (error: any) {
       console.error("Error submitting asset:", error);
       Alert.alert(
         "Error",
-        "An unexpected error occurred while adding the asset.",
+        "An unexpected error occurred while saving the asset."
       );
     } finally {
       setLoading(false);
@@ -113,17 +182,25 @@ export default function AddAssetScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Header heading="Add Asset" subheading="New Portfolio Holding" />
+      <Header
+        heading={isEditing ? "Edit Asset" : "Add Asset"}
+        subheading={
+          isEditing ? "Update Portfolio Holding" : "New Portfolio Holding"
+        }
+      />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={true}
         >
           {/* Asset Name */}
           <View style={styles.formSection}>
@@ -187,6 +264,11 @@ export default function AddAssetScreen() {
                 placeholderTextColor="#999"
                 keyboardType="decimal-pad"
                 maxLength={12}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 220, animated: true });
+                  }, 150);
+                }}
               />
             </View>
           </View>
@@ -214,6 +296,11 @@ export default function AddAssetScreen() {
                 placeholderTextColor="#999"
                 keyboardType="decimal-pad"
                 maxLength={12}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 150);
+                }}
               />
             </View>
           </View>
@@ -229,7 +316,9 @@ export default function AddAssetScreen() {
               {loading ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Text style={styles.saveButtonText}>Add Asset</Text>
+                <Text style={styles.saveButtonText}>
+                  {isEditing ? "Save Changes" : "Add Asset"}
+                </Text>
               )}
             </TouchableOpacity>
 

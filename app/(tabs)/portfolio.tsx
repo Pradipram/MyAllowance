@@ -22,8 +22,6 @@ export default function PortfolioScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
-  const [isValuationSheetVisible, setIsValuationSheetVisible] =
-    useState<boolean>(false);
 
   const loadPortfolioData = useCallback(async () => {
     try {
@@ -55,11 +53,9 @@ export default function PortfolioScreen() {
 
   const handleAssetPress = (asset: Asset) => {
     setSelectedAsset(asset);
-    setIsValuationSheetVisible(true);
   };
 
-  const handleValuationSuccess = () => {
-    setIsValuationSheetVisible(false);
+  const handlePortfolioDetailsSuccess = () => {
     setSelectedAsset(null);
     loadPortfolioData();
   };
@@ -141,6 +137,7 @@ export default function PortfolioScreen() {
         visible={selectedAsset !== null}
         asset={selectedAsset}
         onClose={() => setSelectedAsset(null)}
+        onSuccess={handlePortfolioDetailsSuccess}
       />
     </SafeAreaView>
   );

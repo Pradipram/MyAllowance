@@ -1,7 +1,11 @@
+import { checkAssetHasChanges, deleteAsset } from '@/services/portfolio'
 import { Asset } from '@/types/types'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import React, { useRef, useState } from 'react'
 import {
+  ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -14,6 +18,7 @@ interface PortfolioDetailsProps {
   visible: boolean
   asset: Asset | null
   onClose: () => void
+  onSuccess?: () => void
 }
 
 const formatCurrency = (value: number) =>
@@ -124,9 +129,15 @@ const tooltipStyles = StyleSheet.create({
 })
 
 // ── Main component ───────────────────────────────────────────────────────────
-const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) => {
+const PortfolioDetails = ({
+  visible,
+  asset,
+  onClose,
+  onSuccess,
+}: PortfolioDetailsProps) => {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
   const [tooltipY, setTooltipY] = useState(0)
+  const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const infoRefs = useRef<Record<string, View | null>>({})
 
   const showTooltip = (key: string) => {
@@ -150,7 +161,98 @@ const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) =>
 
   const handleClose = () => {
     setActiveTooltip(null)
+    setLoadingAction(null)
     onClose()
+  }
+
+  const handleDelete = () => {
+    if (!asset || loadingAction) return
+
+    Alert.alert(
+      'Delete Asset',
+      `Are you sure you want to delete "${asset.name}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoadingAction('delete')
+              const res = await deleteAsset(asset.asset_id)
+              if (res.success) {
+                handleClose()
+                onSuccess?.()
+              } else {
+                Alert.alert('Error', res.error || 'Failed to delete asset.')
+              }
+            } catch (err: any) {
+              console.error('Error deleting asset:', err)
+              Alert.alert('Error', err?.message || 'Failed to delete asset.')
+            } finally {
+              setLoadingAction(null)
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  const handleEdit = async () => {
+    if (!asset || loadingAction) return
+
+    try {
+      setLoadingAction('edit')
+      const checkRes = await checkAssetHasChanges(asset.asset_id)
+
+      if (!checkRes.success) {
+        Alert.alert('Error', checkRes.error || 'Failed to check asset status.')
+        return
+      }
+
+      if (checkRes.data === true) {
+        Alert.alert(
+          'Cannot Edit Asset',
+          "It can't be edited as it has been changed after adding it. But if there is still error then Delete this asset and add it again.",
+          [
+            { text: 'OK', style: 'cancel' },
+            {
+              text: 'Delete Asset',
+              style: 'destructive',
+              onPress: handleDelete,
+            },
+          ]
+        )
+        return
+      }
+
+      // Asset has not been changed: open add-asset page with all fields prefilled
+      handleClose()
+      router.push({
+        pathname: '/add-asset',
+        params: {
+          isEditing: 'true',
+          assetId: asset.asset_id,
+          name: asset.name,
+          assetType: asset.asset_type,
+          investedAmount: asset.invested_amount.toString(),
+          currentValue: asset.current_value.toString(),
+        },
+      })
+    } catch (err: any) {
+      console.error('Error checking asset status:', err)
+      Alert.alert('Error', err?.message || 'An unexpected error occurred.')
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
+  const handleActionPress = (key: string) => {
+    if (key === 'edit') {
+      handleEdit()
+    } else if (key === 'delete') {
+      handleDelete()
+    }
   }
 
   const activeAction = ACTIONS.find((a) => a.key === activeTooltip)
@@ -206,7 +308,8 @@ const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) =>
               <React.Fragment key={action.key}>
                 <TouchableOpacity
                   style={styles.actionRow}
-                  onPress={() => {/* TODO: wire backend */}}
+                  onPress={() => handleActionPress(action.key)}
+                  disabled={loadingAction !== null}
                   activeOpacity={0.7}
                 >
                   {/* Left: icon + label + info */}
@@ -228,8 +331,12 @@ const PortfolioDetails = ({ visible, asset, onClose }: PortfolioDetailsProps) =>
                     </TouchableOpacity>
                   </View>
 
-                  {/* Right: chevron */}
-                  <Ionicons name="chevron-forward" size={16} color="#c4c7d0" />
+                  {/* Right: chevron or loading indicator */}
+                  {loadingAction === action.key ? (
+                    <ActivityIndicator size="small" color="#7c8395" />
+                  ) : (
+                    <Ionicons name="chevron-forward" size={16} color="#c4c7d0" />
+                  )}
                 </TouchableOpacity>
                 {index < ACTIONS.length - 1 && <View style={styles.divider} />}
               </React.Fragment>

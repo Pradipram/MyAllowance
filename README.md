@@ -96,7 +96,9 @@ A comprehensive React Native budget tracking and investment portfolio app built 
 - **Portfolio Dashboard**: Dedicated tab showing total portfolio value with absolute and percentage return delta, color-coded (green for gains, red for losses)
 - **Asset Management**: Track individual holdings across Equity, Mutual Funds, and other asset types with invested amount vs. current market value
 - **Add Asset Flow**: Dedicated form screen with name, type selector, invested amount, and current value inputs with decimal-pad keyboard and form validation
-- **Quick Valuation Updates**: Tap any asset card to open a bottom-sheet modal for rapid market value updates without leaving the portfolio view
+- **Asset Details Sheet**: Tap any asset card to open a bottom-sheet modal showing asset name, type, invested amount, and current value in a clean info card layout
+- **Action Menu**: Four contextual actions — Edit asset, Update valuation, Mark as sold, Delete asset — each with an inline ⓘ tooltip explaining its purpose and constraints
+- **Quick Valuation Updates**: Update current market value directly from the asset details sheet
 - **Auto-Refresh on Focus**: Portfolio data refreshes automatically when navigating back to the tab
 - **Pull-to-Refresh**: Swipe down on the portfolio list to manually refresh all asset data
 - **Clean Empty State**: Friendly onboarding message when no assets have been added yet
