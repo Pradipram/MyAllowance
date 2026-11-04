@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Delete Asset Flow**: Tapping "Delete asset" (or selecting Delete from the edit restriction alert) displays a confirmation modal and permanently deletes the asset and its valuation ledger.
 - **Portfolio Service Operations** (`services/portfolio.ts`):
   - `editAsset(assetId, name, type, invested, current)`: Updates asset details through the `update_asset_details` RPC.
-  - `deleteAsset(assetId)`: Deletes asset record and cascades deletion to valuation ledger entries.
+  - `deleteAsset(assetId)`: Deletes the authenticated user's asset record using the asset ID.
 
 ### Changed
 - **Update Valuation Sheet** (`components/portfolio/update-valuation-sheet.tsx`): Added the designed valuation form UI with asset details, date, invested amount, and current value. The form is scrollable and keyboard-aware, saves through the `update_asset_valuation` RPC, shows a loader while saving, displays a top success toast with a timed progress indicator, and refreshes the portfolio after a successful update.
