@@ -1,4 +1,4 @@
-import { checkAssetHasChanges, deleteAsset } from '@/services/portfolio'
+import { deleteAsset } from '@/services/portfolio'
 import { Asset } from '@/types/types'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
@@ -198,53 +198,21 @@ const PortfolioDetails = ({
     )
   }
 
-  const handleEdit = async () => {
+  const handleEdit = () => {
     if (!asset || loadingAction) return
 
-    try {
-      setLoadingAction('edit')
-      const checkRes = await checkAssetHasChanges(asset.asset_id)
-
-      if (!checkRes.success) {
-        Alert.alert('Error', checkRes.error || 'Failed to check asset status.')
-        return
-      }
-
-      if (checkRes.data === true) {
-        Alert.alert(
-          'Cannot Edit Asset',
-          "It can't be edited as it has been changed after adding it. But if there is still error then Delete this asset and add it again.",
-          [
-            { text: 'OK', style: 'cancel' },
-            {
-              text: 'Delete Asset',
-              style: 'destructive',
-              onPress: handleDelete,
-            },
-          ]
-        )
-        return
-      }
-
-      // Asset has not been changed: open add-asset page with all fields prefilled
-      handleClose()
-      router.push({
-        pathname: '/add-asset',
-        params: {
-          isEditing: 'true',
-          assetId: asset.asset_id,
-          name: asset.name,
-          assetType: asset.asset_type,
-          investedAmount: asset.invested_amount.toString(),
-          currentValue: asset.current_value.toString(),
-        },
-      })
-    } catch (err: any) {
-      console.error('Error checking asset status:', err)
-      Alert.alert('Error', err?.message || 'An unexpected error occurred.')
-    } finally {
-      setLoadingAction(null)
-    }
+    handleClose()
+    router.push({
+      pathname: '/add-asset',
+      params: {
+        isEditing: 'true',
+        assetId: asset.asset_id,
+        name: asset.name,
+        assetType: asset.asset_type,
+        investedAmount: asset.invested_amount.toString(),
+        currentValue: asset.current_value.toString(),
+      },
+    })
   }
 
   const handleActionPress = (key: string) => {

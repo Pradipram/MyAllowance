@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Edit Asset Flow**: Tapping "Edit asset" checks if valuation updates have been recorded. If unchanged, opens `/add-asset` prefilled with the holding's data. If changed, displays an alert explaining that the asset cannot be edited because it was changed after adding it, providing an option to delete and re-add.
   - **Delete Asset Flow**: Tapping "Delete asset" (or selecting Delete from the edit restriction alert) displays a confirmation modal and permanently deletes the asset and its valuation ledger.
 - **Portfolio Service Operations** (`services/portfolio.ts`):
-  - `checkAssetHasChanges(assetId)`: Determines if an asset has undergone subsequent valuation changes in the ledger.
   - `editAsset(assetId, name, type, invested, current)`: Updates asset holding and initial valuation record if no subsequent updates exist.
   - `deleteAsset(assetId)`: Deletes asset record and cascades deletion to valuation ledger entries.
 

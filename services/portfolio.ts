@@ -191,38 +191,6 @@ export const updateValuation = async (
   }
 };
 
-export const checkAssetHasChanges = async (
-  assetId: string
-): Promise<PortfolioServiceResponse<boolean>> => {
-  if (!assetId) {
-    return {
-      success: false,
-      data: null,
-      error: "Asset ID is required.",
-    };
-  }
-
-  const { count, error } = await supabase
-    .from("asset_monthly_snapshots")
-    .select("*", { count: "exact", head: true })
-    .eq("asset_id", assetId);
-
-  if (error) {
-    console.error("Supabase error checking asset snapshots:", error);
-    return {
-      success: false,
-      data: null,
-      error: error.message,
-    };
-  }
-
-  return {
-    success: true,
-    data: (count ?? 0) > 2,
-    error: null,
-  };
-};
-
 export const editAsset = async (
   _assetId: string,
   _name: string,
