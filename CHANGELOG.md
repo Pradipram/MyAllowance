@@ -5,7 +5,7 @@ All notable changes to My Allowance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.5.0] - Unreleased
+## [4.5.0] - UnReleased
 
 ### Added
 - **Asset Details Sheet** (`components/portfolio/portfolio-details.tsx`): New bottom-sheet modal that opens when tapping an asset card, replacing the previous direct-to-valuation flow.
@@ -16,17 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Edit Asset Flow**: Tapping "Edit asset" checks if valuation updates have been recorded. If unchanged, opens `/add-asset` prefilled with the holding's data. If changed, displays an alert explaining that the asset cannot be edited because it was changed after adding it, providing an option to delete and re-add.
   - **Delete Asset Flow**: Tapping "Delete asset" (or selecting Delete from the edit restriction alert) displays a confirmation modal and permanently deletes the asset and its valuation ledger.
 - **Portfolio Service Operations** (`services/portfolio.ts`):
-  - `checkAssetHasChanges(assetId)`: Determines if an asset has undergone subsequent updates by checking if more than two entries exist for the `asset_id` in `asset_monthly_snapshots`.
-  - `editAsset(assetId, name, type, invested, current)`: Updates asset holding details if no subsequent updates exist in `asset_monthly_snapshots`.
-  - `deleteAsset(assetId)`: Deletes asset record and cascades deletion to associated records.
+  - `checkAssetHasChanges(assetId)`: Determines if an asset has undergone subsequent valuation changes in the ledger.
+  - `editAsset(assetId, name, type, invested, current)`: Updates asset holding and initial valuation record if no subsequent updates exist.
+  - `deleteAsset(assetId)`: Deletes asset record and cascades deletion to valuation ledger entries.
 
 ### Changed
 - **Portfolio Screen** (`app/(tabs)/portfolio.tsx`): Asset card tap now opens `PortfolioDetails` sheet instead of `UpdateValuationSheet`. The `PortfolioDetails` component receives `visible`, `asset`, `onClose`, and `onSuccess` props to refresh portfolio summary upon deletion or edits.
 - **Add Asset Screen** (`app/add-asset.tsx`): Supports edit mode via route parameters (`isEditing`, `assetId`, `name`, `assetType`, `investedAmount`, `currentValue`), dynamically updating header titles, button labels, and delegating submission to `editAsset`.
 - **`UpdateValuationSheet`**: Commented out in the portfolio screen; will be re-integrated as a sub-action triggered from the Portfolio Details action menu in a future release.
-
-### Fixed
-- **Keyboard Avoidance in Add/Edit Asset** (`app/add-asset.tsx`, `assets/styles/add-assets.style.ts`): Resolved issue where the software keyboard obscured the "Current Value" input and action buttons by configuring `KeyboardAvoidingView` behavior across platforms, enabling `automaticallyAdjustKeyboardInsets`, auto-scrolling focused inputs into view, and adding generous bottom scroll padding.
 
 ### Notes
 - Action menu handlers for Mark as sold will be implemented in a follow-up release once the database schema supports sold statuses.
