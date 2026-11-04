@@ -323,6 +323,7 @@ const PortfolioDetails = ({
         visible={showUpdateSheet}
         asset={asset}
         onClose={() => setShowUpdateSheet(false)}
+        onSuccess={onSuccess}
       />
 
       {/* ── Tooltip overlay ────────────────────────────────────────────── */}

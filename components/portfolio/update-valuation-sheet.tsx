@@ -22,6 +22,7 @@ interface UpdateValuationSheetProps {
   asset: Asset | null;
   visible: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 const formatCurrency = (value: number) =>
@@ -34,6 +35,7 @@ export default function UpdateValuationSheet({
   asset,
   visible,
   onClose,
+  onSuccess,
 }: UpdateValuationSheetProps) {
   const [investedText, setInvestedText] = useState("");
   const [currentText, setCurrentText] = useState("");
@@ -100,6 +102,7 @@ export default function UpdateValuationSheet({
         }).start();
         successToastTimer.current = setTimeout(() => {
           setShowSuccessToast(false);
+          onSuccess?.();
           onClose();
         }, 1200);
       } else {
