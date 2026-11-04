@@ -1,7 +1,7 @@
 import { Asset } from "@/types/types";
 import { updateValuation } from "@/services/portfolio";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   ActivityIndicator,
@@ -37,6 +37,16 @@ export default function UpdateValuationSheet({
   const [investedText, setInvestedText] = useState("");
   const [currentText, setCurrentText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const successToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (successToastTimer.current) {
+        clearTimeout(successToastTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (visible && asset) {
@@ -79,7 +89,11 @@ export default function UpdateValuationSheet({
       const response = await updateValuation(asset.asset_id, current, invested);
 
       if (response.success) {
-        onClose();
+        setShowSuccessToast(true);
+        successToastTimer.current = setTimeout(() => {
+          setShowSuccessToast(false);
+          onClose();
+        }, 1200);
       } else {
         Alert.alert(
           "Update failed",
@@ -196,6 +210,14 @@ export default function UpdateValuationSheet({
                 </TouchableOpacity>
               </View>
             </ScrollView>
+            {showSuccessToast && (
+              <View style={styles.successToast}>
+                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Text style={styles.successToastText}>
+                  Valuation updated successfully
+                </Text>
+              </View>
+            )}
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
@@ -261,4 +283,19 @@ const styles = StyleSheet.create({
   saveButton: { flex: 1, height: 44, borderRadius: 9, backgroundColor: "#007aff", alignItems: "center", justifyContent: "center" },
   saveButtonDisabled: { backgroundColor: "#8bbcf5" },
   saveText: { fontSize: 14, fontWeight: "600", color: "#fff" },
+  successToast: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 24,
+    minHeight: 44,
+    borderRadius: 9,
+    paddingHorizontal: 14,
+    backgroundColor: "#228b22",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  successToastText: { color: "#fff", fontSize: 14, fontWeight: "600" },
 });
