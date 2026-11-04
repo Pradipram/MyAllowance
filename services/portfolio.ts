@@ -137,7 +137,8 @@ export const addAsset = async (
  */
 export const updateValuation = async (
   assetId: string,
-  newValue: number
+  newCurrentValue: number,
+  newInvestedAmount: number
 ): Promise<PortfolioServiceResponse> => {
   try {
     if (!assetId) {
@@ -163,7 +164,8 @@ export const updateValuation = async (
 
     const { data, error } = await supabase.rpc("update_asset_valuation", {
       p_asset_id: assetId,
-      p_new_value: newValue,
+      p_new_current_value: newCurrentValue,
+      p_new_invested_amount: newInvestedAmount,
     });
 
     if (error) {

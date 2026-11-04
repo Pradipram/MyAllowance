@@ -1,4 +1,5 @@
 import { Asset } from "@/types/types";
+import { updateValuation } from "@/services/portfolio";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -58,8 +59,27 @@ export default function UpdateValuationSheet({
     [],
   );
 
-  const handleSave = () => {
-    Alert.alert("Not implemented", "Saving valuation is not implemented yet.");
+  const handleSave = async () => {
+    if (!asset) {
+      Alert.alert("Error", "Asset is missing.");
+      return;
+    }
+
+    if (invested <= 0 || current < 0) {
+      Alert.alert("Invalid amount", "Please enter valid valuation amounts.");
+      return;
+    }
+
+    const response = await updateValuation(asset.asset_id, current, invested);
+
+    if (response.success) {
+      onClose();
+    } else {
+      Alert.alert(
+        "Update failed",
+        response.error || "Failed to update valuation.",
+      );
+    }
   };
 
   return (
