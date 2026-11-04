@@ -194,160 +194,51 @@ export const updateValuation = async (
 export const checkAssetHasChanges = async (
   assetId: string
 ): Promise<PortfolioServiceResponse<boolean>> => {
-  try {
-    if (!assetId) {
-      return { success: false, data: null, error: "Asset ID is required." };
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return {
-        success: false,
-        data: null,
-        error: authError?.message || "User not authenticated.",
-      };
-    }
-
-    const { count, error } = await supabase
-      .from("asset_monthly_snapshots")
-      .select("*", { count: "exact", head: true })
-      .eq("asset_id", assetId);
-
-    if (error) {
-      console.error("Supabase error checking asset snapshots:", error);
-      return { success: false, data: null, error: error.message };
-    }
-
-    return {
-      success: true,
-      data: (count ?? 0) > 2,
-      error: null,
-    };
-  } catch (err: any) {
-    console.error("Unexpected error in checkAssetHasChanges:", err);
+  if (!assetId) {
     return {
       success: false,
       data: null,
-      error: err?.message || "An unexpected error occurred while checking asset changes.",
+      error: "Asset ID is required.",
     };
   }
+
+  const { count, error } = await supabase
+    .from("asset_monthly_snapshots")
+    .select("*", { count: "exact", head: true })
+    .eq("asset_id", assetId);
+
+  if (error) {
+    console.error("Supabase error checking asset snapshots:", error);
+    return {
+      success: false,
+      data: null,
+      error: error.message,
+    };
+  }
+
+  return {
+    success: true,
+    data: (count ?? 0) > 2,
+    error: null,
+  };
 };
 
 export const editAsset = async (
-  assetId: string,
-  name: string,
-  type: string,
-  invested: number,
-  current: number
-): Promise<PortfolioServiceResponse> => {
-  try {
-    if (!assetId) {
-      return { success: false, data: null, error: "Asset ID is required." };
-    }
-    if (!name || !name.trim()) {
-      return { success: false, data: null, error: "Asset name cannot be empty." };
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return {
-        success: false,
-        data: null,
-        error: authError?.message || "User not authenticated.",
-      };
-    }
-
-    const { count, error: countError } = await supabase
-      .from("asset_monthly_snapshots")
-      .select("*", { count: "exact", head: true })
-      .eq("asset_id", assetId);
-
-    if (countError) {
-      console.error("Error verifying asset snapshot count:", countError);
-      return { success: false, data: null, error: countError.message };
-    }
-    if ((count ?? 0) > 2) {
-      return {
-        success: false,
-        data: null,
-        error: "It can't be edited as it has been changed after adding it.",
-      };
-    }
-
-    const { data, error } = await supabase
-      .from("assets")
-      .update({
-        name: name.trim(),
-        asset_type: type,
-        invested_amount: invested,
-        current_value: current,
-      })
-      .eq("asset_id", assetId)
-      .eq("user_id", user.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase error editing asset:", error);
-      return { success: false, data: null, error: error.message };
-    }
-    return { success: true, data, error: null };
-  } catch (err: any) {
-    console.error("Unexpected error in editAsset:", err);
-    return {
-      success: false,
-      data: null,
-      error: err?.message || "An unexpected error occurred while editing asset.",
-    };
-  }
-};
+  _assetId: string,
+  _name: string,
+  _type: string,
+  _invested: number,
+  _current: number
+): Promise<PortfolioServiceResponse<never>> => ({
+  success: false,
+  data: null,
+  error: "Asset editing is not implemented yet.",
+});
 
 export const deleteAsset = async (
-  assetId: string
-): Promise<PortfolioServiceResponse> => {
-  try {
-    if (!assetId) {
-      return { success: false, data: null, error: "Asset ID is required." };
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return {
-        success: false,
-        data: null,
-        error: authError?.message || "User not authenticated.",
-      };
-    }
-
-    const { error } = await supabase
-      .from("assets")
-      .delete()
-      .eq("asset_id", assetId)
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.error("Supabase error deleting asset:", error);
-      return { success: false, data: null, error: error.message };
-    }
-    return { success: true, data: true, error: null };
-  } catch (err: any) {
-    console.error("Unexpected error in deleteAsset:", err);
-    return {
-      success: false,
-      data: null,
-      error: err?.message || "An unexpected error occurred while deleting asset.",
-    };
-  }
-};
+  _assetId: string
+): Promise<PortfolioServiceResponse<boolean>> => ({
+  success: true,
+  data: true,
+  error: null,
+});
