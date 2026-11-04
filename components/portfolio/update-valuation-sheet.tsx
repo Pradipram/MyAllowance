@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -39,6 +40,7 @@ export default function UpdateValuationSheet({
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const successToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     return () => {
@@ -89,7 +91,13 @@ export default function UpdateValuationSheet({
       const response = await updateValuation(asset.asset_id, current, invested);
 
       if (response.success) {
+        toastProgress.setValue(0);
         setShowSuccessToast(true);
+        Animated.timing(toastProgress, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: false,
+        }).start();
         successToastTimer.current = setTimeout(() => {
           setShowSuccessToast(false);
           onClose();
@@ -212,10 +220,25 @@ export default function UpdateValuationSheet({
             </ScrollView>
             {showSuccessToast && (
               <View style={styles.successToast}>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                <Text style={styles.successToastText}>
-                  Valuation updated successfully
-                </Text>
+                <View style={styles.successToastMessage}>
+                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={styles.successToastText}>
+                    Valuation updated successfully
+                  </Text>
+                </View>
+                <View style={styles.progressTrack}>
+                  <Animated.View
+                    style={[
+                      styles.progressBar,
+                      {
+                        width: toastProgress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
               </View>
             )}
           </Pressable>
@@ -287,15 +310,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     right: 20,
-    bottom: 24,
-    minHeight: 44,
+    top: 20,
     borderRadius: 9,
-    paddingHorizontal: 14,
+    paddingTop: 10,
     backgroundColor: "#228b22",
+    overflow: "hidden",
+  },
+  successToastMessage: {
+    minHeight: 34,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
   successToastText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  progressTrack: {
+    height: 3,
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  progressBar: {
+    height: 3,
+    backgroundColor: "#fff",
+  },
 });
