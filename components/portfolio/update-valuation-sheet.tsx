@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -35,6 +36,7 @@ export default function UpdateValuationSheet({
 }: UpdateValuationSheetProps) {
   const [investedText, setInvestedText] = useState("");
   const [currentText, setCurrentText] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (visible && asset) {
@@ -60,6 +62,8 @@ export default function UpdateValuationSheet({
   );
 
   const handleSave = async () => {
+    if (isSaving) return;
+
     if (!asset) {
       Alert.alert("Error", "Asset is missing.");
       return;
@@ -70,15 +74,23 @@ export default function UpdateValuationSheet({
       return;
     }
 
-    const response = await updateValuation(asset.asset_id, current, invested);
+    try {
+      setIsSaving(true);
+      const response = await updateValuation(asset.asset_id, current, invested);
 
-    if (response.success) {
-      onClose();
-    } else {
-      Alert.alert(
-        "Update failed",
-        response.error || "Failed to update valuation.",
-      );
+      if (response.success) {
+        onClose();
+      } else {
+        Alert.alert(
+          "Update failed",
+          response.error || "Failed to update valuation.",
+        );
+      }
+    } catch (error) {
+      console.error("Error updating valuation:", error);
+      Alert.alert("Update failed", "An unexpected error occurred.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -164,11 +176,23 @@ export default function UpdateValuationSheet({
               </View>
 
               <View style={styles.actions}>
-                <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={onClose}
+                  disabled={isSaving}
+                >
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                  <Text style={styles.saveText}>Save valuation</Text>
+                <TouchableOpacity
+                  style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+                  onPress={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.saveText}>Save valuation</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -235,5 +259,6 @@ const styles = StyleSheet.create({
   cancelButton: { flex: 1, height: 44, borderRadius: 9, borderWidth: 1, borderColor: "#d1d1d6", alignItems: "center", justifyContent: "center" },
   cancelText: { fontSize: 14, fontWeight: "600", color: "#555" },
   saveButton: { flex: 1, height: 44, borderRadius: 9, backgroundColor: "#007aff", alignItems: "center", justifyContent: "center" },
+  saveButtonDisabled: { backgroundColor: "#8bbcf5" },
   saveText: { fontSize: 14, fontWeight: "600", color: "#fff" },
 });
