@@ -192,16 +192,45 @@ export const updateValuation = async (
 };
 
 export const editAsset = async (
-  _assetId: string,
-  _name: string,
-  _type: string,
-  _invested: number,
-  _current: number
-): Promise<PortfolioServiceResponse<never>> => ({
-  success: false,
-  data: null,
-  error: "Asset editing is not implemented yet.",
-});
+  assetId: string,
+  name: string,
+  type: string,
+  invested: number,
+  current: number
+): Promise<PortfolioServiceResponse> => {
+  try {
+    const { data, error } = await supabase.rpc("update_asset_details", {
+      p_asset_id: assetId,
+      p_name: name,
+      p_asset_type: type,
+      p_invested_amount: invested,
+      p_current_value: current,
+    });
+
+    if (error) {
+      console.error("Supabase RPC error editing asset:", error);
+      return {
+        success: false,
+        data: null,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data,
+      error: null,
+    };
+  } catch (err: any) {
+    console.error("Unexpected error in editAsset:", err);
+    return {
+      success: false,
+      data: null,
+      error:
+        err?.message || "An unexpected error occurred while editing asset.",
+    };
+  }
+};
 
 export const deleteAsset = async (
   _assetId: string
