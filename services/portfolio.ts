@@ -234,10 +234,91 @@ export const editAsset = async (
   }
 };
 
+export const closeAsset = async (
+  assetId: string,
+  finalValue: number
+): Promise<PortfolioServiceResponse> => {
+  try {
+    const { data, error } = await supabase.rpc("close_asset", {
+      p_asset_id: assetId,
+      p_final_value: finalValue,
+    });
+
+    if (error) {
+      console.error("Supabase RPC error closing asset:", error);
+      return {
+        success: false,
+        data: null,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data,
+      error: null,
+    };
+  } catch (err: any) {
+    console.error("Unexpected error in closeAsset:", err);
+    return {
+      success: false,
+      data: null,
+      error: err?.message || "An unexpected error occurred while closing asset.",
+    };
+  }
+};
+
 export const deleteAsset = async (
-  _assetId: string
-): Promise<PortfolioServiceResponse<boolean>> => ({
-  success: true,
-  data: true,
-  error: null,
-});
+  assetId: string
+): Promise<PortfolioServiceResponse<boolean>> => {
+  try {
+    if (!assetId) {
+      return {
+        success: false,
+        data: null,
+        error: "Asset ID is required.",
+      };
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        data: null,
+        error: authError?.message || "User not authenticated.",
+      };
+    }
+
+    const { error } = await supabase
+      .from("assets")
+      .delete()
+      .eq("asset_id", assetId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Supabase error deleting asset:", error);
+      return {
+        success: false,
+        data: null,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: true,
+      error: null,
+    };
+  } catch (err: any) {
+    console.error("Unexpected error in deleteAsset:", err);
+    return {
+      success: false,
+      data: null,
+      error: err?.message || "An unexpected error occurred while deleting asset.",
+    };
+  }
+};

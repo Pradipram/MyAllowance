@@ -1,4 +1,4 @@
-import { deleteAsset } from '@/services/portfolio'
+import { closeAsset, deleteAsset } from '@/services/portfolio'
 import { Asset } from '@/types/types'
 import UpdateValuationSheet from '@/components/portfolio/update-valuation-sheet'
 import { Ionicons } from '@expo/vector-icons'
@@ -11,6 +11,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
@@ -140,6 +141,8 @@ const PortfolioDetails = ({
   const [tooltipY, setTooltipY] = useState(0)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [showUpdateSheet, setShowUpdateSheet] = useState(false)
+  const [showSoldForm, setShowSoldForm] = useState(false)
+  const [finalValueText, setFinalValueText] = useState('')
   const infoRefs = useRef<Record<string, View | null>>({})
 
   const showTooltip = (key: string) => {
@@ -165,6 +168,8 @@ const PortfolioDetails = ({
     setActiveTooltip(null)
     setLoadingAction(null)
     setShowUpdateSheet(false)
+    setShowSoldForm(false)
+    setFinalValueText('')
     onClose()
   }
 
@@ -218,6 +223,52 @@ const PortfolioDetails = ({
     })
   }
 
+  const handleMarkSold = () => {
+    if (!asset || loadingAction) return
+
+    Alert.alert(
+      'Mark Asset as Sold',
+      'Selling this asset cannot be undone. Continue to enter the final sale value?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: () => {
+            setFinalValueText(asset.current_value.toString())
+            setShowSoldForm(true)
+          },
+        },
+      ],
+    )
+  }
+
+  const handleConfirmSold = async () => {
+    if (!asset || loadingAction) return
+
+    const finalValue = Number.parseFloat(finalValueText)
+    if (Number.isNaN(finalValue) || finalValue < 0) {
+      Alert.alert('Invalid final value', 'Please enter a valid sale value.')
+      return
+    }
+
+    try {
+      setLoadingAction('sold')
+      const response = await closeAsset(asset.asset_id, finalValue)
+      if (response.success) {
+        handleClose()
+        onSuccess?.()
+      } else {
+        Alert.alert('Error', response.error || 'Failed to mark asset as sold.')
+      }
+    } catch (error: any) {
+      console.error('Error closing asset:', error)
+      Alert.alert('Error', error?.message || 'Failed to mark asset as sold.')
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
   const handleActionPress = (key: string) => {
     if (key === 'edit') {
       handleEdit()
@@ -225,6 +276,8 @@ const PortfolioDetails = ({
       handleDelete()
     } else if (key === 'update') {
       setShowUpdateSheet(true)
+    } else if (key === 'sold') {
+      handleMarkSold()
     }
   }
 
@@ -326,6 +379,52 @@ const PortfolioDetails = ({
         onSuccess={onSuccess}
       />
 
+      <Modal
+        visible={showSoldForm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSoldForm(false)}
+      >
+        <Pressable
+          style={styles.soldOverlay}
+          onPress={() => setShowSoldForm(false)}
+        >
+          <Pressable style={styles.soldDialog} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.soldTitle}>Final sale value</Text>
+            <Text style={styles.soldDescription}>
+              Enter the value received when this asset was sold.
+            </Text>
+            <TextInput
+              value={finalValueText}
+              onChangeText={setFinalValueText}
+              keyboardType="decimal-pad"
+              placeholder="0.00"
+              style={styles.soldInput}
+            />
+            <View style={styles.soldActions}>
+              <TouchableOpacity
+                style={styles.soldCancelButton}
+                onPress={() => setShowSoldForm(false)}
+                disabled={loadingAction === 'sold'}
+              >
+                <Text style={styles.soldCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.soldConfirmButton}
+                onPress={handleConfirmSold}
+                disabled={loadingAction === 'sold'}
+              >
+                {loadingAction === 'sold' ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.soldConfirmText}>Mark as sold</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* ── Tooltip overlay ────────────────────────────────────────────── */}
       {activeAction && (
         <Tooltip
@@ -352,6 +451,72 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 32,
+  },
+  soldOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  soldDialog: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 20,
+  },
+  soldTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#212529',
+    marginBottom: 8,
+  },
+  soldDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#6c757d',
+    marginBottom: 16,
+  },
+  soldInput: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#d1d1d6',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    fontSize: 17,
+    color: '#212529',
+    marginBottom: 16,
+  },
+  soldActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  soldCancelButton: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#d1d1d6',
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soldCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+  },
+  soldConfirmButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 9,
+    backgroundColor: '#eb5b3c',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soldConfirmText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
   handle: {
     width: 40,
